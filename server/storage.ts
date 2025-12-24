@@ -10,6 +10,7 @@ import type {
   Language
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { songs } from "./data/songs";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -95,48 +96,8 @@ const encouragements: Record<Language, Encouragement[]> = {
   ],
 };
 
-const musicTracks: MusicTrack[] = [
-  {
-    id: "1",
-    title: "How Great Is Our God",
-    artist: "Chris Tomlin",
-    duration: "4:32",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    albumArt: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=300&h=300&fit=crop",
-  },
-  {
-    id: "2",
-    title: "Amazing Grace (My Chains Are Gone)",
-    artist: "Chris Tomlin",
-    duration: "5:18",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    albumArt: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop",
-  },
-  {
-    id: "3",
-    title: "Blessed Assurance",
-    artist: "Carrie Underwood",
-    duration: "3:45",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    albumArt: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=300&h=300&fit=crop",
-  },
-  {
-    id: "4",
-    title: "What A Beautiful Name",
-    artist: "Hillsong Worship",
-    duration: "5:42",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-    albumArt: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop",
-  },
-  {
-    id: "5",
-    title: "Goodness of God",
-    artist: "Bethel Music",
-    duration: "4:53",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-    albumArt: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300&h=300&fit=crop",
-  },
-];
+// Music tracks are now loaded from server/data/songs.ts
+// Edit that file to add your Suno songs!
 
 const videos: Video[] = [
   {
@@ -228,7 +189,7 @@ export class MemStorage implements IStorage {
   }
 
   async getMusicTracks(): Promise<MusicTrack[]> {
-    return musicTracks;
+    return songs;
   }
 
   async getVideos(): Promise<Video[]> {
