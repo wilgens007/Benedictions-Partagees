@@ -14,58 +14,16 @@
  * 
  * From a short URL like: https://youtu.be/ABC123xyz
  * The youtubeId is: ABC123xyz
- * 
- * EXAMPLE:
- * {
- *   id: "1",
- *   title: "My Video Title",
- *   description: "What this video is about...",
- *   youtubeId: "ABC123xyz",
- *   category: "sermons",
- * },
  */
 
 import type { Video } from "@shared/schema";
 
 export const videos: Video[] = [
   // ========================================
-  // SERMONS
-  // ========================================
-  {
-    id: "1",
-    title: "The Power of Faith in Difficult Times",
-    description: "A powerful message about trusting God when facing life's greatest challenges. Learn how faith can carry you through any storm.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "sermons",
-  },
-  
-  // ========================================
-  // TESTIMONIES
-  // ========================================
-  {
-    id: "2",
-    title: "Testimony: From Darkness to Light",
-    description: "An inspiring testimony of transformation through the grace of God. Hear how one life was completely changed by faith.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "testimonies",
-  },
-  
-  // ========================================
-  // WORSHIP
-  // ========================================
-  {
-    id: "3",
-    title: "Live Worship: Amazing Grace",
-    description: "A beautiful live worship session featuring the timeless hymn Amazing Grace. Perfect for your devotional time.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "worship",
-  },
-  
-  // ========================================
   // TEACHINGS
   // ========================================
   {
-    id: "4",
+    id: "1",
     title: "Vivre une vie pleine du Saint Esprit",
     description: "Découvrez comment vivre une vie remplie du Saint Esprit et expérimenter le surnaturel de Dieu dans votre quotidien.",
     youtubeId: "c0Mzyi6CqcQ",
