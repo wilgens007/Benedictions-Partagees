@@ -66,23 +66,9 @@ export const videos: Video[] = [
   // ========================================
   {
     id: "4",
-    title: "Bible Study: The Psalms",
-    description: "Deep dive into the book of Psalms and discover the richness of David's prayers and songs of praise.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "teachings",
-  },
-  {
-    id: "5",
-    title: "Understanding God's Love",
-    description: "A heartfelt teaching about the depth and breadth of God's unconditional love for His children.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "teachings",
-  },
-  {
-    id: "6",
-    title: "Prayer Warriors: How to Pray",
-    description: "Learn practical tips for developing a powerful and consistent prayer life that transforms your relationship with God.",
-    youtubeId: "dQw4w9WgXcQ",
+    title: "Vivre une vie pleine du Saint Esprit",
+    description: "Découvrez comment vivre une vie remplie du Saint Esprit et expérimenter le surnaturel de Dieu dans votre quotidien.",
+    youtubeId: "c0Mzyi6CqcQ",
     category: "teachings",
   },
 ];
