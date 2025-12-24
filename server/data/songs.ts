@@ -190,4 +190,65 @@ export const songs: MusicTrack[] = [
     audioUrl: "https://cdn1.suno.ai/c26ef04e-e03f-4455-8b1f-f511110b5160.mp3",
     albumArt: "https://cdn2.suno.ai/image_c26ef04e-e03f-4455-8b1f-f511110b5160.jpeg",
   },
+
+  // ========================================
+  // CHAN'T D'ESPERANCE - Wilgens Pierre
+  // ========================================
+
+  {
+    id: "22",
+    title: "Jezi se tout bagay pou mwen",
+    artist: "Bénédictions Partagées Music",
+    duration: "3:32",
+    audioUrl: "https://cdn1.suno.ai/4dd7b021-422f-424c-ac10-99a6ad047d2f.mp3",
+    albumArt: "https://cdn2.suno.ai/image_4dd7b021-422f-424c-ac10-99a6ad047d2f.jpeg",
+  },
+  {
+    id: "23",
+    title: "Ou Se Fos Mwen Le Kem Kase",
+    artist: "Bénédictions Partagées Music",
+    duration: "2:14",
+    audioUrl: "https://cdn1.suno.ai/d0428f30-7052-426f-9e41-62a47c2a8c33.mp3",
+    albumArt: "https://cdn2.suno.ai/image_d0428f30-7052-426f-9e41-62a47c2a8c33.jpeg",
+  },
+  {
+    id: "24",
+    title: "San Jezi mwen pa kapab viv",
+    artist: "Bénédictions Partagées Music",
+    duration: "2:44",
+    audioUrl: "https://cdn1.suno.ai/93e9e6c0-da04-4afa-ac27-2d89294cd9c4.mp3",
+    albumArt: "https://cdn2.suno.ai/image_93e9e6c0-da04-4afa-ac27-2d89294cd9c4.jpeg",
+  },
+  {
+    id: "25",
+    title: "Jezi, kenbe m pre lakwa",
+    artist: "Bénédictions Partagées Music",
+    duration: "3:42",
+    audioUrl: "https://cdn1.suno.ai/76830ac8-e4a2-4283-bbf6-ce3f443d1726.mp3",
+    albumArt: "https://cdn2.suno.ai/image_76830ac8-e4a2-4283-bbf6-ce3f443d1726.jpeg",
+  },
+  {
+    id: "26",
+    title: "Eskew ta vle viv pou jezi",
+    artist: "Bénédictions Partagées Music",
+    duration: "4:16",
+    audioUrl: "https://cdn1.suno.ai/9cd27738-8452-4777-938b-eff1daa0a839.mp3",
+    albumArt: "https://cdn2.suno.ai/image_9cd27738-8452-4777-938b-eff1daa0a839.jpeg",
+  },
+  {
+    id: "27",
+    title: "Tout Lavi Mwen",
+    artist: "Bénédictions Partagées Music",
+    duration: "3:48",
+    audioUrl: "https://cdn1.suno.ai/3057b605-b5a9-4b38-9eb4-17c382b7e33f.mp3",
+    albumArt: "https://cdn2.suno.ai/image_3057b605-b5a9-4b38-9eb4-17c382b7e33f.jpeg",
+  },
+  {
+    id: "28",
+    title: "Lè Jezi Mouri Sou Kalvè",
+    artist: "Bénédictions Partagées Music",
+    duration: "3:59",
+    audioUrl: "https://cdn1.suno.ai/482ea3e8-b49a-4475-9671-81f5c401dafa.mp3",
+    albumArt: "https://cdn2.suno.ai/image_482ea3e8-b49a-4475-9671-81f5c401dafa.jpeg",
+  },
 ];
