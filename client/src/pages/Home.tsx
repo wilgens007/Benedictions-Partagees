@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Music, Video, BookOpen, HandHeart, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/lib/LanguageContext";
 import type { DailyVerse, Encouragement } from "@shared/schema";
+import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
 const quickLinks = [
   { path: "/music", icon: Music, labelKey: "music", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
@@ -46,6 +46,11 @@ export default function Home() {
         }}
       >
         <div className="text-center max-w-md mx-auto">
+          <img 
+            src={logoImage} 
+            alt="Bénédictions Partagées" 
+            className="w-20 h-20 mx-auto mb-4 rounded-full shadow-lg"
+          />
           <p className="text-white/80 text-sm font-medium mb-2 tracking-wide uppercase">
             {t("todaysVerse")}
           </p>

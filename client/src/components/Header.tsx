@@ -9,6 +9,7 @@ import {
 import { useTheme } from "@/lib/ThemeContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import type { Language } from "@shared/schema";
+import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
 const languages: { code: Language; name: string; flag: string }[] = [
   { code: "en", name: "English", flag: "🇺🇸" },
@@ -24,9 +25,11 @@ export function Header() {
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="flex items-center justify-between gap-4 px-4 h-14 max-w-lg mx-auto">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-serif font-bold text-sm">BP</span>
-          </div>
+          <img 
+            src={logoImage} 
+            alt="Bénédictions Partagées" 
+            className="w-8 h-8 rounded-full object-cover"
+          />
           <span className="font-serif font-semibold text-sm text-foreground hidden min-[360px]:block">
             {t("appName")}
           </span>
