@@ -19,8 +19,9 @@ export type User = typeof users.$inferSelect;
 
 export const prayerRequestSchema = z.object({
   id: z.string(),
-  name: z.string().optional(),
-  request: z.string().min(1, "Prayer request is required"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email is required"),
+  message: z.string().min(1, "Prayer request is required"),
   language: z.enum(["en", "fr", "ht"]),
   createdAt: z.string(),
 });

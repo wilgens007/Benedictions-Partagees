@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPrayerRequestSchema } from "@shared/schema";
 import type { Language } from "@shared/schema";
+import { sendPrayerRequestEmail } from "./resend";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -63,6 +64,17 @@ export async function registerRoutes(
       }
 
       const prayerRequest = await storage.createPrayerRequest(validation.data);
+      
+      try {
+        await sendPrayerRequestEmail(
+          validation.data.name,
+          validation.data.email,
+          validation.data.message
+        );
+      } catch (emailError) {
+        console.error("Error sending prayer request email:", emailError);
+      }
+      
       res.status(201).json(prayerRequest);
     } catch (error) {
       console.error("Error creating prayer request:", error);

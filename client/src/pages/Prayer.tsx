@@ -28,8 +28,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertPrayerRequestSchema } from "@shared/schema";
 
 const formSchema = insertPrayerRequestSchema.extend({
-  name: z.string().optional(),
-  request: z.string().min(1, "Prayer request is required").max(2000, "Request too long"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email is required"),
+  message: z.string().min(1, "Prayer request is required").max(2000, "Request too long"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -42,7 +43,8 @@ export default function Prayer() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      request: "",
+      email: "",
+      message: "",
       language: language,
     },
   });
@@ -100,7 +102,7 @@ export default function Prayer() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("yourName")}</FormLabel>
+                      <FormLabel>{t("yourName")} *</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder={t("namePlaceholder")} 
@@ -115,7 +117,26 @@ export default function Prayer() {
 
                 <FormField
                   control={form.control}
-                  name="request"
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("yourEmail")} *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email"
+                          placeholder={t("emailPlaceholder")} 
+                          {...field} 
+                          data-testid="input-email"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="message"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("yourPrayer")} *</FormLabel>
