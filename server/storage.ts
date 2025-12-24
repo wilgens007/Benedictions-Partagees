@@ -11,6 +11,7 @@ import type {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { songs } from "./data/songs";
+import { videos } from "./data/videos";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -96,59 +97,9 @@ const encouragements: Record<Language, Encouragement[]> = {
   ],
 };
 
-// Music tracks are now loaded from server/data/songs.ts
-// Edit that file to add your Suno songs!
-
-const videos: Video[] = [
-  {
-    id: "1",
-    title: "The Power of Faith in Difficult Times",
-    description: "A powerful message about trusting God when facing life's greatest challenges. Learn how faith can carry you through any storm.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "sermons",
-    thumbnail: "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=400&h=225&fit=crop",
-  },
-  {
-    id: "2",
-    title: "Testimony: From Darkness to Light",
-    description: "An inspiring testimony of transformation through the grace of God. Hear how one life was completely changed by faith.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "testimonies",
-    thumbnail: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400&h=225&fit=crop",
-  },
-  {
-    id: "3",
-    title: "Worship Night Live - Praise & Adoration",
-    description: "Join us for an evening of powerful worship and praise. Experience the presence of God through music.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "worship",
-    thumbnail: "https://images.unsplash.com/photo-1478147427282-58a87a120781?w=400&h=225&fit=crop",
-  },
-  {
-    id: "4",
-    title: "Understanding God's Grace",
-    description: "A deep dive into what grace truly means and how it transforms our relationship with God and others.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "teachings",
-    thumbnail: "https://images.unsplash.com/photo-1555431189-0fabf2667795?w=400&h=225&fit=crop",
-  },
-  {
-    id: "5",
-    title: "The Beatitudes: Keys to Kingdom Living",
-    description: "Exploring the teachings of Jesus in the Sermon on the Mount and their practical application today.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "sermons",
-    thumbnail: "https://images.unsplash.com/photo-1504439904031-93ded9f93e4e?w=400&h=225&fit=crop",
-  },
-  {
-    id: "6",
-    title: "My Healing Journey",
-    description: "A touching testimony of physical and spiritual healing that will strengthen your faith.",
-    youtubeId: "dQw4w9WgXcQ",
-    category: "testimonies",
-    thumbnail: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&h=225&fit=crop",
-  },
-];
+// Music tracks are loaded from server/data/songs.ts
+// Videos are loaded from server/data/videos.ts
+// Edit those files to add your content!
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;

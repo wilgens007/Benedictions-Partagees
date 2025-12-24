@@ -56,7 +56,7 @@ export interface Video {
   description: string;
   youtubeId: string;
   category: string;
-  thumbnail: string;
+  thumbnail?: string;
 }
 
 export interface Encouragement {
