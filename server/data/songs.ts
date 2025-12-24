@@ -34,11 +34,11 @@ export const songs: MusicTrack[] = [
   
   {
     id: "1",
-    title: "How Great Is Our God",
-    artist: "Bénédictions Partagées",
-    duration: "4:32",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Replace with your Suno URL
-    albumArt: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=300&h=300&fit=crop",
+    title: "Chemen Lavi",
+    artist: "Wilgens Pierre",
+    duration: "3:30",
+    audioUrl: "https://cdn1.suno.ai/754977c5-e4a5-4064-a140-1da89146af3d.mp3",
+    albumArt: "https://cdn2.suno.ai/image_large_754977c5-e4a5-4064-a140-1da89146af3d.jpeg",
   },
   {
     id: "2",
