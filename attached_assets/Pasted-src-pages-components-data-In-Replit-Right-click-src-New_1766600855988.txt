@@ -1,0 +1,176 @@
+src/
+ ├── pages
+ ├── components
+ └── data
+👉 In Replit:
+
+Right-click src
+
+New Folder → pages
+
+New Folder → components
+
+New Folder → data
+
+🔹 STEP 2 — ADD VERSES DATA
+Create a file:
+
+📄 src/data/verses.js
+
+Paste this code:
+
+js
+Copy code
+export const verses = [
+  {
+    text: "The Lord is my shepherd; I shall not want.",
+    reference: "Psalm 23:1"
+  },
+  {
+    text: "Come to me, all who labor and are heavy laden, and I will give you rest.",
+    reference: "Matthew 11:28"
+  },
+  {
+    text: "For I know the plans I have for you, declares the Lord.",
+    reference: "Jeremiah 29:11"
+  },
+  {
+    text: "Be still, and know that I am God.",
+    reference: "Psalm 46:10"
+  },
+  {
+    text: "The joy of the Lord is your strength.",
+    reference: "Nehemiah 8:10"
+  }
+];
+👉 You can add more verses anytime.
+
+🔹 STEP 3 — ENCOURAGEMENT DATA
+Create:
+
+📄 src/data/encouragements.js
+
+js
+Copy code
+export const encouragements = [
+  "God sees you. You are not forgotten.",
+  "Even today, grace is sufficient for you.",
+  "The Lord is working, even when you cannot see it.",
+  "Do not give up. God is not finished with you.",
+  "Peace is your portion today in Jesus’ name."
+];
+🔹 STEP 4 — VERSE CARD COMPONENT
+Create:
+
+📄 src/components/VerseCard.jsx
+
+jsx
+Copy code
+export default function VerseCard({ verse }) {
+  return (
+    <div style={styles.card}>
+      <p style={styles.text}>"{verse.text}"</p>
+      <p style={styles.reference}>{verse.reference}</p>
+    </div>
+  );
+}
+
+const styles = {
+  card: {
+    background: "#f8f9fa",
+    padding: "20px",
+    borderRadius: "12px",
+    marginBottom: "16px",
+    textAlign: "center"
+  },
+  text: {
+    fontSize: "18px",
+    fontStyle: "italic"
+  },
+  reference: {
+    marginTop: "10px",
+    fontWeight: "bold"
+  }
+};
+🔹 STEP 5 — HOME PAGE (IMPORTANT)
+Create:
+
+📄 src/pages/Home.jsx
+
+jsx
+Copy code
+import { verses } from "../data/verses";
+import { encouragements } from "../data/encouragements";
+import VerseCard from "../components/VerseCard";
+
+function getDailyItem(list) {
+  const today = new Date().toDateString();
+  let hash = 0;
+
+  for (let i = 0; i < today.length; i++) {
+    hash += today.charCodeAt(i);
+  }
+
+  return list[hash % list.length];
+}
+
+export default function Home() {
+  const verse = getDailyItem(verses);
+  const encouragement = getDailyItem(encouragements);
+
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.title}>Bénédictions Partagées</h1>
+      <p style={styles.subtitle}>Today’s Word</p>
+
+      <VerseCard verse={verse} />
+
+      <div style={styles.encouragement}>
+        <p>{encouragement}</p>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    padding: "20px",
+    maxWidth: "500px",
+    margin: "0 auto"
+  },
+  title: {
+    textAlign: "center"
+  },
+  subtitle: {
+    textAlign: "center",
+    marginBottom: "20px"
+  },
+  encouragement: {
+    background: "#eaf4ea",
+    padding: "15px",
+    borderRadius: "10px",
+    textAlign: "center"
+  }
+};
+👉 This logic ensures:
+
+Same verse all day
+
+New verse every new day
+
+No database yet (simple & reliable)
+
+🔹 STEP 6 — CONNECT HOME TO APP
+Open:
+
+📄 src/App.jsx
+
+Replace its content with:
+
+jsx
+Copy code
+import Home from "./pages/Home";
+
+export default function App() {
+  return <Home />;
+}
