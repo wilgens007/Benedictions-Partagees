@@ -25,7 +25,7 @@ export const videos: Video[] = [
   {
     id: "1",
     title: "Vivre une vie pleine du Saint Esprit",
-    description: "Découvrez comment vivre une vie remplie du Saint Esprit et expérimenter le surnaturel de Dieu dans votre quotidien.",
+    description: "Découvrez comment vivre une vie remplie du Saint Esprit et expérimenter le surnaturel de Dieu dans votre vie quotidienne.",
     youtubeId: "c0Mzyi6CqcQ",
     category: "teachings",
   },
