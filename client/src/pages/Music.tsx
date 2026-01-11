@@ -32,6 +32,42 @@ export default function Music() {
 
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
+
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        album: "Bénédictions Partagées Music",
+        artwork: [
+          { src: currentTrack.albumArt, sizes: "96x96", type: "image/jpeg" },
+          { src: currentTrack.albumArt, sizes: "128x128", type: "image/jpeg" },
+          { src: currentTrack.albumArt, sizes: "192x192", type: "image/jpeg" },
+          { src: currentTrack.albumArt, sizes: "256x256", type: "image/jpeg" },
+          { src: currentTrack.albumArt, sizes: "384x384", type: "image/jpeg" },
+          { src: currentTrack.albumArt, sizes: "512x512", type: "image/jpeg" },
+        ],
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        audio.play();
+        setIsPlaying(true);
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        audio.pause();
+        setIsPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        skipPrevious();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        skipNext();
+      });
+    }
+  }, [currentTrack, tracks, currentTrackIndex]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
     if (!audio) return;
 
     const updateProgress = () => {
