@@ -66,13 +66,15 @@ export async function registerRoutes(
       const prayerRequest = await storage.createPrayerRequest(validation.data);
       
       try {
-        await sendPrayerRequestEmail(
+        console.log("Attempting to send prayer request email...");
+        const emailResult = await sendPrayerRequestEmail(
           validation.data.name,
           validation.data.email,
           validation.data.message
         );
+        console.log("Prayer request email sent successfully:", JSON.stringify(emailResult));
       } catch (emailError) {
-        console.error("Error sending prayer request email:", emailError);
+        console.error("CRITICAL: Error sending prayer request email:", emailError);
       }
       
       res.status(201).json(prayerRequest);
