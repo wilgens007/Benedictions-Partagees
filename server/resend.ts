@@ -56,6 +56,12 @@ export async function sendPrayerRequestEmail(name: string, email: string, messag
       <hr />
       <p style="color: #666; font-size: 12px;">This prayer request was submitted through the Bénédictions Partagées app.</p>
     `
+  }).then(res => {
+    console.log("Resend API Response:", JSON.stringify(res));
+    return res;
+  }).catch(err => {
+    console.error("Resend API Error:", err);
+    throw err;
   });
   
   return result;
