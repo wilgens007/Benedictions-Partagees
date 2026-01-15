@@ -44,7 +44,7 @@ export async function sendPrayerRequestEmail(name: string, email: string, messag
   
   const result = await client.emails.send({
     from: fromEmail,
-    to: 'benedictionspartagees@gmail.com',
+    to: manualApiKey ? 'wilgens007@gmail.com' : 'benedictionspartagees@gmail.com',
     subject: `New Prayer Request from ${name}`,
     html: `
       <h2>New Prayer Request</h2>
