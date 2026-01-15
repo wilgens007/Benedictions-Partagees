@@ -66,15 +66,15 @@ export async function registerRoutes(
       const prayerRequest = await storage.createPrayerRequest(validation.data);
       
       try {
-        console.log(`[DEBUG] Attempting to send prayer request email for ${validation.data.name}...`);
+        console.log(`[DEBUG] Attempting to send prayer request email to benedictionspartagees@gmail.com for ${validation.data.name}...`);
         const emailResult = await sendPrayerRequestEmail(
           validation.data.name,
           validation.data.email,
           validation.data.message
         );
         console.log("[DEBUG] Prayer request email sent successfully:", JSON.stringify(emailResult));
-      } catch (emailError) {
-        console.error("[DEBUG] CRITICAL: Error sending prayer request email:", emailError);
+      } catch (emailError: any) {
+        console.error("[DEBUG] CRITICAL: Error sending prayer request email:", emailError.message || emailError);
       }
       
       res.status(201).json(prayerRequest);
