@@ -26,6 +26,10 @@ async function getCredentials() {
   ).then(res => res.json()).then(data => data.items?.[0]);
 
   if (!connectionSettings || (!connectionSettings.settings.api_key)) {
+    console.error("[DEBUG] Resend connection settings missing or API key not found", {
+      hasSettings: !!connectionSettings,
+      hasApiKey: !!connectionSettings?.settings?.api_key
+    });
     throw new Error('Resend not connected');
   }
   return { apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email };

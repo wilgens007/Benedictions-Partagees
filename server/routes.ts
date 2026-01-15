@@ -72,9 +72,13 @@ export async function registerRoutes(
           validation.data.email,
           validation.data.message
         );
-        console.log("[DEBUG] Prayer request email sent successfully:", JSON.stringify(emailResult));
+        console.log("[DEBUG] Prayer request email result:", JSON.stringify(emailResult));
+        
+        if (emailResult.error) {
+          console.error("[DEBUG] Resend API returned an error:", emailResult.error);
+        }
       } catch (emailError: any) {
-        console.error("[DEBUG] CRITICAL: Error sending prayer request email:", emailError.message || emailError);
+        console.error("[DEBUG] CRITICAL: Error in sendPrayerRequestEmail:", emailError.message || emailError);
       }
       
       res.status(201).json(prayerRequest);
