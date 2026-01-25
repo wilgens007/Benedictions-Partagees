@@ -55,20 +55,35 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  private getDayOfYear(date: Date): number {
+    // Eastern Time is UTC-5 (EST) or UTC-4 (EDT)
+    // To handle "6 am Eastern Time", we shift the date by 5 hours (using EST as base)
+    // so that 6am ET becomes 1am UTC, or more simply, we can just use the adjusted time.
+    
+    // A more robust way: Adjust date to Eastern Time then subtract 6 hours.
+    // This way, the "day" flips at 6am ET.
+    const etDate = new Date(date.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const shiftedDate = new Date(etDate.getTime() - (6 * 60 * 60 * 1000));
+    
+    const start = new Date(shiftedDate.getFullYear(), 0, 0);
+    const diff = shiftedDate.getTime() - start.getTime();
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay);
+  }
+
   async getDailyVerse(language: Language): Promise<DailyVerse> {
     const verses = dailyVerses[language] || dailyVerses.en;
     const now = new Date();
-    // Use UTC date to ensure consistency across timezones for "today"
-    const todayStr = now.toISOString().split("T")[0];
-    const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-    const verse = verses[dayOfYear % verses.length];
-    return { ...verse, date: todayStr };
+    const dayIndex = this.getDayOfYear(now);
+    const verse = verses[dayIndex % verses.length];
+    const dateStr = now.toISOString().split("T")[0];
+    return { ...verse, date: dateStr };
   }
 
   async getEncouragement(language: Language): Promise<Encouragement> {
     const msgs = encouragements[language] || encouragements.en;
-    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-    return msgs[dayOfYear % msgs.length];
+    const dayIndex = this.getDayOfYear(new Date());
+    return msgs[dayIndex % msgs.length];
   }
 
   async getMusicTracks(): Promise<MusicTrack[]> {
