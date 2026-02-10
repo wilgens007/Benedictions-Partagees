@@ -4,7 +4,11 @@ import { storage } from "./storage";
 import { insertPrayerRequestSchema } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
-import { generateDailyContent, getTodayKeyET } from "./dailyContentGenerator";
+import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
+import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
+import { db } from "./db";
+import { supportConfig } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -60,6 +64,163 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("[CRON-ENDPOINT] ERROR during generation:", error.message || error);
       res.status(500).json({ error: "Generation failed", details: error.message });
+    }
+  });
+
+  app.get("/api/push/vapid-public-key", (_req, res) => {
+    const publicKey = process.env.VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      return res.status(500).json({ error: "VAPID public key not configured" });
+    }
+    res.json({ publicKey });
+  });
+
+  app.post("/api/push/subscribe", async (req, res) => {
+    try {
+      const { subscription, language } = req.body;
+      if (!subscription || !subscription.endpoint || !subscription.keys) {
+        return res.status(400).json({ error: "Invalid subscription object" });
+      }
+      const result = await saveSubscription({
+        endpoint: subscription.endpoint,
+        keys: subscription.keys,
+        language: language || "en",
+      });
+      res.json(result);
+    } catch (error: any) {
+      console.error("[PUSH] Error saving subscription:", error.message || error);
+      res.status(500).json({ error: "Failed to save subscription" });
+    }
+  });
+
+  app.post("/api/push/unsubscribe", async (req, res) => {
+    try {
+      const { endpoint } = req.body;
+      if (!endpoint) {
+        return res.status(400).json({ error: "Missing endpoint" });
+      }
+      const result = await removeSubscription(endpoint);
+      res.json(result);
+    } catch (error: any) {
+      console.error("[PUSH] Error removing subscription:", error.message || error);
+      res.status(500).json({ error: "Failed to remove subscription" });
+    }
+  });
+
+  app.post("/api/push/send-today", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const result = await sendPushToAll({
+        title: "BP \u2014 Devotion du jour",
+        body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
+        url: "/devotion",
+      });
+      res.json(result);
+    } catch (error: any) {
+      console.error("[PUSH] Error sending notifications:", error.message || error);
+      res.status(500).json({ error: "Failed to send notifications" });
+    }
+  });
+
+  app.get("/api/share/today", async (req, res) => {
+    try {
+      const language = (req.query.language as Language) || "en";
+      const dayKey = getTodayKeyET();
+      const content = await getDailyContentForDay(dayKey, language);
+      
+      if (!content) {
+        return res.status(404).json({ error: "Today's content not yet generated" });
+      }
+
+      const excerpt = content.verse.length > 120 ? content.verse.substring(0, 117) + "..." : content.verse;
+      const whatsappMessage = `BP \u2014 Devotion du jour (${dayKey})\n${content.reference} \u2014 "${excerpt}"\nLire: https://benedictionspartagees.org/devotion`;
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://benedictionspartagees.org/devotion")}`;
+
+      res.json({
+        dayKey,
+        reference: content.reference,
+        verseExcerpt: excerpt,
+        shareCaption: content.shareCaption || whatsappMessage,
+        whatsappUrl: `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`,
+        facebookUrl,
+        devotionUrl: "https://benedictionspartagees.org/devotion",
+      });
+    } catch (error: any) {
+      console.error("Error getting share data:", error.message || error);
+      res.status(500).json({ error: "Failed to get share data" });
+    }
+  });
+
+  app.post("/api/social/facebook/post-today", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const pageId = process.env.FACEBOOK_PAGE_ID;
+    const pageToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+
+    if (!pageId || !pageToken) {
+      console.log("[FACEBOOK] Auto-post disabled: FACEBOOK_PAGE_ID or FACEBOOK_PAGE_ACCESS_TOKEN not set");
+      return res.json({ status: "disabled", message: "Facebook auto-post not configured" });
+    }
+
+    try {
+      const dayKey = getTodayKeyET();
+      const content = await getDailyContentForDay(dayKey, "en");
+
+      if (!content) {
+        return res.status(404).json({ error: "Today's content not generated yet" });
+      }
+
+      const message = content.shareCaption || `BP \u2014 Devotion du jour (${dayKey})\n${content.reference}\nLire: https://benedictionspartagees.org/devotion`;
+
+      const fbResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${pageId}/feed`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            link: "https://benedictionspartagees.org/devotion",
+            access_token: pageToken,
+          }),
+        }
+      );
+
+      const fbData = await fbResponse.json();
+      console.log(`[FACEBOOK] Post result: status=${fbResponse.status}, response=${JSON.stringify(fbData)}`);
+
+      if (!fbResponse.ok) {
+        return res.status(fbResponse.status).json({ error: "Facebook API error", details: fbData });
+      }
+
+      res.json({ status: "posted", postId: fbData.id });
+    } catch (error: any) {
+      console.error("[FACEBOOK] ERROR posting:", error.message || error);
+      res.status(500).json({ error: "Failed to post to Facebook" });
+    }
+  });
+
+  app.get("/api/support/config", async (_req, res) => {
+    try {
+      const configs = await db.select().from(supportConfig);
+      const configMap: Record<string, string> = {};
+      for (const c of configs) {
+        configMap[c.key] = c.value;
+      }
+      res.json(configMap);
+    } catch (error: any) {
+      console.error("Error fetching support config:", error);
+      res.json({});
     }
   });
 

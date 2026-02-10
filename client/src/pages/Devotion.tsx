@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Share2, Bookmark, BookOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Share2, Bookmark, BookOpen, Bell, BellOff, MessageCircle } from "lucide-react";
+import { SiFacebook, SiWhatsapp } from "react-icons/si";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,10 +9,18 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import type { DailyVerse } from "@shared/schema";
+import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 
 export default function Devotion() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const pushSupported = isPushSupported();
+
+  useEffect(() => {
+    isPushSubscribed().then(setPushEnabled);
+  }, []);
 
   const { data: verse, isLoading } = useQuery<DailyVerse>({
     queryKey: ["/api/daily-verse", language],
@@ -20,6 +30,45 @@ export default function Devotion() {
       return res.json();
     },
   });
+
+  const { data: shareData } = useQuery<{
+    whatsappUrl: string;
+    facebookUrl: string;
+    shareCaption: string;
+    reference: string;
+    verseExcerpt: string;
+  }>({
+    queryKey: ["/api/share/today", language],
+    queryFn: async () => {
+      const res = await fetch(`/api/share/today?language=${language}`);
+      if (!res.ok) throw new Error("Failed to fetch share data");
+      return res.json();
+    },
+  });
+
+  const handleTogglePush = async () => {
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        const success = await unsubscribeFromPush();
+        if (success) {
+          setPushEnabled(false);
+          toast({ title: t("notificationsDisabled") });
+        }
+      } else {
+        const success = await subscribeToPush(language);
+        if (success) {
+          setPushEnabled(true);
+          toast({ title: t("notificationsEnabled") });
+        } else {
+          toast({ title: t("notificationsDenied"), variant: "destructive" });
+        }
+      }
+    } catch {
+      toast({ title: t("error"), variant: "destructive" });
+    }
+    setPushLoading(false);
+  };
 
   const handleShare = async () => {
     if (!verse) return;
@@ -67,10 +116,30 @@ export default function Devotion() {
   return (
     <div className="flex flex-col min-h-full pb-20">
       <div className="px-4 py-6">
-        <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
-          {t("dailyDevotion")}
-        </h1>
-        <p className="text-muted-foreground text-sm">{today}</p>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
+              {t("dailyDevotion")}
+            </h1>
+            <p className="text-muted-foreground text-sm">{today}</p>
+          </div>
+          {pushSupported && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTogglePush}
+              disabled={pushLoading}
+              data-testid="button-toggle-notifications"
+            >
+              {pushEnabled ? (
+                <BellOff className="w-4 h-4 mr-2" />
+              ) : (
+                <Bell className="w-4 h-4 mr-2" />
+              )}
+              {pushEnabled ? t("disableNotifications") : t("enableNotifications")}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 px-4 space-y-6">
@@ -154,10 +223,7 @@ export default function Devotion() {
             </p>
           ) : (
             <p className="text-muted-foreground leading-relaxed">
-              God calls us to rest in His care, trusting that He will provide for all our needs. 
-              Just as a shepherd leads his flock to green pastures and still waters, our Heavenly 
-              Father guides us through every season of life. Today, let go of your worries and 
-              place your trust in His unfailing love.
+              God calls us to rest in His care, trusting that He will provide for all our needs.
             </p>
           )}
         </div>
@@ -193,13 +259,72 @@ export default function Devotion() {
             <Card className="bg-muted/50">
               <CardContent className="p-5">
                 <p className="text-foreground leading-relaxed italic">
-                  Lord, thank You for being my Shepherd. Help me to trust in Your provision 
-                  and guidance today. May I find rest in Your presence and peace in Your promises. 
-                  Lead me in paths of righteousness for Your name's sake.
+                  Lord, thank You for being my Shepherd. Help me to trust in Your provision.
                 </p>
                 <p className="text-right font-semibold text-primary mt-4">
                   {t("amen")}
                 </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <h2 className="font-serif font-semibold text-lg text-foreground">
+            {t("shareThisDevotion")}
+          </h2>
+          <div className="flex gap-3 flex-wrap">
+            {shareData && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => window.open(shareData.whatsappUrl, "_blank")}
+                  data-testid="button-share-whatsapp"
+                >
+                  <SiWhatsapp className="w-4 h-4 mr-2 text-green-600" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => window.open(shareData.facebookUrl, "_blank")}
+                  data-testid="button-share-facebook"
+                >
+                  <SiFacebook className="w-4 h-4 mr-2 text-blue-600" />
+                  Facebook
+                </Button>
+              </>
+            )}
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              data-testid="button-share-general"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              {t("share")}
+            </Button>
+          </div>
+          {shareData && (
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-2">{t("copyShareMessage")}:</p>
+                <p className="text-sm text-foreground whitespace-pre-line" data-testid="text-share-caption">
+                  {shareData.shareCaption}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(shareData.shareCaption);
+                    toast({ title: t("copiedToClipboard") });
+                  }}
+                  data-testid="button-copy-caption"
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  {t("copyText")}
+                </Button>
               </CardContent>
             </Card>
           )}

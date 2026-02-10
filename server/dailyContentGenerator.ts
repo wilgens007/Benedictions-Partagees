@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 import type { Language, DailyContent } from "@shared/schema";
+import { sendPushToAll } from "./pushService";
 
 const LANGUAGES: Language[] = ["en", "fr", "ht"];
 
@@ -24,6 +25,11 @@ function getDayIndex(dayKey: string): number {
   const diff = date.getTime() - start.getTime();
   const oneDay = 1000 * 60 * 60 * 24;
   return Math.floor(diff / oneDay);
+}
+
+function generateShareCaption(verse: { verse: string; reference: string }, dayKey: string): string {
+  const excerpt = verse.verse.length > 120 ? verse.verse.substring(0, 117) + "..." : verse.verse;
+  return `BP — Devotion du jour (${dayKey})\n${verse.reference} — "${excerpt}"\nLire: https://benedictionspartagees.org/devotion`;
 }
 
 export async function getDailyContentForDay(dayKey: string, language: Language): Promise<DailyContent | null> {
@@ -55,6 +61,7 @@ export async function generateDailyContent(dayKey: string): Promise<{
     const msgs = encouragements[lang] || encouragements.en;
     const verse = verses[dayIndex % verses.length];
     const encouragement = msgs[dayIndex % msgs.length];
+    const shareCaption = generateShareCaption(verse, dayKey);
 
     try {
       await db.insert(dailyContent).values({
@@ -66,6 +73,7 @@ export async function generateDailyContent(dayKey: string): Promise<{
         prayer: verse.prayer,
         encouragementText: encouragement.text,
         encouragementAuthor: encouragement.author,
+        shareCaption,
       });
       console.log(`[CRON] Created daily content for dayKey=${dayKey}, lang=${lang}`);
       generated.push(lang);
@@ -81,6 +89,20 @@ export async function generateDailyContent(dayKey: string): Promise<{
 
   const status = generated.length > 0 ? "created" : "already_exists";
   console.log(`[CRON] Generation result for dayKey=${dayKey}: status=${status}, languages=${generated.join(",") || "none (all existed)"}`);
+
+  if (status === "created") {
+    console.log(`[CRON] New content created — triggering push notifications`);
+    try {
+      const pushResult = await sendPushToAll({
+        title: "BP — Devotion du jour",
+        body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
+        url: "/devotion",
+      });
+      console.log(`[CRON] Push notification results: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`);
+    } catch (pushErr: any) {
+      console.error(`[CRON] ERROR sending push notifications: ${pushErr.message || pushErr}`);
+    }
+  }
 
   return { status, languages: generated, dayKey };
 }

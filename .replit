@@ -45,3 +45,6 @@ integrations = ["resend:1.0.0"]
 
 [userenv.shared]
 CRON_SECRET = "bp-cron-cb6eacb8069e2259c854ecbeb011c62a"
+VAPID_PUBLIC_KEY = "BHPA09VN1LAzbDLi-3firKGmkHY7z6P-PVuZiqUAoxfxxjV9CkFEaZdUmpyWiH9sMeqO7H6i4ZvFAFYjJ0mjiu8"
+VAPID_PRIVATE_KEY = "vgBsgW73pP04IopJIPS28u-72kYslKPCbF2wOpwgBuI"
+VAPID_SUBJECT = "mailto:contact@benedictionspartagees.org"

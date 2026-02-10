@@ -12,6 +12,8 @@ import Music from "@/pages/Music";
 import Videos from "@/pages/Videos";
 import Devotion from "@/pages/Devotion";
 import Prayer from "@/pages/Prayer";
+import Support from "@/pages/Support";
+import ThankYou from "@/pages/ThankYou";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +24,8 @@ function Router() {
       <Route path="/videos" component={Videos} />
       <Route path="/devotion" component={Devotion} />
       <Route path="/prayer" component={Prayer} />
+      <Route path="/support" component={Support} />
+      <Route path="/support/thank-you" component={ThankYou} />
       <Route component={NotFound} />
     </Switch>
   );

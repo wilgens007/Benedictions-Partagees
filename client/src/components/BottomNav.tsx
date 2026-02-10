@@ -1,13 +1,13 @@
 import { Link, useLocation } from "wouter";
-import { Home, Music, Video, BookOpen, HandHeart } from "lucide-react";
+import { Home, Music, Video, BookOpen, HandHeart, Heart } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 
 const navItems = [
   { path: "/", icon: Home, labelKey: "home" },
   { path: "/music", icon: Music, labelKey: "music" },
-  { path: "/videos", icon: Video, labelKey: "videos" },
   { path: "/devotion", icon: BookOpen, labelKey: "devotion" },
   { path: "/prayer", icon: HandHeart, labelKey: "prayer" },
+  { path: "/support", icon: Heart, labelKey: "support" },
 ];
 
 export function BottomNav() {

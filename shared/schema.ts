@@ -19,12 +19,33 @@ export const dailyContent = pgTable("daily_content", {
   prayer: text("prayer").notNull(),
   encouragementText: text("encouragement_text").notNull(),
   encouragementAuthor: text("encouragement_author").notNull().default("Bénédictions Partagées"),
+  shareCaption: text("share_caption"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   uniqueIndex("daily_content_day_lang_idx").on(table.dayKey, table.language),
 ]);
 
 export type DailyContent = typeof dailyContent.$inferSelect;
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  language: varchar("language", { length: 5 }).default("en"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+export const supportConfig = pgTable("support_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SupportConfig = typeof supportConfig.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

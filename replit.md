@@ -45,12 +45,33 @@ Preferred communication style: Simple, everyday language.
 - **Context Providers**: Theme and Language contexts wrap the application for global state
 - **Internationalization**: Translation system with support for English, French, and Haitian Creole
 
+### Push Notifications
+- **Service Worker**: `client/public/sw.js` — handles push events, shows notifications
+- **Client Library**: `client/src/lib/pushNotifications.ts` — subscribe/unsubscribe/check status helpers
+- **Server**: `server/pushService.ts` — sends push notifications via web-push library
+- **DB Table**: `push_subscriptions` — stores push subscription endpoints with language preference
+- **VAPID Keys**: `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` environment variables
+- **Auto-trigger**: Push notifications sent automatically after daily content generation
+
+### Social Sharing
+- **Endpoint**: `GET /api/share/today?language=en` — returns WhatsApp/Facebook share URLs and caption
+- **Components**: WhatsApp and Facebook share buttons on Devotion page
+- **Optional Facebook Auto-Post**: Gated by `FACEBOOK_PAGE_ID` and `FACEBOOK_PAGE_ACCESS_TOKEN` env vars
+
+### Support/Donation System
+- **Pages**: `/support` (donation page) and `/support/thank-you` (thank you page)
+- **Config Endpoint**: `GET /api/support/config` — returns donation link configuration
+- **DB Table**: `support_config` — key-value store for Stripe links, CashApp, PayPal, Zelle handles
+- **Stage 2 (pending)**: Stripe payment link integration when user provides links
+
 ### Application Features
 - **Home**: Daily verse display with encouragement messages
 - **Music**: Audio player with track listing and playback controls
 - **Videos**: Categorized video content with modal playback
-- **Devotion**: Daily devotional content with scripture, reflection, and prayer
+- **Devotion**: Daily devotional with scripture, reflection, prayer, push notification toggle, and social sharing (WhatsApp/Facebook)
 - **Prayer**: Prayer request submission form
+- **Support**: Donation page with configurable payment links and "coming soon" fallback
+- **Navigation**: 5-tab bottom nav (Home, Music, Devotion, Prayer, Support)
 
 ## External Dependencies
 
