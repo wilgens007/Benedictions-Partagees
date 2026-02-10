@@ -44,7 +44,7 @@ export default function Home() {
   });
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full">
 
       <div className="relative overflow-hidden bg-gradient-to-br from-[#1E3A8A] via-[#1E3A8A] to-[#2D4BA0] dark:from-[#0F1D45] dark:via-[#0F1D45] dark:to-[#1A2D6B] px-5 pt-8 pb-10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#EAB308]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />

@@ -54,7 +54,7 @@ export default function Music() {
   const displayTrack = currentTrack || tracks?.[0] || null;
 
   return (
-    <div className={`flex flex-col min-h-full ${currentTrack ? "pb-36" : "pb-20"}`}>
+    <div className="flex flex-col min-h-full">
       <div className="px-5 py-6">
         <h1 className="font-serif text-2xl font-bold text-foreground mb-1" data-testid="text-page-title">
           {t("musicWorship")}

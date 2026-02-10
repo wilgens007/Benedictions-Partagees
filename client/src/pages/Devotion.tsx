@@ -114,7 +114,7 @@ export default function Devotion() {
   });
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full">
       <div className="px-5 py-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>

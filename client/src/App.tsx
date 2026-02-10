@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { LanguageProvider } from "@/lib/LanguageContext";
-import { AudioPlayerProvider } from "@/lib/AudioPlayerContext";
+import { AudioPlayerProvider, useAudioPlayer } from "@/lib/AudioPlayerContext";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { MiniPlayer } from "@/components/MiniPlayer";
@@ -33,6 +33,22 @@ function Router() {
   );
 }
 
+function AppLayout() {
+  const { currentTrack } = useAudioPlayer();
+  const hasPlayer = !!currentTrack;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      <main className={`flex-1 max-w-lg mx-auto w-full ${hasPlayer ? "pb-36" : "pb-20"}`}>
+        <Router />
+      </main>
+      <MiniPlayer />
+      <BottomNav />
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -40,14 +56,7 @@ function App() {
         <LanguageProvider>
           <AudioPlayerProvider>
             <TooltipProvider>
-              <div className="min-h-screen bg-background flex flex-col">
-                <Header />
-                <main className="flex-1 max-w-lg mx-auto w-full">
-                  <Router />
-                </main>
-                <MiniPlayer />
-                <BottomNav />
-              </div>
+              <AppLayout />
               <Toaster />
             </TooltipProvider>
           </AudioPlayerProvider>

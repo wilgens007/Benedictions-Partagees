@@ -68,7 +68,7 @@ export default function Prayer() {
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full">
       <div className="px-5 py-6">
         <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
           {t("prayerRequest")}
