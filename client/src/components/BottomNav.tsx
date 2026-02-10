@@ -4,10 +4,10 @@ import { useLanguage } from "@/lib/LanguageContext";
 
 const navItems = [
   { path: "/", icon: Home, labelKey: "home" },
-  { path: "/music", icon: Music, labelKey: "music" },
   { path: "/devotion", icon: BookOpen, labelKey: "devotion" },
-  { path: "/prayer", icon: HandHeart, labelKey: "prayer" },
+  { path: "/music", icon: Music, labelKey: "music" },
   { path: "/support", icon: Heart, labelKey: "support" },
+  { path: "/prayer", icon: HandHeart, labelKey: "prayer" },
 ];
 
 export function BottomNav() {
@@ -16,7 +16,7 @@ export function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 bg-card border-t border-card-border z-50 safe-area-bottom"
+      className="fixed bottom-0 left-0 right-0 bg-[#1E3A8A] dark:bg-[#0F1D45] z-50 safe-area-bottom"
       data-testid="nav-bottom"
     >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
@@ -27,10 +27,10 @@ export function BottomNav() {
           return (
             <Link key={item.path} href={item.path}>
               <button
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-[60px] ${
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-[56px] ${
                   isActive 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover-elevate active-elevate-2"
+                    ? "text-[#EAB308]" 
+                    : "text-white/60"
                 }`}
                 data-testid={`nav-${item.labelKey}`}
               >
@@ -39,14 +39,11 @@ export function BottomNav() {
                     className={`w-5 h-5 transition-transform duration-200 ${
                       isActive ? "scale-110" : ""
                     }`}
-                    strokeWidth={isActive ? 2.5 : 2}
+                    strokeWidth={isActive ? 2.5 : 1.8}
                   />
-                  {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-                  )}
                 </div>
-                <span className={`text-[10px] font-medium uppercase tracking-wide ${
-                  isActive ? "text-primary" : ""
+                <span className={`text-[10px] font-medium tracking-wide ${
+                  isActive ? "text-[#EAB308]" : ""
                 }`}>
                   {t(item.labelKey)}
                 </span>

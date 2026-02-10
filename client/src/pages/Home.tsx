@@ -8,10 +8,10 @@ import type { DailyVerse, Encouragement } from "@shared/schema";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
 const quickLinks = [
-  { path: "/music", icon: Music, labelKey: "music", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  { path: "/videos", icon: Video, labelKey: "videos", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-  { path: "/devotion", icon: BookOpen, labelKey: "devotion", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-  { path: "/prayer", icon: HandHeart, labelKey: "prayer", color: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
+  { path: "/music", icon: Music, labelKey: "music", color: "bg-[#EAB308]/10 text-[#EAB308] dark:text-[#EAB308]" },
+  { path: "/videos", icon: Video, labelKey: "videos", color: "bg-primary/10 text-primary" },
+  { path: "/devotion", icon: BookOpen, labelKey: "devotion", color: "bg-emerald-600/10 text-emerald-600 dark:text-emerald-400" },
+  { path: "/prayer", icon: HandHeart, labelKey: "prayer", color: "bg-rose-500/10 text-rose-500 dark:text-rose-400" },
 ];
 
 export default function Home() {
@@ -35,62 +35,113 @@ export default function Home() {
     },
   });
 
+  const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div 
-        className="relative min-h-[45vh] flex items-end justify-center px-4 py-8 bg-gradient-to-b from-primary/20 via-primary/10 to-background"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23f97316'/%3E%3Cstop offset='50%25' stop-color='%23fb923c'/%3E%3Cstop offset='100%25' stop-color='%23fcd34d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23sky)' width='1200' height='800'/%3E%3Ccircle cx='600' cy='600' r='120' fill='%23fbbf24' opacity='0.8'/%3E%3C/svg%3E")`,
-          backgroundSize: "cover",
-          backgroundPosition: "center bottom",
-        }}
-      >
-        <div className="text-center max-w-md mx-auto">
-          <img 
-            src={logoImage} 
-            alt="Bénédictions Partagées" 
-            className="w-20 h-20 mx-auto mb-4 rounded-full shadow-lg"
-          />
-          <p className="text-white/80 text-sm font-medium mb-2 tracking-wide uppercase">
-            {t("todaysVerse")}
-          </p>
-          {verseLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-6 w-full bg-white/20" />
-              <Skeleton className="h-6 w-3/4 mx-auto bg-white/20" />
-              <Skeleton className="h-4 w-1/2 mx-auto bg-white/20" />
-            </div>
-          ) : verse ? (
-            <>
-              <p 
-                className="font-serif text-xl md:text-2xl text-white leading-relaxed italic mb-3"
-                data-testid="text-daily-verse"
-              >
-                "{verse.verse}"
-              </p>
-              <p className="text-white/90 text-sm font-medium" data-testid="text-verse-reference">
-                — {verse.reference}
-              </p>
-            </>
-          ) : (
-            <p className="font-serif text-xl text-white italic">
-              "For I know the plans I have for you, declares the Lord."
-            </p>
-          )}
-        </div>
+      <div className="px-5 pt-6 pb-4 space-y-1">
+        <p className="text-sm text-muted-foreground capitalize">{today}</p>
       </div>
 
-      <div className="flex-1 px-4 -mt-6 space-y-6">
-        <Card className="border-none shadow-lg">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-primary" />
-              </div>
-              <h2 className="font-serif font-semibold text-foreground">
-                {t("encouragement")}
-              </h2>
+      <div className="px-5 space-y-6">
+        <Card className="shadow-md overflow-hidden">
+          <CardContent className="p-0">
+            <div className="bg-primary/5 dark:bg-primary/10 px-6 py-5">
+              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-4">
+                {t("todaysVerse")}
+              </p>
+              {verseLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-5/6" />
+                  <Skeleton className="h-5 w-4/6" />
+                  <Skeleton className="h-4 w-1/3 mt-3" />
+                </div>
+              ) : verse ? (
+                <>
+                  <p 
+                    className="font-serif font-semibold text-lg text-foreground leading-relaxed mb-1"
+                    data-testid="text-verse-reference"
+                  >
+                    {verse.reference}
+                  </p>
+                  <blockquote 
+                    className="text-foreground/90 leading-relaxed text-base italic"
+                    data-testid="text-daily-verse"
+                  >
+                    &laquo; {verse.verse} &raquo;
+                  </blockquote>
+                </>
+              ) : (
+                <p className="font-serif text-lg text-foreground italic leading-relaxed">
+                  &laquo; For I know the plans I have for you, declares the Lord. &raquo;
+                </p>
+              )}
             </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-3">
+          <h2 className="font-serif font-semibold text-xl text-foreground">
+            {t("todaysDevotional")}
+          </h2>
+          
+          {verseLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-4/6" />
+            </div>
+          ) : verse ? (
+            <p 
+              className="text-muted-foreground leading-relaxed"
+              data-testid="text-devotional-preview"
+            >
+              {verse.devotional?.slice(0, 150)}...
+            </p>
+          ) : null}
+
+          <Link href="/devotion">
+            <span className="text-sm text-primary font-medium inline-flex items-center gap-1 mt-1 cursor-pointer" data-testid="link-read-more">
+              {t("dailyDevotion")}
+              <ChevronRight className="w-4 h-4" />
+            </span>
+          </Link>
+        </div>
+
+        <Card className="shadow-md">
+          <CardContent className="p-5">
+            <h2 className="font-serif font-semibold text-xl text-foreground mb-3">
+              {t("prayerInspired")}
+            </h2>
+            
+            {verseLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ) : verse ? (
+              <p 
+                className="text-muted-foreground leading-relaxed italic"
+                data-testid="text-prayer-preview"
+              >
+                {verse.prayer?.slice(0, 120)}...
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md">
+          <CardContent className="p-5">
+            <h2 className="font-serif font-semibold text-lg text-foreground mb-3">
+              {t("encouragement")}
+            </h2>
             
             {encouragementLoading ? (
               <div className="space-y-2">
@@ -106,7 +157,7 @@ export default function Home() {
                 >
                   {encouragement.text}
                 </p>
-                <p className="text-sm text-primary font-medium">
+                <p className="text-sm text-[#EAB308] dark:text-[#EAB308] font-medium">
                   — {encouragement.author}
                 </p>
               </>
@@ -118,7 +169,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <div className="space-y-3">
+        <div className="space-y-3 pb-4">
           <h2 className="font-serif font-semibold text-lg text-foreground px-1">
             {t("welcome")}
           </h2>
@@ -127,7 +178,7 @@ export default function Home() {
               const Icon = link.icon;
               return (
                 <Link key={link.path} href={link.path}>
-                  <Card className="hover-elevate active-elevate-2 cursor-pointer h-full">
+                  <Card className="hover-elevate active-elevate-2 cursor-pointer h-full shadow-sm">
                     <CardContent className="p-4 flex flex-col items-center justify-center gap-3 text-center min-h-[100px]">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${link.color}`}>
                         <Icon className="w-5 h-5" />
@@ -142,23 +193,6 @@ export default function Home() {
             })}
           </div>
         </div>
-
-        <Link href="/devotion">
-          <Card className="hover-elevate active-elevate-2 cursor-pointer">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">{t("dailyDevotion")}</p>
-                  <p className="text-sm text-muted-foreground">{t("todaysDevotional")}</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </CardContent>
-          </Card>
-        </Link>
       </div>
     </div>
   );

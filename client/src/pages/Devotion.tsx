@@ -106,7 +106,7 @@ export default function Devotion() {
     });
   };
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -115,13 +115,13 @@ export default function Devotion() {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div className="px-4 py-6">
+      <div className="px-5 py-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
               {t("dailyDevotion")}
             </h1>
-            <p className="text-muted-foreground text-sm">{today}</p>
+            <p className="text-muted-foreground text-sm capitalize">{today}</p>
           </div>
           {pushSupported && (
             <Button
@@ -142,67 +142,69 @@ export default function Devotion() {
         </div>
       </div>
 
-      <div className="flex-1 px-4 space-y-6">
-        <Card className="border-none shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 text-primary" />
+      <div className="flex-1 px-5 space-y-6">
+        <Card className="shadow-md overflow-hidden">
+          <CardContent className="p-0">
+            <div className="bg-primary/5 dark:bg-primary/10 px-6 py-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#EAB308]/20 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-[#EAB308]" />
+                  </div>
+                  <span className="text-xs font-semibold text-primary uppercase tracking-widest">
+                    {t("todaysVerse")}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                  {t("todaysVerse")}
-                </span>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={handleShare}
+                    data-testid="button-share"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={handleSave}
+                    data-testid="button-save"
+                  >
+                    <Bookmark className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={handleShare}
-                  data-testid="button-share"
-                >
-                  <Share2 className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={handleSave}
-                  data-testid="button-save"
-                >
-                  <Bookmark className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
 
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-5/6" />
-                <Skeleton className="h-6 w-4/6" />
-                <Skeleton className="h-4 w-1/3 mt-4" />
-              </div>
-            ) : verse ? (
-              <>
-                <blockquote className="font-serif text-xl md:text-2xl text-foreground leading-relaxed italic text-center mb-4">
-                  "{verse.verse}"
-                </blockquote>
-                <p 
-                  className="text-center text-primary font-semibold"
-                  data-testid="text-verse-reference"
-                >
-                  — {verse.reference}
+              {isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-5/6" />
+                  <Skeleton className="h-6 w-4/6" />
+                  <Skeleton className="h-4 w-1/3 mt-4" />
+                </div>
+              ) : verse ? (
+                <>
+                  <blockquote className="font-serif text-xl text-foreground leading-relaxed italic text-center mb-4">
+                    &laquo; {verse.verse} &raquo;
+                  </blockquote>
+                  <p 
+                    className="text-center text-[#EAB308] dark:text-[#EAB308] font-semibold"
+                    data-testid="text-verse-reference"
+                  >
+                    — {verse.reference}
+                  </p>
+                </>
+              ) : (
+                <p className="font-serif text-xl text-center italic text-foreground">
+                  &laquo; The Lord is my shepherd; I shall not want. &raquo;
                 </p>
-              </>
-            ) : (
-              <p className="font-serif text-xl text-center italic text-foreground">
-                "The Lord is my shepherd; I shall not want."
-              </p>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-          <h2 className="font-serif font-semibold text-lg text-foreground">
+          <h2 className="font-serif font-semibold text-xl text-foreground">
             {t("todaysDevotional")}
           </h2>
           
@@ -216,7 +218,7 @@ export default function Devotion() {
             </div>
           ) : verse ? (
             <p 
-              className="text-muted-foreground leading-relaxed"
+              className="text-muted-foreground leading-relaxed text-base"
               data-testid="text-devotional"
             >
               {verse.devotional}
@@ -231,7 +233,7 @@ export default function Devotion() {
         <Separator />
 
         <div className="space-y-4">
-          <h2 className="font-serif font-semibold text-lg text-foreground">
+          <h2 className="font-serif font-semibold text-xl text-foreground">
             {t("prayerInspired")}
           </h2>
           
@@ -242,7 +244,7 @@ export default function Devotion() {
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : verse ? (
-            <Card className="bg-muted/50">
+            <Card className="bg-primary/5 dark:bg-primary/10 shadow-sm">
               <CardContent className="p-5">
                 <p 
                   className="text-foreground leading-relaxed italic"
@@ -250,18 +252,18 @@ export default function Devotion() {
                 >
                   {verse.prayer}
                 </p>
-                <p className="text-right font-semibold text-primary mt-4">
+                <p className="text-right font-serif font-semibold text-[#EAB308] dark:text-[#EAB308] mt-4">
                   {t("amen")}
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-muted/50">
+            <Card className="bg-primary/5 dark:bg-primary/10 shadow-sm">
               <CardContent className="p-5">
                 <p className="text-foreground leading-relaxed italic">
                   Lord, thank You for being my Shepherd. Help me to trust in Your provision.
                 </p>
-                <p className="text-right font-semibold text-primary mt-4">
+                <p className="text-right font-serif font-semibold text-[#EAB308] dark:text-[#EAB308] mt-4">
                   {t("amen")}
                 </p>
               </CardContent>
@@ -271,8 +273,8 @@ export default function Devotion() {
 
         <Separator />
 
-        <div className="space-y-3">
-          <h2 className="font-serif font-semibold text-lg text-foreground">
+        <div className="space-y-3 pb-4">
+          <h2 className="font-serif font-semibold text-xl text-foreground">
             {t("shareThisDevotion")}
           </h2>
           <div className="flex gap-3 flex-wrap">
@@ -306,7 +308,7 @@ export default function Devotion() {
             </Button>
           </div>
           {shareData && (
-            <Card className="bg-muted/30">
+            <Card className="bg-muted/30 shadow-sm">
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-2">{t("copyShareMessage")}:</p>
                 <p className="text-sm text-foreground whitespace-pre-line" data-testid="text-share-caption">

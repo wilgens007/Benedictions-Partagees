@@ -1,4 +1,4 @@
-import { Play, Pause, SkipBack, SkipForward, ChevronUp, X } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -23,14 +23,13 @@ export function MiniPlayer() {
     next,
     prev,
     seek,
-    pause,
   } = useAudioPlayer();
 
   if (!currentTrack) return null;
 
   return (
     <div
-      className="fixed left-0 right-0 z-40 bg-card border-t border-card-border shadow-lg"
+      className="fixed left-0 right-0 z-40 bg-[#1E3A8A] dark:bg-[#0F1D45] shadow-lg"
       style={{ bottom: "64px" }}
       data-testid="mini-player"
     >
@@ -48,7 +47,7 @@ export function MiniPlayer() {
         <div className="flex items-center gap-3 px-3 py-2">
           <Link href="/music">
             <div
-              className="w-10 h-10 rounded-md bg-cover bg-center flex-shrink-0 cursor-pointer"
+              className="w-10 h-10 rounded-md bg-cover bg-center flex-shrink-0 cursor-pointer shadow-sm"
               style={{
                 backgroundImage: `url(${currentTrack.albumArt})`,
                 backgroundColor: "hsl(var(--muted))",
@@ -60,12 +59,12 @@ export function MiniPlayer() {
           <Link href="/music" className="flex-1 min-w-0">
             <div className="cursor-pointer">
               <p
-                className="text-sm font-medium text-foreground truncate"
+                className="text-sm font-medium text-white truncate"
                 data-testid="mini-player-title"
               >
                 {currentTrack.title}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-xs text-white/60 truncate">
                 {currentTrack.artist} &middot; {formatTime(currentTime)} / {formatTime(duration)}
               </p>
             </div>
@@ -77,6 +76,7 @@ export function MiniPlayer() {
               size="icon"
               onClick={prev}
               disabled={currentTrackIndex === 0}
+              className="text-white/80 no-default-hover-elevate no-default-active-elevate disabled:text-white/30"
               data-testid="mini-player-prev"
             >
               <SkipBack className="w-4 h-4" />
@@ -86,6 +86,7 @@ export function MiniPlayer() {
               variant="ghost"
               size="icon"
               onClick={toggle}
+              className="text-white no-default-hover-elevate no-default-active-elevate"
               data-testid="mini-player-toggle"
             >
               {isPlaying ? (
@@ -100,6 +101,7 @@ export function MiniPlayer() {
               size="icon"
               onClick={next}
               disabled={currentTrackIndex >= playlist.length - 1}
+              className="text-white/80 no-default-hover-elevate no-default-active-elevate disabled:text-white/30"
               data-testid="mini-player-next"
             >
               <SkipForward className="w-4 h-4" />

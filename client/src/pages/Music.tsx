@@ -55,8 +55,8 @@ export default function Music() {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div className="px-4 py-6">
-        <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
+      <div className="px-5 py-6">
+        <h1 className="font-serif text-2xl font-bold text-foreground mb-1" data-testid="text-page-title">
           {t("musicWorship")}
         </h1>
         <p className="text-muted-foreground text-sm">
@@ -64,10 +64,10 @@ export default function Music() {
         </p>
       </div>
 
-      <div className="px-4 mb-6">
-        <Card className="overflow-hidden">
+      <div className="px-5 mb-6">
+        <Card className="shadow-md overflow-visible">
           <CardContent className="p-0">
-            <div className="aspect-square max-w-[280px] mx-auto mt-6 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <div className="relative mx-auto mt-6 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5" style={{ maxWidth: "280px", aspectRatio: "1" }}>
               {isLoading ? (
                 <Skeleton className="w-full h-full" />
               ) : displayTrack ? (
@@ -79,18 +79,20 @@ export default function Music() {
                   }}
                 />
               ) : (
-                <div className="text-center p-8">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Volume2 className="w-10 h-10 text-primary/50" />
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Volume2 className="w-10 h-10 text-primary/50" />
+                    </div>
+                    <p className="text-muted-foreground">{t("noResults")}</p>
                   </div>
-                  <p className="text-muted-foreground">{t("noResults")}</p>
                 </div>
               )}
             </div>
 
             {displayTrack && (
-              <div className="text-center px-4 mb-4">
-                <h3 className="font-semibold text-lg text-foreground" data-testid="text-current-track">
+              <div className="text-center px-5 mb-4">
+                <h3 className="font-serif font-semibold text-lg text-foreground" data-testid="text-current-track">
                   {displayTrack.title}
                 </h3>
                 <p className="text-muted-foreground text-sm">
@@ -115,7 +117,7 @@ export default function Music() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-4 pb-6">
+            <div className="flex items-center justify-center gap-6 pb-6">
               <Button
                 variant="ghost"
                 size="icon"
@@ -123,12 +125,11 @@ export default function Music() {
                 disabled={currentTrackIndex === 0}
                 data-testid="button-previous"
               >
-                <SkipBack className="w-5 h-5" />
+                <SkipBack className="w-6 h-6" />
               </Button>
 
-              <Button
-                size="lg"
-                className="w-16 h-16 rounded-full"
+              <button
+                className="w-16 h-16 rounded-full bg-[#1E3A8A] dark:bg-primary text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
                 onClick={() => {
                   if (!currentTrack && tracks && tracks.length > 0) {
                     handlePlayTrack(0);
@@ -139,11 +140,11 @@ export default function Music() {
                 data-testid="button-play-pause"
               >
                 {isPlaying ? (
-                  <Pause className="w-6 h-6" />
+                  <Pause className="w-7 h-7" />
                 ) : (
-                  <Play className="w-6 h-6 ml-1" />
+                  <Play className="w-7 h-7 ml-1" />
                 )}
-              </Button>
+              </button>
 
               <Button
                 variant="ghost"
@@ -152,11 +153,11 @@ export default function Music() {
                 disabled={!tracks || currentTrackIndex >= tracks.length - 1}
                 data-testid="button-next"
               >
-                <SkipForward className="w-5 h-5" />
+                <SkipForward className="w-6 h-6" />
               </Button>
             </div>
 
-            <div className="px-6 pb-4 flex items-center gap-3">
+            <div className="px-6 pb-5 flex items-center gap-3">
               <Volume2 className="w-4 h-4 text-muted-foreground" />
               <Slider
                 value={[volume]}
@@ -172,8 +173,8 @@ export default function Music() {
         </Card>
       </div>
 
-      <div className="flex-1 px-4">
-        <h2 className="font-serif font-semibold text-lg text-foreground mb-3">
+      <div className="flex-1 px-5">
+        <h2 className="font-serif font-semibold text-xl text-foreground mb-3">
           {t("nowPlaying")}
         </h2>
 
@@ -204,7 +205,7 @@ export default function Music() {
                   data-testid={`track-${track.id}`}
                 >
                   <div
-                    className="w-12 h-12 rounded-md bg-cover bg-center flex-shrink-0"
+                    className="w-12 h-12 rounded-md bg-cover bg-center flex-shrink-0 shadow-sm"
                     style={{
                       backgroundImage: `url(${track.albumArt})`,
                       backgroundColor: "hsl(var(--muted))",

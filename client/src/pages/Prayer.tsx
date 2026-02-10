@@ -69,7 +69,7 @@ export default function Prayer() {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div className="px-4 py-6">
+      <div className="px-5 py-6">
         <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
           {t("prayerRequest")}
         </h1>
@@ -78,12 +78,12 @@ export default function Prayer() {
         </p>
       </div>
 
-      <div className="flex-1 px-4">
-        <Card className="border-none shadow-lg">
+      <div className="flex-1 px-5">
+        <Card className="shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <HandHeart className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-full bg-[#EAB308]/10 flex items-center justify-center">
+                <HandHeart className="w-6 h-6 text-[#EAB308]" />
               </div>
               <div>
                 <h2 className="font-serif font-semibold text-lg text-foreground">
@@ -96,7 +96,7 @@ export default function Prayer() {
             </div>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                 <FormField
                   control={form.control}
                   name="name"
@@ -176,12 +176,12 @@ export default function Prayer() {
           </CardContent>
         </Card>
 
-        <div className="mt-8 text-center px-4">
+        <div className="mt-8 text-center px-4 pb-4">
           <p className="text-sm text-muted-foreground italic leading-relaxed">
-            "Do not be anxious about anything, but in every situation, by prayer and petition, 
-            with thanksgiving, present your requests to God."
+            &laquo; Do not be anxious about anything, but in every situation, by prayer and petition, 
+            with thanksgiving, present your requests to God. &raquo;
           </p>
-          <p className="text-sm text-primary font-medium mt-2">
+          <p className="text-sm text-[#EAB308] dark:text-[#EAB308] font-serif font-medium mt-2">
             — Philippians 4:6
           </p>
         </div>

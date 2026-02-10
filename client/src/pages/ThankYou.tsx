@@ -8,11 +8,11 @@ export default function ThankYou() {
   const { t } = useLanguage();
 
   return (
-    <div className="flex flex-col min-h-full pb-20 items-center justify-center px-4">
-      <Card className="max-w-md w-full">
+    <div className="flex flex-col min-h-full pb-20 items-center justify-center px-5">
+      <Card className="max-w-md w-full shadow-md">
         <CardContent className="p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto">
-            <Heart className="w-8 h-8 text-rose-500" />
+          <div className="w-16 h-16 rounded-full bg-[#EAB308]/10 flex items-center justify-center mx-auto">
+            <Heart className="w-8 h-8 text-[#EAB308]" />
           </div>
 
           <div className="space-y-2">

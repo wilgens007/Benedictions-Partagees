@@ -12,25 +12,27 @@ import type { Language } from "@shared/schema";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
 const languages: { code: Language; name: string; flag: string }[] = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "fr", name: "Français", flag: "🇫🇷" },
-  { code: "ht", name: "Kreyòl Ayisyen", flag: "🇭🇹" },
+  { code: "en", name: "English", flag: "EN" },
+  { code: "fr", name: "Français", flag: "FR" },
+  { code: "ht", name: "Kreyòl Ayisyen", flag: "HT" },
 ];
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
 
+  const currentLang = languages.find(l => l.code === language);
+
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+    <header className="sticky top-0 z-40 bg-[#1E3A8A] dark:bg-[#0F1D45]">
       <div className="flex items-center justify-between gap-4 px-4 h-14 max-w-lg mx-auto">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <img 
             src={logoImage} 
             alt="Bénédictions Partagées" 
             className="w-8 h-8 rounded-full object-cover"
           />
-          <span className="font-serif font-semibold text-sm text-foreground hidden min-[360px]:block">
+          <span className="font-serif font-semibold text-base text-white tracking-wide hidden min-[360px]:block">
             {t("appName")}
           </span>
         </div>
@@ -40,10 +42,12 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                size="icon"
+                size="sm"
+                className="text-white/90 no-default-hover-elevate no-default-active-elevate"
                 data-testid="button-language"
               >
-                <Globe className="w-4 h-4" />
+                <Globe className="w-4 h-4 mr-1" />
+                <span className="text-xs font-medium">{currentLang?.flag}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -51,10 +55,10 @@ export function Header() {
                 <DropdownMenuItem
                   key={lang.code}
                   onClick={() => setLanguage(lang.code)}
-                  className={language === lang.code ? "bg-accent" : ""}
+                  className={language === lang.code ? "bg-primary/10 text-primary font-medium" : ""}
                   data-testid={`language-${lang.code}`}
                 >
-                  <span className="mr-2 text-base">{lang.flag}</span>
+                  <span className="mr-2 text-xs font-bold text-muted-foreground">{lang.flag}</span>
                   {lang.name}
                 </DropdownMenuItem>
               ))}
@@ -65,6 +69,7 @@ export function Header() {
             variant="ghost" 
             size="icon"
             onClick={toggleTheme}
+            className="text-white/90 no-default-hover-elevate no-default-active-elevate"
             data-testid="button-theme-toggle"
           >
             {theme === "light" ? (

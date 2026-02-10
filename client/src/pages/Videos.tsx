@@ -33,7 +33,7 @@ export default function Videos() {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div className="px-4 py-6">
+      <div className="px-5 py-6">
         <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
           {t("videoTeachings")}
         </h1>
@@ -42,7 +42,7 @@ export default function Videos() {
         </p>
       </div>
 
-      <div className="px-4 mb-4">
+      <div className="px-5 mb-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-2 pb-2">
             {categories.map((cat) => (
@@ -62,7 +62,7 @@ export default function Videos() {
         </ScrollArea>
       </div>
 
-      <div className="flex-1 px-4">
+      <div className="flex-1 px-5">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -78,7 +78,7 @@ export default function Videos() {
             {filteredVideos.map((video) => (
               <Card 
                 key={video.id}
-                className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer"
+                className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer shadow-sm"
                 onClick={() => setSelectedVideo(video)}
                 data-testid={`video-${video.id}`}
               >
@@ -123,7 +123,7 @@ export default function Videos() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
+                className="absolute top-2 right-2 z-10 bg-black/50 text-white no-default-hover-elevate no-default-active-elevate"
                 onClick={() => setSelectedVideo(null)}
                 data-testid="button-close-video"
               >

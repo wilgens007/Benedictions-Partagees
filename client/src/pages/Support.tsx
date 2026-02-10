@@ -55,19 +55,14 @@ export default function Support() {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div className="px-4 py-6">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center">
-            <Heart className="w-5 h-5 text-rose-500" />
-          </div>
-          <h1 className="font-serif text-2xl font-bold text-foreground">
-            {t("supportMinistry")}
-          </h1>
-        </div>
+      <div className="px-5 py-6">
+        <h1 className="font-serif text-2xl font-bold text-foreground">
+          {t("supportMinistry")}
+        </h1>
       </div>
 
-      <div className="flex-1 px-4 space-y-6">
-        <Card>
+      <div className="flex-1 px-5 space-y-6">
+        <Card className="shadow-md">
           <CardContent className="p-6">
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t("supportMission")}
@@ -80,7 +75,7 @@ export default function Support() {
 
         {hasStripeLinks ? (
           <div className="space-y-4">
-            <h2 className="font-serif font-semibold text-lg text-foreground">
+            <h2 className="font-serif font-semibold text-xl text-foreground">
               {t("makeADonation")}
             </h2>
             <div className="grid grid-cols-2 gap-3">
@@ -138,9 +133,11 @@ export default function Support() {
             )}
           </div>
         ) : (
-          <Card>
+          <Card className="shadow-md">
             <CardContent className="p-6 text-center">
-              <Heart className="w-12 h-12 mx-auto mb-4 text-rose-400" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#EAB308]/10 flex items-center justify-center">
+                <Heart className="w-8 h-8 text-[#EAB308]" />
+              </div>
               <h2 className="font-serif font-semibold text-lg text-foreground mb-2">
                 {t("donationsComingSoon")}
               </h2>
@@ -155,11 +152,11 @@ export default function Support() {
           <>
             <Separator />
             <div className="space-y-3">
-              <h2 className="font-serif font-semibold text-lg text-foreground">
+              <h2 className="font-serif font-semibold text-xl text-foreground">
                 {t("otherWaysToGive")}
               </h2>
               {cashAppHandle && (
-                <Card>
+                <Card className="shadow-sm">
                   <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <p className="font-medium text-foreground">Cash App</p>
@@ -178,7 +175,7 @@ export default function Support() {
                 </Card>
               )}
               {paypalHandle && (
-                <Card>
+                <Card className="shadow-sm">
                   <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <p className="font-medium text-foreground">PayPal</p>
@@ -197,7 +194,7 @@ export default function Support() {
                 </Card>
               )}
               {zelleHandle && (
-                <Card>
+                <Card className="shadow-sm">
                   <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <p className="font-medium text-foreground">Zelle</p>
@@ -212,14 +209,14 @@ export default function Support() {
 
         <Separator />
 
-        <Card className="bg-muted/30">
+        <Card className="bg-muted/30 shadow-sm">
           <CardContent className="p-5 text-center">
             <p className="text-sm text-muted-foreground mb-2">
               {t("questionsAboutDonations")}
             </p>
             <a 
               href={`mailto:${contactEmail}`}
-              className="text-sm text-primary font-medium hover:underline"
+              className="text-sm text-primary font-medium"
               data-testid="link-contact-email"
             >
               {contactEmail}
