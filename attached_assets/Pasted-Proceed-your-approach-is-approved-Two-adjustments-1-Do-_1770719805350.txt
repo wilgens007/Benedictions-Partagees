@@ -1,0 +1,41 @@
+Proceed — your approach is approved. Two adjustments:
+
+1) Do NOT block development on Stripe “Connect Stripe”.
+Build Feature 3 in two stages so we can launch now:
+
+Stage 1 (ship immediately, no Stripe keys required):
+- Create /support page + navbar/footer link.
+- Add mission statement + suggested amounts ($5/$10/$25/$50/custom).
+- Implement donation buttons using Stripe Payment Links (URLs) OR a clean placeholder module that I can later connect.
+- If Payment Links are used, I will paste the links in an admin/config area (DB or config file) and the page will render them.
+- Add /support/thank-you page (static) after donation (for Payment Links we can link redirect to this page).
+
+Stage 2 (after Stripe connection is available):
+- Upgrade to Stripe Checkout sessions + recurring monthly + optional webhook verification.
+- Use env vars only (STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET), no keys in repo.
+
+2) Security update:
+Because the CRON secret value has now been shared, please rotate it.
+- Update server expected X-CRON-SECRET to a new value.
+- Update GitHub Actions secret CRON_SECRET to match.
+(Provide the exact steps/locations where you updated it.)
+
+Everything else is approved as you described:
+Feature 1 — Push:
+- VAPID keys via env vars
+- push_subscriptions table + cleanup on 404/410
+- /sw.js
+- enable/disable UI
+- trigger push ONLY when /api/devotion/generate returns status=created
+
+Feature 2 — Sharing:
+- WhatsApp wa.me link using today’s verse + link
+- Facebook share dialog button (user-assisted)
+- Optional FB Page auto-post only if I provide tokens (env vars)
+- Add Open Graph meta tags for better previews + generate an HTML-based share card (stored/served) and use it for OG image.
+
+Deliverables I want:
+- PR/commit summary
+- List of env vars needed (VAPID_*, optional STRIPE_*, optional FACEBOOK_*)
+- Testing checklist for each feature (Android/desktop + iOS PWA note)
+- Confirm push + share triggers run ONLY when status=created (idempotent)

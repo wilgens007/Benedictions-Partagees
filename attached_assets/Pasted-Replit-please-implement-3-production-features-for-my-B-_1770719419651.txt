@@ -1,0 +1,127 @@
+Replit — please implement 3 production features for my “Bénédictions Partagées” app (https://benedictionspartagees.org/devotion). Use our existing daily_content + idempotent generation system (POST /api/devotion/generate with X-CRON-SECRET + DB unique dayKey + GitHub Actions scheduler).
+
+FEATURE 1 — Daily Push Notifications (Web Push / PWA)
+Goal:
+- Users can opt-in to daily notifications.
+- When today’s devotion is CREATED (not “exists”), send ONE push notification to all subscribers.
+- Must be reliable, DST-aware (America/New_York), and safe across restarts.
+
+Requirements:
+1) Install web-push and use VAPID keys via env vars:
+   - VAPID_PUBLIC_KEY
+   - VAPID_PRIVATE_KEY
+   - VAPID_SUBJECT (mailto: contact@benedictionspartagees.org)
+2) Create DB table push_subscriptions:
+   - id
+   - endpoint UNIQUE
+   - p256dh
+   - auth
+   - language (optional)
+   - createdAt
+   - auto-delete subscriptions that return 404/410 on send
+3) Add Service Worker at /sw.js (must be root-scoped) to receive push and show notification.
+4) Add UI on /devotion (or settings):
+   - Button: “Enable Daily Notifications”
+   - Optional: “Disable Notifications”
+   - iOS note: push works only when installed as PWA (“Add to Home Screen”)
+5) Add API routes:
+   - GET /api/push/vapid-public-key -> { publicKey }
+   - POST /api/push/subscribe -> save subscription
+   - POST /api/push/unsubscribe (optional)
+   - POST /api/push/send-today (internal, protected by X-CRON-SECRET)
+6) Trigger sending:
+   - In POST /api/devotion/generate: if status=created, call send-today once.
+7) Default notification payload:
+   - title: “BP — Devotion du jour”
+   - body: “Le verset et la méditation d’aujourd’hui sont prêts. Touchez pour lire 🙏”
+   - url: “/devotion”
+8) Logging:
+   - subscribe/unsubscribe counts
+   - send success/fail counts
+   - verbose errors (no silent fails)
+
+FEATURE 2 — Auto-share devotion to Facebook + WhatsApp
+Goal:
+- Each day when content is CREATED, generate a share-ready post and make it easy to publish.
+- Must not violate platform rules; no hardcoding of personal tokens in repo.
+
+Deliverables:
+A) Share assets generated daily (from DB content):
+- A “Share Card” image (1080x1080) with:
+  - Title: “Bénédictions Partagées”
+  - Date
+  - Verse reference (short text)
+  - Short encouragement line
+  - URL: benedictionspartagees.org/devotion
+- Store the image URL (or path) and a short caption in DB: daily_content.share_caption, daily_content.share_image_url.
+
+B) WhatsApp sharing (automatic user flow):
+- Add a “Share to WhatsApp” button on /devotion:
+  - Uses wa.me link with encoded message including today’s verse + short devotion teaser + link.
+  - Example message:
+    “BP — Devotion du jour (YYYY-MM-DD) 🙏
+     [Verse Ref] — [Short verse excerpt]
+     Lire: https://benedictionspartagees.org/devotion”
+
+C) Facebook sharing (two modes — implement both)
+1) One-click share (user-assisted):
+- Add a “Share to Facebook” button that opens Facebook share dialog with:
+  - URL: https://benedictionspartagees.org/devotion
+  - Pre-filled recommended caption shown on our page for copy/paste.
+
+2) Optional auto-post to a Facebook Page (only if I provide Page access + token):
+- Create an admin settings page to store Page ID and a long-lived Page access token as encrypted env vars:
+  - FACEBOOK_PAGE_ID
+  - FACEBOOK_PAGE_ACCESS_TOKEN
+- Implement POST /api/social/facebook/post-today (protected by X-CRON-SECRET):
+  - Posts the share_caption + share_image_url (if supported) or link + message to the Page.
+- If tokens aren’t provided, feature should gracefully disable auto-post and only show user-assisted sharing.
+
+Important:
+- Do not require my personal Facebook login.
+- Do not commit tokens. Use environment variables only.
+- Log Facebook API response (success/failure) safely.
+
+FEATURE 3 — Donation / Supporter Section
+Goal:
+- Add a Support page and a donation section to sustain the ministry.
+- Must be simple, mobile-friendly, and trustworthy.
+
+Requirements:
+1) Add “Support” link in navbar/footer.
+2) Create /support page with:
+- Short mission statement about sustaining daily devotions
+- Donation options:
+  A) Stripe donation (preferred)
+     - Stripe Payment Link OR Stripe Checkout session
+     - Suggested amounts: $5, $10, $25, $50, Custom
+     - One-time + recurring monthly option (if easy)
+     - After success: thank-you page with receipt note
+     Env vars:
+       STRIPE_SECRET_KEY
+       STRIPE_WEBHOOK_SECRET (if webhooks used)
+  B) Optional: Cash App / Zelle / PayPal (only if I provide handles) — otherwise hide.
+3) Add “Become a Supporter” badge:
+- If recurring donation is enabled, show “Supporter” thank-you message after redirect (simple, no login required).
+4) Add admin-editable section (simple config file or DB table):
+- Support page text, donation links, and contact email should be editable without code changes.
+
+QUALITY / ACCEPTANCE CRITERIA
+- Everything must work with our idempotent daily generation:
+  - Push sends only on created
+  - Share assets generated only on created
+  - Auto-post (if enabled) runs only on created
+- Must be secure:
+  - All secrets in env vars
+  - Protected internal endpoints use X-CRON-SECRET
+- Provide clear steps for me to configure:
+  - how to set VAPID keys
+  - how to set Stripe keys / payment links
+  - (optional) how to set Facebook page token
+- Provide a short testing checklist + list of files changed.
+
+Please implement these features end-to-end and send me:
+1) The PR/commit summary
+2) Setup steps (env vars + where to click)
+3) How to test each feature
+4) Screenshots or a short walkthrough of the UI locations

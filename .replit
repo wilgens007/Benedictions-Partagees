@@ -44,4 +44,4 @@ integrations = ["resend:1.0.0"]
 [userenv]
 
 [userenv.shared]
-CRON_SECRET = "bp-cron-secret-2026-autogen"
+CRON_SECRET = "bp-cron-cb6eacb8069e2259c854ecbeb011c62a"
