@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { Music, Video, BookOpen, HandHeart, ChevronRight, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Music, Video, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import type { DailyVerse, Encouragement } from "@shared/schema";
+import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
 const quickLinks = [
@@ -17,6 +20,38 @@ const quickLinks = [
 
 export default function Home() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const pushSupported = isPushSupported();
+
+  useEffect(() => {
+    isPushSubscribed().then(setPushEnabled);
+  }, []);
+
+  const handleTogglePush = async () => {
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        const success = await unsubscribeFromPush();
+        if (success) {
+          setPushEnabled(false);
+          toast({ title: t("notificationsDisabled") });
+        }
+      } else {
+        const success = await subscribeToPush(language);
+        if (success) {
+          setPushEnabled(true);
+          toast({ title: t("notificationsEnabled") });
+        } else {
+          toast({ title: t("notificationsDenied"), variant: "destructive" });
+        }
+      }
+    } catch {
+      toast({ title: t("error"), variant: "destructive" });
+    }
+    setPushLoading(false);
+  };
 
   const { data: verse, isLoading: verseLoading } = useQuery<DailyVerse>({
     queryKey: ["/api/daily-verse", language],
@@ -61,12 +96,28 @@ export default function Home() {
               alt="Bénédictions Partagées"
               className="w-14 h-14 rounded-full object-cover border-2 border-[#EAB308]/40 shadow-lg"
             />
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="font-serif text-2xl font-bold text-white leading-tight" data-testid="text-greeting">
                 {t("blessedDay")}
               </h1>
               <p className="text-white/70 text-sm capitalize">{today}</p>
             </div>
+            {pushSupported && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleTogglePush}
+                disabled={pushLoading}
+                className="text-white/80 hover:text-white border border-white/20 rounded-full flex-shrink-0"
+                data-testid="button-home-toggle-notifications"
+              >
+                {pushEnabled ? (
+                  <BellOff className="w-5 h-5" />
+                ) : (
+                  <Bell className="w-5 h-5" />
+                )}
+              </Button>
+            )}
           </div>
           <p className="text-white/80 text-base leading-relaxed" data-testid="text-blessed-greeting">
             {t("blessedGreeting")}
