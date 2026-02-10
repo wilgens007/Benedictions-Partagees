@@ -51,6 +51,10 @@ export default function Devotion() {
   });
 
   const handleTogglePush = async () => {
+    if (!pushSupported) {
+      toast({ title: t("notificationsNotSupported"), duration: 6000 });
+      return;
+    }
     setPushLoading(true);
     try {
       if (pushEnabled) {
@@ -127,22 +131,20 @@ export default function Devotion() {
             </h1>
             <p className="text-muted-foreground text-sm capitalize">{today}</p>
           </div>
-          {pushSupported && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTogglePush}
-              disabled={pushLoading}
-              data-testid="button-toggle-notifications"
-            >
-              {pushEnabled ? (
-                <BellOff className="w-4 h-4 mr-2" />
-              ) : (
-                <Bell className="w-4 h-4 mr-2" />
-              )}
-              {pushEnabled ? t("disableNotifications") : t("enableNotifications")}
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTogglePush}
+            disabled={pushLoading}
+            data-testid="button-toggle-notifications"
+          >
+            {pushEnabled ? (
+              <BellOff className="w-4 h-4 mr-2" />
+            ) : (
+              <Bell className="w-4 h-4 mr-2" />
+            )}
+            {pushEnabled ? t("disableNotifications") : t("enableNotifications")}
+          </Button>
         </div>
       </div>
 

@@ -30,6 +30,10 @@ export default function Home() {
   }, []);
 
   const handleTogglePush = async () => {
+    if (!pushSupported) {
+      toast({ title: t("notificationsNotSupported"), duration: 6000 });
+      return;
+    }
     setPushLoading(true);
     try {
       if (pushEnabled) {
@@ -102,22 +106,20 @@ export default function Home() {
               </h1>
               <p className="text-white/70 text-sm capitalize">{today}</p>
             </div>
-            {pushSupported && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleTogglePush}
-                disabled={pushLoading}
-                className="text-white/80 hover:text-white border border-white/20 rounded-full flex-shrink-0"
-                data-testid="button-home-toggle-notifications"
-              >
-                {pushEnabled ? (
-                  <BellOff className="w-5 h-5" />
-                ) : (
-                  <Bell className="w-5 h-5" />
-                )}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleTogglePush}
+              disabled={pushLoading}
+              className="text-white/80 hover:text-white border border-white/20 rounded-full flex-shrink-0"
+              data-testid="button-home-toggle-notifications"
+            >
+              {pushEnabled ? (
+                <BellOff className="w-5 h-5" />
+              ) : (
+                <Bell className="w-5 h-5" />
+              )}
+            </Button>
           </div>
           <p className="text-white/80 text-base leading-relaxed" data-testid="text-blessed-greeting">
             {t("blessedGreeting")}
