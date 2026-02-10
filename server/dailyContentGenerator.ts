@@ -9,13 +9,13 @@ import { sendPushToAll } from "./pushService";
 const LANGUAGES: Language[] = ["en", "fr", "ht"];
 
 export function getTodayKeyET(): string {
-  const now = new Date();
-  const etStr = now.toLocaleString("en-US", { timeZone: "America/New_York" });
-  const etDate = new Date(etStr);
-  const year = etDate.getFullYear();
-  const month = String(etDate.getMonth() + 1).padStart(2, "0");
-  const day = String(etDate.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
 }
 
 function getDayIndex(dayKey: string): number {

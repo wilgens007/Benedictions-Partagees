@@ -25,6 +25,8 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch daily verse");
       return res.json();
     },
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
   });
 
   const { data: encouragement, isLoading: encouragementLoading } = useQuery<Encouragement>({
@@ -34,6 +36,8 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch encouragement");
       return res.json();
     },
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
   });
 
   const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {
