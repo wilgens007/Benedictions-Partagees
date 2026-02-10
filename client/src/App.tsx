@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { LanguageProvider } from "@/lib/LanguageContext";
+import { AudioPlayerProvider } from "@/lib/AudioPlayerContext";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { MiniPlayer } from "@/components/MiniPlayer";
 import Home from "@/pages/Home";
 import Music from "@/pages/Music";
 import Videos from "@/pages/Videos";
@@ -36,16 +38,19 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <LanguageProvider>
-          <TooltipProvider>
-            <div className="min-h-screen bg-background flex flex-col">
-              <Header />
-              <main className="flex-1 max-w-lg mx-auto w-full">
-                <Router />
-              </main>
-              <BottomNav />
-            </div>
-            <Toaster />
-          </TooltipProvider>
+          <AudioPlayerProvider>
+            <TooltipProvider>
+              <div className="min-h-screen bg-background flex flex-col">
+                <Header />
+                <main className="flex-1 max-w-lg mx-auto w-full">
+                  <Router />
+                </main>
+                <MiniPlayer />
+                <BottomNav />
+              </div>
+              <Toaster />
+            </TooltipProvider>
+          </AudioPlayerProvider>
         </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>

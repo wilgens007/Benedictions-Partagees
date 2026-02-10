@@ -64,9 +64,17 @@ Preferred communication style: Simple, everyday language.
 - **DB Table**: `support_config` — key-value store for Stripe links, CashApp, PayPal, Zelle handles
 - **Stage 2 (pending)**: Stripe payment link integration when user provides links
 
+### Global Audio Player
+- **Context**: `client/src/lib/AudioPlayerContext.tsx` — persistent Audio() instance that survives route changes
+- **State**: currentTrack, playlist, isPlaying, currentTime, duration, volume — all managed globally
+- **Actions**: playTrack, play, pause, toggle, seek, setVolume, next, prev, setPlaylist
+- **Media Session API**: Lock screen controls for Android/Chrome (play, pause, next, prev, seekto)
+- **MiniPlayer**: `client/src/components/MiniPlayer.tsx` — fixed mini-player above bottom nav with progress bar, track info, and controls
+- **Design**: Audio() created programmatically (not DOM element) to guarantee persistence independent of React rendering
+
 ### Application Features
 - **Home**: Daily verse display with encouragement messages
-- **Music**: Audio player with track listing and playback controls
+- **Music**: Full audio player with track listing, playback controls, volume — uses global AudioPlayerContext
 - **Videos**: Categorized video content with modal playback
 - **Devotion**: Daily devotional with scripture, reflection, prayer, push notification toggle, and social sharing (WhatsApp/Facebook)
 - **Prayer**: Prayer request submission form

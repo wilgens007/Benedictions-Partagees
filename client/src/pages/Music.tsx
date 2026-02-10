@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,137 +7,51 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useAudioPlayer } from "@/lib/AudioPlayerContext";
 import type { MusicTrack } from "@shared/schema";
+
+function formatTime(seconds: number) {
+  if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
 
 export default function Music() {
   const { t } = useLanguage();
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(80);
+  const {
+    currentTrack,
+    currentTrackIndex,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    playTrack,
+    toggle,
+    seek,
+    setVolume,
+    next,
+    prev,
+    setPlaylist,
+    playlist,
+  } = useAudioPlayer();
 
   const { data: tracks, isLoading } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music"],
   });
 
-  const currentTrack = tracks?.[currentTrackIndex];
-
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+    if (tracks && tracks.length > 0 && playlist.length === 0) {
+      setPlaylist(tracks, 0);
     }
-  }, [volume]);
+  }, [tracks, playlist.length, setPlaylist]);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !currentTrack) return;
-
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
-        artist: currentTrack.artist,
-        album: "Bénédictions Partagées Music",
-        artwork: [
-          { src: currentTrack.albumArt, sizes: "96x96", type: "image/jpeg" },
-          { src: currentTrack.albumArt, sizes: "128x128", type: "image/jpeg" },
-          { src: currentTrack.albumArt, sizes: "192x192", type: "image/jpeg" },
-          { src: currentTrack.albumArt, sizes: "256x256", type: "image/jpeg" },
-          { src: currentTrack.albumArt, sizes: "384x384", type: "image/jpeg" },
-          { src: currentTrack.albumArt, sizes: "512x512", type: "image/jpeg" },
-        ],
-      });
-
-      navigator.mediaSession.setActionHandler("play", () => {
-        audio.play();
-        setIsPlaying(true);
-      });
-      navigator.mediaSession.setActionHandler("pause", () => {
-        audio.pause();
-        setIsPlaying(false);
-      });
-      navigator.mediaSession.setActionHandler("previoustrack", () => {
-        skipPrevious();
-      });
-      navigator.mediaSession.setActionHandler("nexttrack", () => {
-        skipNext();
-      });
-    }
-  }, [currentTrack, tracks, currentTrackIndex]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const updateProgress = () => {
-      setProgress(audio.currentTime);
-      setDuration(audio.duration || 0);
-    };
-
-    const handleEnded = () => {
-      if (tracks && currentTrackIndex < tracks.length - 1) {
-        setCurrentTrackIndex(prev => prev + 1);
-      } else {
-        setIsPlaying(false);
-      }
-    };
-
-    audio.addEventListener("timeupdate", updateProgress);
-    audio.addEventListener("loadedmetadata", updateProgress);
-    audio.addEventListener("ended", handleEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("loadedmetadata", updateProgress);
-      audio.removeEventListener("ended", handleEnded);
-    };
-  }, [tracks, currentTrackIndex]);
-
-  const togglePlayPause = () => {
-    if (!audioRef.current) return;
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
+  const handlePlayTrack = (index: number) => {
+    if (!tracks) return;
+    playTrack(tracks[index], tracks, index);
   };
 
-  const playTrack = (index: number) => {
-    setCurrentTrackIndex(index);
-    setIsPlaying(true);
-    setTimeout(() => {
-      audioRef.current?.play();
-    }, 100);
-  };
-
-  const skipPrevious = () => {
-    if (currentTrackIndex > 0) {
-      playTrack(currentTrackIndex - 1);
-    }
-  };
-
-  const skipNext = () => {
-    if (tracks && currentTrackIndex < tracks.length - 1) {
-      playTrack(currentTrackIndex + 1);
-    }
-  };
-
-  const handleSeek = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setProgress(value[0]);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const displayTrack = currentTrack || tracks?.[0] || null;
 
   return (
     <div className="flex flex-col min-h-full pb-20">
@@ -156,12 +70,12 @@ export default function Music() {
             <div className="aspect-square max-w-[280px] mx-auto mt-6 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
               {isLoading ? (
                 <Skeleton className="w-full h-full" />
-              ) : currentTrack ? (
-                <div 
+              ) : displayTrack ? (
+                <div
                   className="w-full h-full bg-cover bg-center"
-                  style={{ 
-                    backgroundImage: `url(${currentTrack.albumArt})`,
-                    backgroundColor: "hsl(var(--muted))"
+                  style={{
+                    backgroundImage: `url(${displayTrack.albumArt})`,
+                    backgroundColor: "hsl(var(--muted))",
                   }}
                 />
               ) : (
@@ -174,48 +88,54 @@ export default function Music() {
               )}
             </div>
 
-            {currentTrack && (
+            {displayTrack && (
               <div className="text-center px-4 mb-4">
                 <h3 className="font-semibold text-lg text-foreground" data-testid="text-current-track">
-                  {currentTrack.title}
+                  {displayTrack.title}
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  {currentTrack.artist}
+                  {displayTrack.artist}
                 </p>
               </div>
             )}
 
             <div className="px-6 mb-4">
               <Slider
-                value={[progress]}
+                value={[currentTime]}
                 min={0}
                 max={duration || 100}
                 step={1}
-                onValueChange={handleSeek}
+                onValueChange={(v) => seek(v[0])}
                 className="mb-2"
                 data-testid="slider-progress"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{formatTime(progress)}</span>
+                <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-center gap-4 pb-6">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
-                onClick={skipPrevious}
+                onClick={prev}
                 disabled={currentTrackIndex === 0}
                 data-testid="button-previous"
               >
                 <SkipBack className="w-5 h-5" />
               </Button>
-              
-              <Button 
+
+              <Button
                 size="lg"
                 className="w-16 h-16 rounded-full"
-                onClick={togglePlayPause}
+                onClick={() => {
+                  if (!currentTrack && tracks && tracks.length > 0) {
+                    handlePlayTrack(0);
+                  } else {
+                    toggle();
+                  }
+                }}
                 data-testid="button-play-pause"
               >
                 {isPlaying ? (
@@ -224,11 +144,11 @@ export default function Music() {
                   <Play className="w-6 h-6 ml-1" />
                 )}
               </Button>
-              
-              <Button 
-                variant="ghost" 
+
+              <Button
+                variant="ghost"
                 size="icon"
-                onClick={skipNext}
+                onClick={next}
                 disabled={!tracks || currentTrackIndex >= tracks.length - 1}
                 data-testid="button-next"
               >
@@ -256,7 +176,7 @@ export default function Music() {
         <h2 className="font-serif font-semibold text-lg text-foreground mb-3">
           {t("nowPlaying")}
         </h2>
-        
+
         <ScrollArea className="h-[300px]">
           {isLoading ? (
             <div className="space-y-2">
@@ -275,25 +195,27 @@ export default function Music() {
               {tracks.map((track, index) => (
                 <button
                   key={track.id}
-                  onClick={() => playTrack(index)}
+                  onClick={() => handlePlayTrack(index)}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                    index === currentTrackIndex 
-                      ? "bg-primary/10" 
+                    currentTrack?.id === track.id
+                      ? "bg-primary/10"
                       : "hover-elevate active-elevate-2"
                   }`}
                   data-testid={`track-${track.id}`}
                 >
-                  <div 
+                  <div
                     className="w-12 h-12 rounded-md bg-cover bg-center flex-shrink-0"
-                    style={{ 
+                    style={{
                       backgroundImage: `url(${track.albumArt})`,
-                      backgroundColor: "hsl(var(--muted))"
+                      backgroundColor: "hsl(var(--muted))",
                     }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium truncate ${
-                      index === currentTrackIndex ? "text-primary" : "text-foreground"
-                    }`}>
+                    <p
+                      className={`font-medium truncate ${
+                        currentTrack?.id === track.id ? "text-primary" : "text-foreground"
+                      }`}
+                    >
                       {track.title}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
@@ -313,14 +235,6 @@ export default function Music() {
           )}
         </ScrollArea>
       </div>
-
-      {currentTrack && (
-        <audio
-          ref={audioRef}
-          src={currentTrack.audioUrl}
-          preload="metadata"
-        />
-      )}
     </div>
   );
 }
