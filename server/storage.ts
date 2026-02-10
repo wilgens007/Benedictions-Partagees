@@ -14,6 +14,7 @@ import { songs } from "./data/songs";
 import { videos } from "./data/videos";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
+import { getDailyContentForDay, getTodayKeyET, generateDailyContent } from "./dailyContentGenerator";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -55,35 +56,66 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  private getDayOfYear(date: Date): number {
-    // Eastern Time is UTC-5 (EST) or UTC-4 (EDT)
-    // To handle "6 am Eastern Time", we shift the date by 5 hours (using EST as base)
-    // so that 6am ET becomes 1am UTC, or more simply, we can just use the adjusted time.
-    
-    // A more robust way: Adjust date to Eastern Time then subtract 6 hours.
-    // This way, the "day" flips at 6am ET.
-    const etDate = new Date(date.toLocaleString("en-US", {timeZone: "America/New_York"}));
-    const shiftedDate = new Date(etDate.getTime() - (6 * 60 * 60 * 1000));
-    
-    const start = new Date(shiftedDate.getFullYear(), 0, 0);
-    const diff = shiftedDate.getTime() - start.getTime();
-    const oneDay = 1000 * 60 * 60 * 24;
-    return Math.floor(diff / oneDay);
-  }
-
   async getDailyVerse(language: Language): Promise<DailyVerse> {
+    const dayKey = getTodayKeyET();
+
+    const dbContent = await getDailyContentForDay(dayKey, language);
+    if (dbContent) {
+      return {
+        id: dbContent.id,
+        verse: dbContent.verse,
+        reference: dbContent.reference,
+        devotional: dbContent.devotional,
+        prayer: dbContent.prayer,
+        date: dbContent.dayKey,
+      };
+    }
+
+    console.log(`[STORAGE] No DB content for dayKey=${dayKey}, lang=${language} — generating now`);
+    await generateDailyContent(dayKey);
+
+    const freshContent = await getDailyContentForDay(dayKey, language);
+    if (freshContent) {
+      return {
+        id: freshContent.id,
+        verse: freshContent.verse,
+        reference: freshContent.reference,
+        devotional: freshContent.devotional,
+        prayer: freshContent.prayer,
+        date: freshContent.dayKey,
+      };
+    }
+
     const verses = dailyVerses[language] || dailyVerses.en;
-    const now = new Date();
-    const dayIndex = this.getDayOfYear(now);
-    const verse = verses[dayIndex % verses.length];
-    const dateStr = now.toISOString().split("T")[0];
-    return { ...verse, date: dateStr };
+    return { ...verses[0], date: dayKey };
   }
 
   async getEncouragement(language: Language): Promise<Encouragement> {
+    const dayKey = getTodayKeyET();
+
+    const dbContent = await getDailyContentForDay(dayKey, language);
+    if (dbContent) {
+      return {
+        id: dbContent.id,
+        text: dbContent.encouragementText,
+        author: dbContent.encouragementAuthor,
+      };
+    }
+
+    console.log(`[STORAGE] No DB encouragement for dayKey=${dayKey}, lang=${language} — generating now`);
+    await generateDailyContent(dayKey);
+
+    const freshContent = await getDailyContentForDay(dayKey, language);
+    if (freshContent) {
+      return {
+        id: freshContent.id,
+        text: freshContent.encouragementText,
+        author: freshContent.encouragementAuthor,
+      };
+    }
+
     const msgs = encouragements[language] || encouragements.en;
-    const dayIndex = this.getDayOfYear(new Date());
-    return msgs[dayIndex % msgs.length];
+    return msgs[0];
   }
 
   async getMusicTracks(): Promise<MusicTrack[]> {

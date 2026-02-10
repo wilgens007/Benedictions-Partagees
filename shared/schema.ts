@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,6 +8,23 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
+
+export const dailyContent = pgTable("daily_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dayKey: varchar("day_key", { length: 10 }).notNull(),
+  language: varchar("language", { length: 5 }).notNull().default("en"),
+  verse: text("verse").notNull(),
+  reference: text("reference").notNull(),
+  devotional: text("devotional").notNull(),
+  prayer: text("prayer").notNull(),
+  encouragementText: text("encouragement_text").notNull(),
+  encouragementAuthor: text("encouragement_author").notNull().default("Bénédictions Partagées"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("daily_content_day_lang_idx").on(table.dayKey, table.language),
+]);
+
+export type DailyContent = typeof dailyContent.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

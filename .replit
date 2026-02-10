@@ -40,3 +40,8 @@ waitForPort = 5000
 
 [agent]
 integrations = ["resend:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+CRON_SECRET = "bp-cron-secret-2026-autogen"

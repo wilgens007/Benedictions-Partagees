@@ -27,7 +27,17 @@ Preferred communication style: Simple, everyday language.
 ### Data Layer
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Schema Location**: `shared/schema.ts` contains database tables and Zod validation schemas
-- **Current Storage**: In-memory storage implementation in `server/storage.ts` with interface ready for database migration
+- **DB Connection**: `server/db.ts` — Drizzle + pg pool using `DATABASE_URL`
+- **Daily Content Persistence**: `daily_content` table with composite unique index on `(day_key, language)` — stores daily verse, devotional, prayer, and encouragement per language per day
+- **In-Memory**: Prayer requests and user data still use in-memory storage in `server/storage.ts`
+
+### Daily Content Generation System
+- **Generator**: `server/dailyContentGenerator.ts` — computes Eastern Time dayKey (YYYY-MM-DD), selects verse/encouragement by day-of-year index from static data arrays, inserts to DB (idempotent via unique constraint)
+- **Secure Endpoint**: `POST /api/devotion/generate` — protected by `X-CRON-SECRET` header, returns `created` or `already_exists`
+- **Primary Scheduler**: GitHub Actions external cron (`.github/workflows/daily-devotion-cron.yml`) — runs at both 10:00 UTC and 11:00 UTC to cover EST/EDT, idempotent
+- **Backup Scheduler**: node-cron in `server/index.ts` — runs at 6:00 AM America/New_York daily
+- **Startup Fallback**: On server boot, checks if today's content exists in DB; generates if missing
+- **Environment Variable**: `CRON_SECRET` — shared secret for authenticating the generation endpoint
 
 ### Key Design Patterns
 - **Shared Types**: TypeScript types and schemas in `shared/` directory are used by both client and server

@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertPrayerRequestSchema } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
+import { generateDailyContent, getTodayKeyET } from "./dailyContentGenerator";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -29,6 +30,36 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching encouragement:", error);
       res.status(500).json({ error: "Failed to fetch encouragement" });
+    }
+  });
+
+  app.post("/api/devotion/generate", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    console.log(`[CRON-ENDPOINT] POST /api/devotion/generate called at ${new Date().toISOString()}`);
+
+    if (!cronSecret) {
+      console.error("[CRON-ENDPOINT] ERROR: CRON_SECRET env var is not set on the server");
+      return res.status(500).json({ error: "Server misconfiguration: CRON_SECRET not set" });
+    }
+
+    if (!providedSecret || providedSecret !== cronSecret) {
+      console.warn("[CRON-ENDPOINT] UNAUTHORIZED: Invalid or missing X-CRON-SECRET header");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const dayKey = getTodayKeyET();
+      console.log(`[CRON-ENDPOINT] Computed dayKey=${dayKey} (America/New_York)`);
+
+      const result = await generateDailyContent(dayKey);
+
+      console.log(`[CRON-ENDPOINT] Result: status=${result.status}, dayKey=${result.dayKey}, languages=${result.languages.join(",") || "none"}`);
+      res.json(result);
+    } catch (error: any) {
+      console.error("[CRON-ENDPOINT] ERROR during generation:", error.message || error);
+      res.status(500).json({ error: "Generation failed", details: error.message });
     }
   });
 
