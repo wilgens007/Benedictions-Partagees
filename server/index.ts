@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import cron from "node-cron";
 import { generateDailyContent, getTodayKeyET } from "./dailyContentGenerator";
+import { sendPushToAll } from "./pushService";
 
 const app = express();
 const httpServer = createServer(app);
@@ -109,17 +110,27 @@ app.use((req, res, next) => {
 
   cron.schedule("0 6 * * *", async () => {
     const dayKey = getTodayKeyET();
-    log(`[CRON-BACKUP] node-cron triggered at ${new Date().toISOString()} — dayKey=${dayKey}`, "cron");
+    log(`[CRON-6AM] Triggered at ${new Date().toISOString()} — dayKey=${dayKey}`, "cron");
     try {
       const result = await generateDailyContent(dayKey);
-      log(`[CRON-BACKUP] Result: status=${result.status}, dayKey=${result.dayKey}`, "cron");
+      log(`[CRON-6AM] Content: status=${result.status}, dayKey=${result.dayKey}`, "cron");
     } catch (err: any) {
-      log(`[CRON-BACKUP] ERROR: ${err.message || err}`, "cron");
+      log(`[CRON-6AM] ERROR generating content: ${err.message || err}`, "cron");
+    }
+    try {
+      const pushResult = await sendPushToAll({
+        title: "BP — Devotion du jour",
+        body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
+        url: "/devotion",
+      });
+      log(`[CRON-6AM] Push notifications sent: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`, "cron");
+    } catch (pushErr: any) {
+      log(`[CRON-6AM] ERROR sending push notifications: ${pushErr.message || pushErr}`, "cron");
     }
   }, {
     timezone: "America/New_York",
   });
-  log("[CRON-BACKUP] node-cron scheduled for 6:00 AM America/New_York daily", "cron");
+  log("[CRON-6AM] node-cron scheduled for exactly 6:00 AM America/New_York daily", "cron");
 
   try {
     startServer();

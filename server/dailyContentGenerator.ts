@@ -4,24 +4,8 @@ import { eq, and } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 import type { Language, DailyContent } from "@shared/schema";
-import { sendPushToAll } from "./pushService";
 
 const LANGUAGES: Language[] = ["en", "fr", "ht"];
-
-function isWithinNotificationWindow(): boolean {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: false,
-  }).formatToParts(now);
-  let hour = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
-  const minute = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
-  if (hour === 24) hour = 0;
-  const timeInMinutes = hour * 60 + minute;
-  return timeInMinutes >= 330 && timeInMinutes < 1260;
-}
 
 export function getTodayKeyET(): string {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -104,24 +88,6 @@ export async function generateDailyContent(dayKey: string): Promise<{
 
   const status = generated.length > 0 ? "created" : "already_exists";
   console.log(`[CRON] Generation result for dayKey=${dayKey}: status=${status}, languages=${generated.join(",") || "none (all existed)"}`);
-
-  if (status === "created") {
-    if (isWithinNotificationWindow()) {
-      console.log(`[CRON] New content created — triggering push notifications (within 5 AM–9 PM ET window)`);
-      try {
-        const pushResult = await sendPushToAll({
-          title: "BP — Devotion du jour",
-          body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
-          url: "/devotion",
-        });
-        console.log(`[CRON] Push notification results: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`);
-      } catch (pushErr: any) {
-        console.error(`[CRON] ERROR sending push notifications: ${pushErr.message || pushErr}`);
-      }
-    } else {
-      console.log(`[CRON] New content created but outside notification window (5 AM–9 PM ET) — skipping push notifications`);
-    }
-  }
 
   return { status, languages: generated, dayKey };
 }
