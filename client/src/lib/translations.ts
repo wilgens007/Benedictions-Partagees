@@ -97,6 +97,7 @@ export const translations: Record<Language, Record<string, string>> = {
     thankYouVerse: "\"Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver.\" \u2014 2 Corinthians 9:7",
     readTodaysDevotion: "Read Today's Devotion",
     backToHome: "Back to Home",
+    scriptureAttribution: "English Scripture text from the public domain King James Version (KJV). French text from the public domain Louis Segond 1910.",
   },
   fr: {
     appName: "B\u00e9n\u00e9dictions Partag\u00e9es",
@@ -194,6 +195,7 @@ export const translations: Record<Language, Record<string, string>> = {
     thankYouVerse: "\u00ab Que chacun donne comme il l'a r\u00e9solu en son c\u0153ur, sans tristesse ni contrainte; car Dieu aime celui qui donne avec joie. \u00bb \u2014 2 Corinthiens 9:7",
     readTodaysDevotion: "Lire la D\u00e9votion du Jour",
     backToHome: "Retour \u00e0 l'Accueil",
+    scriptureAttribution: "Texte biblique anglais issu de la version King James (KJV), domaine public. Texte fran\u00e7ais issu de la traduction Louis Segond 1910, domaine public.",
   },
   ht: {
     appName: "B\u00e9n\u00e9dictions Partag\u00e9es",
@@ -291,6 +293,7 @@ export const translations: Record<Language, Record<string, string>> = {
     thankYouVerse: "\"Chak moun dwe bay jan li deside nan k\u00e8 li, pa av\u00e8k regr\u00e8 oswa pa f\u00f2s; paske Bondye renmen yon moun ki bay ak k\u00e8 kontan.\" \u2014 2 Korentyen 9:7",
     readTodaysDevotion: "Li Devosyon Jodi a",
     backToHome: "Retounen Ak\u00e8y",
+    scriptureAttribution: "T\u00e8ks Bib angle a soti nan v\u00e8syon King James (KJV), domaine public. T\u00e8ks frans\u00e8 a soti nan tradiksyon Louis Segond 1910, domaine public.",
   },
 };
 

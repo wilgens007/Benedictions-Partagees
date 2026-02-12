@@ -275,7 +275,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="space-y-3 pb-6" data-testid="section-quick-links">
+        <div className="space-y-3 pb-3" data-testid="section-quick-links">
           <h2 className="font-serif font-semibold text-xl text-foreground">
             {t("welcome")}
           </h2>
@@ -306,6 +306,12 @@ export default function Home() {
               );
             })}
           </div>
+        </div>
+
+        <div className="pb-6">
+          <p className="text-xs text-muted-foreground/60 text-center leading-relaxed" data-testid="text-scripture-attribution">
+            {t("scriptureAttribution")}
+          </p>
         </div>
       </div>
     </div>
