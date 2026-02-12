@@ -1,0 +1,50 @@
+Replit — daily content is incorrect by language and verse selection:
+
+Symptoms:
+1) Verse generation only alternates between 2 verses (same two every time).
+2) English is showing yesterday’s verse.
+3) French + Creole are stuck on the same verse (not updating).
+
+Push scheduling is correct (fires at 6am ET), so the issue is generation/read logic and dayKey+language handling.
+
+Please debug and fix with these requirements:
+
+A) DayKey correctness (DST-aware ET)
+- In BOTH generation and read endpoints, compute dayKey using America/New_York, not UTC.
+- Log: nowISO, timezone used, computed dayKey.
+- Ensure EN/FR/HT use the SAME dayKey for that day.
+
+B) Deterministic reads by dayKey + language
+- All “today” GET endpoints must query:
+  SELECT ... FROM daily_content
+  WHERE dayKey = :todayKey AND language = :lang
+  LIMIT 1
+- No fallback to oldest/first record.
+- If missing for a language, generate that language immediately then re-query.
+
+C) Verify DB contents for today
+- Create a debug endpoint (protected) GET /api/admin/daily-content-debug?dayKey=YYYY-MM-DD
+  returns records for all languages with dayKey, verseRef, createdAt.
+- Confirm there are 3 rows for today (EN/FR/HT) or 1 row with 3 language fields, but reads must match.
+
+D) Fix “only 2 verses” bug (selection logic)
+- Inspect verse selection source:
+  - if using DB: confirm verse pool size > 2 and query isn’t LIMIT 2 / wrong ORDER BY
+  - if using array/list: confirm list contains many verses and isn’t overwritten
+  - if using RNG: ensure not using a fixed seed on startup that repeats
+- Add logs: versePoolSize, chosenVerseRef, selection method.
+
+E) Cache key correctness
+- If using caching (SWR/React Query/Next cache), ensure cache key includes:
+  - dayKey + language
+- Ensure Share/Notification does not refetch or change the displayed verse.
+
+Acceptance tests:
+1) Manual call generation:
+   - POST /api/devotion/generate (with secret) -> returns status created/exists + dayKey
+2) Verify DB:
+   - debug endpoint shows correct verseRef per language for todayKey
+3) Verify UI:
+   - EN/FR/HT show today’s content (same dayKey) and verse does not flip
+4) Verify verse variety:
+   - Over multiple days, verse changes (not alternating between 2)
