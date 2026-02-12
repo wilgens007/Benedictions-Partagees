@@ -7,8 +7,10 @@ import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
 import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
 import { db } from "./db";
-import { supportConfig } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { supportConfig, dailyContent } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
+import { dailyVerses } from "./data/dailyVerses";
+import { encouragements } from "./data/encouragements";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -65,6 +67,60 @@ export async function registerRoutes(
       console.error("[CRON-ENDPOINT] ERROR during generation:", error.message || error);
       res.status(500).json({ error: "Generation failed", details: error.message });
     }
+  });
+
+  app.get("/api/admin/daily-content-debug", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const dayKey = (req.query.dayKey as string) || getTodayKeyET();
+    const languages: Language[] = ["en", "fr", "ht"];
+
+    const rows = await db
+      .select()
+      .from(dailyContent)
+      .where(eq(dailyContent.dayKey, dayKey));
+
+    const [year, month, day] = dayKey.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    const start = new Date(year, 0, 0);
+    const dayIndex = Math.floor((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    const result = {
+      dayKey,
+      dayIndex,
+      versePoolSizes: {
+        en: dailyVerses.en.length,
+        fr: dailyVerses.fr.length,
+        ht: dailyVerses.ht.length,
+      },
+      encouragementPoolSizes: {
+        en: encouragements.en.length,
+        fr: encouragements.fr.length,
+        ht: encouragements.ht.length,
+      },
+      expectedVerseIndices: {
+        en: dayIndex % dailyVerses.en.length,
+        fr: dayIndex % dailyVerses.fr.length,
+        ht: dayIndex % dailyVerses.ht.length,
+      },
+      records: languages.map((lang) => {
+        const row = rows.find((r) => r.language === lang);
+        return {
+          language: lang,
+          exists: !!row,
+          verseRef: row?.reference || null,
+          createdAt: row?.createdAt || null,
+          encouragementAuthor: row?.encouragementAuthor || null,
+        };
+      }),
+    };
+
+    res.json(result);
   });
 
   app.get("/api/push/vapid-public-key", (_req, res) => {
