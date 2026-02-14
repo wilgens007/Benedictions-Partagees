@@ -7,7 +7,7 @@ import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
 import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
 import { db } from "./db";
-import { supportConfig, dailyContent } from "@shared/schema";
+import { supportConfig, dailyContent, pushSubscriptions } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
@@ -129,6 +129,23 @@ export async function registerRoutes(
       return res.status(500).json({ error: "VAPID public key not configured" });
     }
     res.json({ publicKey });
+  });
+
+  app.post("/api/push/check", async (req, res) => {
+    try {
+      const { endpoint } = req.body;
+      if (!endpoint) {
+        return res.status(400).json({ exists: false });
+      }
+      const existing = await db
+        .select()
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.endpoint, endpoint));
+      res.json({ exists: existing.length > 0 });
+    } catch (error: any) {
+      console.error("[PUSH] Error checking subscription:", error.message || error);
+      res.json({ exists: false });
+    }
   });
 
   app.post("/api/push/subscribe", async (req, res) => {

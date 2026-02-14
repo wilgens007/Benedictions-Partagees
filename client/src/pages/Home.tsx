@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Music, Video, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff } from "lucide-react";
+import { Music, Video, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ export default function Home() {
   const { toast } = useToast();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    try { return localStorage.getItem("bp-notif-banner-dismissed") === "true"; } catch { return false; }
+  });
   const pushSupported = isPushSupported();
 
   useEffect(() => {
@@ -174,6 +177,48 @@ export default function Home() {
             </div>
           </CardContent>
         </Card>
+
+        {pushSupported && !pushEnabled && !bannerDismissed && (
+          <Card className="shadow-md border-[#EAB308]/30 overflow-hidden" data-testid="card-notification-banner">
+            <CardContent className="p-0">
+              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-[#EAB308]/10 to-[#EAB308]/5 dark:from-[#EAB308]/15 dark:to-[#EAB308]/5">
+                <div className="w-10 h-10 rounded-full bg-[#EAB308]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bell className="w-5 h-5 text-[#EAB308]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm mb-1" data-testid="text-notification-banner-title">
+                    {t("notificationBannerTitle")}
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {t("notificationBannerDesc")}
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={handleTogglePush}
+                    disabled={pushLoading}
+                    className="bg-[#EAB308] text-white border-[#EAB308]"
+                    data-testid="button-notification-banner-enable"
+                  >
+                    <Bell className="w-3.5 h-3.5 mr-1.5" />
+                    {t("turnOn")}
+                  </Button>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0 -mt-1 -mr-1"
+                  onClick={() => {
+                    setBannerDismissed(true);
+                    try { localStorage.setItem("bp-notif-banner-dismissed", "true"); } catch {}
+                  }}
+                  data-testid="button-notification-banner-dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="space-y-3" data-testid="section-devotional-preview">
           <div className="flex items-center justify-between gap-4">

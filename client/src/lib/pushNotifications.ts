@@ -48,6 +48,7 @@ export async function subscribeToPush(language: string = "en"): Promise<boolean>
       return false;
     }
 
+    console.log("[PUSH] Successfully subscribed to push notifications");
     return true;
   } catch (err) {
     console.error("[PUSH] Error subscribing:", err);
@@ -84,7 +85,33 @@ export async function isPushSubscribed(): Promise<boolean> {
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
-    return subscription !== null;
+    if (!subscription) return false;
+
+    const response = await fetch("/api/push/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    });
+
+    if (!response.ok) return false;
+    const { exists } = await response.json();
+
+    if (!exists) {
+      console.log("[PUSH] Browser has subscription but server does not — re-syncing...");
+      const storedLang = localStorage.getItem("language") || "en";
+      const resubResponse = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: subscription.toJSON(), language: storedLang }),
+      });
+      if (resubResponse.ok) {
+        console.log("[PUSH] Re-synced subscription to server");
+        return true;
+      }
+      return false;
+    }
+
+    return true;
   } catch {
     return false;
   }
