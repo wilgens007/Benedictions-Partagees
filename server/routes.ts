@@ -1,14 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPrayerRequestSchema } from "@shared/schema";
+import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
 import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
 import { db } from "./db";
 import { supportConfig, dailyContent, pushSubscriptions } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 
@@ -319,7 +319,7 @@ export async function registerRoutes(
 
   app.post("/api/prayer-requests", async (req, res) => {
     try {
-      const validation = insertPrayerRequestSchema.safeParse(req.body);
+      const validation = insertDbPrayerRequestSchema.safeParse(req.body);
       
       if (!validation.success) {
         return res.status(400).json({ 
@@ -328,7 +328,7 @@ export async function registerRoutes(
         });
       }
 
-      const prayerRequest = await storage.createPrayerRequest(validation.data);
+      const [prayerRequest] = await db.insert(prayerRequests).values(validation.data).returning();
       
       try {
         console.log(`[DEBUG] Attempting to send prayer request email to benedictionspartagees@gmail.com for ${validation.data.name}...`);
@@ -355,8 +355,8 @@ export async function registerRoutes(
 
   app.get("/api/prayer-requests", async (req, res) => {
     try {
-      const requests = await storage.getPrayerRequests();
-      res.json(requests);
+      const rows = await db.select().from(prayerRequests).where(eq(prayerRequests.status, "approved")).orderBy(desc(prayerRequests.createdAt));
+      res.json(rows);
     } catch (error) {
       console.error("Error fetching prayer requests:", error);
       res.status(500).json({ error: "Failed to fetch prayer requests" });

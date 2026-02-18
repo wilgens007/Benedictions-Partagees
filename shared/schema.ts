@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, uniqueIndex, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -46,6 +46,74 @@ export const supportConfig = pgTable("support_config", {
 });
 
 export type SupportConfig = typeof supportConfig.$inferSelect;
+
+export const albums = pgTable("albums", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  coverUrl: text("cover_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Album = typeof albums.$inferSelect;
+export const insertAlbumSchema = createInsertSchema(albums).omit({ id: true, createdAt: true });
+export type InsertAlbum = z.infer<typeof insertAlbumSchema>;
+
+export const songs = pgTable("songs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  albumId: varchar("album_id"),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  coverUrl: text("cover_url"),
+  audioUrl: text("audio_url").notNull(),
+  duration: text("duration"),
+  isEarlyAccess: boolean("is_early_access").default(false),
+  publicReleaseAt: timestamp("public_release_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Song = typeof songs.$inferSelect;
+export const insertSongSchema = createInsertSchema(songs).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertSong = z.infer<typeof insertSongSchema>;
+
+export const testimonies = pgTable("testimonies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nameDisplay: text("name_display").notNull(),
+  contentText: text("content_text").notNull(),
+  audioUrl: text("audio_url"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  isFeatured: boolean("is_featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Testimony = typeof testimonies.$inferSelect;
+export const insertTestimonySchema = createInsertSchema(testimonies).omit({ id: true, createdAt: true, status: true, isFeatured: true });
+export type InsertTestimony = z.infer<typeof insertTestimonySchema>;
+
+export const prayerRequests = pgTable("prayer_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  message: text("message").notNull(),
+  language: varchar("language", { length: 5 }).notNull().default("en"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type DbPrayerRequest = typeof prayerRequests.$inferSelect;
+export const insertDbPrayerRequestSchema = createInsertSchema(prayerRequests).omit({ id: true, createdAt: true, status: true });
+export type InsertDbPrayerRequest = z.infer<typeof insertDbPrayerRequestSchema>;
+
+export const adminSessions = pgTable("admin_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export type AdminSession = typeof adminSessions.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

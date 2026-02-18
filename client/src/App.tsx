@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,9 +16,11 @@ import Devotion from "@/pages/Devotion";
 import Prayer from "@/pages/Prayer";
 import Support from "@/pages/Support";
 import ThankYou from "@/pages/ThankYou";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminLayout from "@/pages/AdminLayout";
 import NotFound from "@/pages/not-found";
 
-function Router() {
+function PublicRouter() {
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -41,12 +43,28 @@ function AppLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className={`flex-1 max-w-lg mx-auto w-full ${hasPlayer ? "pb-36" : "pb-20"}`}>
-        <Router />
+        <PublicRouter />
       </main>
       <MiniPlayer />
       <BottomNav />
     </div>
   );
+}
+
+function AppRouter() {
+  const [location] = useLocation();
+  const isAdmin = location.startsWith("/admin");
+
+  if (isAdmin) {
+    return (
+      <Switch>
+        <Route path="/admin/login" component={AdminLogin} />
+        <Route path="/admin/:rest*" component={AdminLayout} />
+      </Switch>
+    );
+  }
+
+  return <AppLayout />;
 }
 
 function App() {
@@ -56,7 +74,7 @@ function App() {
         <LanguageProvider>
           <AudioPlayerProvider>
             <TooltipProvider>
-              <AppLayout />
+              <AppRouter />
               <Toaster />
             </TooltipProvider>
           </AudioPlayerProvider>

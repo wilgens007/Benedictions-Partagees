@@ -1,0 +1,268 @@
+import { Express, Request, Response } from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { db } from "./db";
+import {
+  albums, songs, testimonies, prayerRequests, users, adminSessions,
+  insertAlbumSchema, insertSongSchema, insertTestimonySchema,
+  type Album, type Song, type Testimony, type DbPrayerRequest,
+} from "@shared/schema";
+import { eq, desc, ilike, sql, and } from "drizzle-orm";
+import { requireAdmin, isAdminEmail, createAdminSession, validateAdminToken } from "./adminAuth";
+
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+export function registerAdminRoutes(app: Express) {
+  app.post("/api/admin/login", async (req: Request, res: Response) => {
+    const { email, secret } = req.body;
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ error: "Email is required" });
+    }
+    const adminSecret = process.env.ADMIN_SECRET;
+    if (!adminSecret) {
+      return res.status(500).json({ error: "Admin login not configured" });
+    }
+    if (!secret || secret !== adminSecret) {
+      return res.status(403).json({ error: "Invalid credentials" });
+    }
+    if (!isAdminEmail(email)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    const token = await createAdminSession(email);
+    res.cookie("admin_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: "lax",
+    });
+    res.json({ success: true, token });
+  });
+
+  app.post("/api/admin/logout", requireAdmin, async (req: Request, res: Response) => {
+    const token = req.headers["x-admin-token"] as string || req.cookies?.admin_token;
+    if (token) {
+      await db.delete(adminSessions).where(eq(adminSessions.token, token));
+    }
+    res.clearCookie("admin_token");
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/me", requireAdmin, async (req: Request, res: Response) => {
+    res.json({ email: (req as any).adminEmail });
+  });
+
+  app.post("/api/admin/upload/cover", requireAdmin, upload.single("file"), (req: Request, res: Response) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
+  app.post("/api/admin/upload/audio", requireAdmin, upload.single("file"), (req: Request, res: Response) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
+  app.get("/api/admin/albums", requireAdmin, async (_req: Request, res: Response) => {
+    const rows = await db.select().from(albums).orderBy(desc(albums.createdAt));
+    res.json(rows);
+  });
+
+  app.post("/api/admin/albums", requireAdmin, async (req: Request, res: Response) => {
+    const parsed = insertAlbumSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+    const [row] = await db.insert(albums).values(parsed.data).returning();
+    res.status(201).json(row);
+  });
+
+  app.put("/api/admin/albums/:id", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { title, artist, coverUrl } = req.body;
+    const [row] = await db.update(albums).set({ title, artist, coverUrl }).where(eq(albums.id, id)).returning();
+    if (!row) return res.status(404).json({ error: "Album not found" });
+    res.json(row);
+  });
+
+  app.delete("/api/admin/albums/:id", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const linkedSongs = await db.select().from(songs).where(eq(songs.albumId, id));
+    if (linkedSongs.length > 0) {
+      return res.status(400).json({ error: `Cannot delete album with ${linkedSongs.length} linked songs. Remove songs first.` });
+    }
+    await db.delete(albums).where(eq(albums.id, id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/songs", requireAdmin, async (_req: Request, res: Response) => {
+    const rows = await db.select().from(songs).orderBy(desc(songs.createdAt));
+    res.json(rows);
+  });
+
+  app.post("/api/admin/songs", requireAdmin, async (req: Request, res: Response) => {
+    const body = { ...req.body };
+    if (body.publicReleaseAt) body.publicReleaseAt = new Date(body.publicReleaseAt);
+    const parsed = insertSongSchema.safeParse(body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+    const [row] = await db.insert(songs).values(parsed.data).returning();
+    res.status(201).json(row);
+  });
+
+  app.put("/api/admin/songs/:id", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const updates: any = { ...req.body, updatedAt: new Date() };
+    if (updates.publicReleaseAt) updates.publicReleaseAt = new Date(updates.publicReleaseAt);
+    if (updates.publicReleaseAt === null) updates.publicReleaseAt = null;
+    delete updates.id;
+    delete updates.createdAt;
+    const [row] = await db.update(songs).set(updates).where(eq(songs.id, id)).returning();
+    if (!row) return res.status(404).json({ error: "Song not found" });
+    res.json(row);
+  });
+
+  app.delete("/api/admin/songs/:id", requireAdmin, async (req: Request, res: Response) => {
+    await db.delete(songs).where(eq(songs.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/testimonies", requireAdmin, async (req: Request, res: Response) => {
+    const status = req.query.status as string | undefined;
+    let rows;
+    if (status && ["pending", "approved", "rejected"].includes(status)) {
+      rows = await db.select().from(testimonies).where(eq(testimonies.status, status)).orderBy(desc(testimonies.createdAt));
+    } else {
+      rows = await db.select().from(testimonies).orderBy(desc(testimonies.createdAt));
+    }
+    res.json(rows);
+  });
+
+  app.post("/api/admin/testimonies", requireAdmin, async (req: Request, res: Response) => {
+    const parsed = insertTestimonySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+    const [row] = await db.insert(testimonies).values(parsed.data).returning();
+    res.status(201).json(row);
+  });
+
+  app.put("/api/admin/testimonies/:id/status", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+    const updates: any = { status };
+    if (status !== "approved") {
+      updates.isFeatured = false;
+    }
+    const [row] = await db.update(testimonies).set(updates).where(eq(testimonies.id, id)).returning();
+    if (!row) return res.status(404).json({ error: "Testimony not found" });
+    res.json(row);
+  });
+
+  app.put("/api/admin/testimonies/:id/feature", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    await db.update(testimonies).set({ isFeatured: false }).where(eq(testimonies.isFeatured, true));
+    const [row] = await db.update(testimonies).set({ isFeatured: true, status: "approved" }).where(eq(testimonies.id, id)).returning();
+    if (!row) return res.status(404).json({ error: "Testimony not found" });
+    res.json(row);
+  });
+
+  app.delete("/api/admin/testimonies/:id", requireAdmin, async (req: Request, res: Response) => {
+    await db.delete(testimonies).where(eq(testimonies.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/prayer-requests", requireAdmin, async (req: Request, res: Response) => {
+    const status = req.query.status as string | undefined;
+    let rows;
+    if (status && ["pending", "approved", "rejected"].includes(status)) {
+      rows = await db.select().from(prayerRequests).where(eq(prayerRequests.status, status)).orderBy(desc(prayerRequests.createdAt));
+    } else {
+      rows = await db.select().from(prayerRequests).orderBy(desc(prayerRequests.createdAt));
+    }
+    res.json(rows);
+  });
+
+  app.put("/api/admin/prayer-requests/:id/status", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+    const [row] = await db.update(prayerRequests).set({ status }).where(eq(prayerRequests.id, id)).returning();
+    if (!row) return res.status(404).json({ error: "Prayer request not found" });
+    res.json(row);
+  });
+
+  app.delete("/api/admin/prayer-requests/:id", requireAdmin, async (req: Request, res: Response) => {
+    await db.delete(prayerRequests).where(eq(prayerRequests.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
+    const search = req.query.search as string | undefined;
+    const page = parseInt(req.query.page as string || "1", 10);
+    const limit = 20;
+    const offset = (page - 1) * limit;
+
+    let rows;
+    let countResult;
+
+    if (search) {
+      rows = await db.select().from(users).where(ilike(users.username, `%${search}%`)).orderBy(users.username).limit(limit).offset(offset);
+      countResult = await db.select({ count: sql<number>`count(*)` }).from(users).where(ilike(users.username, `%${search}%`));
+    } else {
+      rows = await db.select().from(users).orderBy(users.username).limit(limit).offset(offset);
+      countResult = await db.select({ count: sql<number>`count(*)` }).from(users);
+    }
+
+    res.json({
+      users: rows.map((u) => ({ id: u.id, username: u.username })),
+      total: Number(countResult[0]?.count || 0),
+      page,
+      totalPages: Math.ceil(Number(countResult[0]?.count || 0) / limit),
+    });
+  });
+
+  app.get("/api/admin/stats", requireAdmin, async (_req: Request, res: Response) => {
+    const [songCount] = await db.select({ count: sql<number>`count(*)` }).from(songs);
+    const [albumCount] = await db.select({ count: sql<number>`count(*)` }).from(albums);
+    const [testimonyCount] = await db.select({ count: sql<number>`count(*)` }).from(testimonies);
+    const [pendingTestimonies] = await db.select({ count: sql<number>`count(*)` }).from(testimonies).where(eq(testimonies.status, "pending"));
+    const [prayerCount] = await db.select({ count: sql<number>`count(*)` }).from(prayerRequests);
+    const [pendingPrayers] = await db.select({ count: sql<number>`count(*)` }).from(prayerRequests).where(eq(prayerRequests.status, "pending"));
+    const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+
+    res.json({
+      songs: Number(songCount.count),
+      albums: Number(albumCount.count),
+      testimonies: Number(testimonyCount.count),
+      pendingTestimonies: Number(pendingTestimonies.count),
+      prayerRequests: Number(prayerCount.count),
+      pendingPrayers: Number(pendingPrayers.count),
+      users: Number(userCount.count),
+    });
+  });
+
+  app.use("/uploads", (req, res, next) => {
+    const filePath = path.join(uploadsDir, req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: "File not found" });
+    }
+  });
+}

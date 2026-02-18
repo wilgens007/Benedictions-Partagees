@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
+import { registerAdminRoutes } from "./adminRoutes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import cron from "node-cron";
@@ -24,6 +26,7 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -63,6 +66,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  registerAdminRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -147,5 +151,12 @@ async function runStartupGeneration() {
     log(`[STARTUP] Result: status=${result.status}, dayKey=${result.dayKey}, languages=${result.languages.join(",") || "all existed"}`, "startup");
   } catch (err: any) {
     log(`[STARTUP] ERROR generating daily content: ${err.message || err}`, "startup");
+  }
+
+  try {
+    const { seedAdminData } = await import("./seed");
+    await seedAdminData();
+  } catch (err: any) {
+    log(`[STARTUP] Seed: ${err.message || err}`, "startup");
   }
 }
