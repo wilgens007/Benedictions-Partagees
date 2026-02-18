@@ -29,7 +29,7 @@ export function MiniPlayer() {
 
   return (
     <div
-      className="fixed left-0 right-0 z-40 bg-[#1E3A8A] dark:bg-[#0F1D45] shadow-lg"
+      className="fixed left-0 right-0 z-40 bg-[#0A1F44] dark:bg-[#060E22] shadow-lg"
       style={{ bottom: "64px" }}
       data-testid="mini-player"
     >

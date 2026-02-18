@@ -82,8 +82,8 @@ export default function Prayer() {
         <Card className="shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-[#EAB308]/10 flex items-center justify-center">
-                <HandHeart className="w-6 h-6 text-[#EAB308]" />
+              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                <HandHeart className="w-6 h-6 text-[#D4AF37]" />
               </div>
               <div>
                 <h2 className="font-serif font-semibold text-lg text-foreground">
@@ -181,7 +181,7 @@ export default function Prayer() {
             &laquo; Do not be anxious about anything, but in every situation, by prayer and petition, 
             with thanksgiving, present your requests to God. &raquo;
           </p>
-          <p className="text-sm text-[#EAB308] dark:text-[#EAB308] font-serif font-medium mt-2">
+          <p className="text-sm text-[#D4AF37] font-serif font-medium mt-2">
             — Philippians 4:6
           </p>
         </div>

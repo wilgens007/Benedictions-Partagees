@@ -135,8 +135,8 @@ export default function Support() {
         ) : (
           <Card className="shadow-md">
             <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#EAB308]/10 flex items-center justify-center">
-                <Heart className="w-8 h-8 text-[#EAB308]" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                <Heart className="w-8 h-8 text-[#D4AF37]" />
               </div>
               <h2 className="font-serif font-semibold text-lg text-foreground mb-2">
                 {t("donationsComingSoon")}

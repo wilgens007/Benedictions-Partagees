@@ -24,13 +24,13 @@ export function Header() {
   const currentLang = languages.find(l => l.code === language);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#1E3A8A] dark:bg-[#0F1D45]">
+    <header className="sticky top-0 z-40 bg-[#0A1F44] dark:bg-[#060E22]">
       <div className="flex items-center justify-between gap-4 px-4 h-14 max-w-lg mx-auto">
         <div className="flex items-center gap-2.5">
           <img 
             src={logoImage} 
             alt="Bénédictions Partagées" 
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-8 h-8 rounded-full object-cover border border-[#D4AF37]/30"
           />
           <span className="font-serif font-semibold text-base text-white tracking-wide hidden min-[360px]:block">
             {t("appName")}

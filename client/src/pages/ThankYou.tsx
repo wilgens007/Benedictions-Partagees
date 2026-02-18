@@ -11,8 +11,8 @@ export default function ThankYou() {
     <div className="flex flex-col min-h-full items-center justify-center px-5">
       <Card className="max-w-md w-full shadow-md">
         <CardContent className="p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-[#EAB308]/10 flex items-center justify-center mx-auto">
-            <Heart className="w-8 h-8 text-[#EAB308]" />
+          <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mx-auto">
+            <Heart className="w-8 h-8 text-[#D4AF37]" />
           </div>
 
           <div className="space-y-2">

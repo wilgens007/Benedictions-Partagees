@@ -4,8 +4,8 @@
   "description": "Daily Bible verses, worship music, gospel teachings, and prayer requests.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAF7",
-  "theme_color": "#1E3A8A",
+  "background_color": "#FAF9F6",
+  "theme_color": "#0A1F44",
   "orientation": "portrait",
   "icons": [
     {

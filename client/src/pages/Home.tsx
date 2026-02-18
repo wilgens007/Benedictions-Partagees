@@ -1,26 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Music, Video, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X } from "lucide-react";
+import { Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X, Play } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
-import type { DailyVerse, Encouragement } from "@shared/schema";
+import { useAudioPlayer } from "@/lib/AudioPlayerContext";
+import type { DailyVerse, Encouragement, MusicTrack } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
-
-const quickLinks = [
-  { path: "/music", icon: Music, labelKey: "music", descKey: "exploreMusic", gradient: "from-amber-500/20 to-yellow-300/10 dark:from-amber-500/15 dark:to-yellow-400/5" },
-  { path: "/videos", icon: Video, labelKey: "videos", descKey: "exploreVideos", gradient: "from-blue-500/20 to-indigo-300/10 dark:from-blue-500/15 dark:to-indigo-400/5" },
-  { path: "/devotion", icon: BookOpen, labelKey: "devotion", descKey: "exploreDevotion", gradient: "from-emerald-500/20 to-teal-300/10 dark:from-emerald-500/15 dark:to-teal-400/5" },
-  { path: "/prayer", icon: HandHeart, labelKey: "prayer", descKey: "explorePrayer", gradient: "from-rose-500/20 to-pink-300/10 dark:from-rose-500/15 dark:to-pink-400/5" },
-];
 
 export default function Home() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const { playTrack, currentTrack, isPlaying } = useAudioPlayer();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(() => {
@@ -82,6 +77,10 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: tracks } = useQuery<MusicTrack[]>({
+    queryKey: ["/api/music"],
+  });
+
   const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {
     weekday: "long",
     year: "numeric",
@@ -89,32 +88,35 @@ export default function Home() {
     day: "numeric",
   });
 
+  const featuredTrack = tracks?.[0];
+
   return (
     <div className="flex flex-col min-h-full">
 
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#1E3A8A] via-[#1E3A8A] to-[#2D4BA0] dark:from-[#0F1D45] dark:via-[#0F1D45] dark:to-[#1A2D6B] px-5 pt-8 pb-10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#EAB308]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0A1F44] via-[#0E2A55] to-[#132D5E] dark:from-[#060E22] dark:via-[#0A1833] dark:to-[#0E2040] px-5 pt-8 pb-12">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-[#D4AF37]/8 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-56 h-56 bg-[#D4AF37]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
+        <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-white/3 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
 
         <div className="relative z-10 max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-5">
             <img
               src={logoImage}
               alt="Bénédictions Partagées"
-              className="w-14 h-14 rounded-full object-cover border-2 border-[#EAB308]/40 shadow-lg"
+              className="w-14 h-14 rounded-full object-cover border-2 border-[#D4AF37]/50 shadow-lg"
             />
             <div className="flex-1 min-w-0">
               <h1 className="font-serif text-2xl font-bold text-white leading-tight" data-testid="text-greeting">
-                {t("blessedDay")}
+                {t("appName")}
               </h1>
-              <p className="text-white/70 text-sm capitalize">{today}</p>
+              <p className="text-[#D4AF37]/80 text-sm font-medium">{t("tagline")}</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleTogglePush}
               disabled={pushLoading}
-              className="text-white/80 hover:text-white border border-white/20 rounded-full flex-shrink-0"
+              className="text-white/70 border border-white/15 rounded-full flex-shrink-0 no-default-hover-elevate no-default-active-elevate"
               data-testid="button-home-toggle-notifications"
             >
               {pushEnabled ? (
@@ -124,20 +126,23 @@ export default function Home() {
               )}
             </Button>
           </div>
-          <p className="text-white/80 text-base leading-relaxed" data-testid="text-blessed-greeting">
-            {t("blessedGreeting")}
+          <p className="text-white/50 text-xs capitalize mb-1">{today}</p>
+          <p className="text-white/70 text-sm leading-relaxed" data-testid="text-blessed-greeting">
+            {t("missionLine")}
           </p>
         </div>
       </div>
 
-      <div className="px-5 -mt-5 relative z-10 space-y-6">
+      <div className="px-5 -mt-6 relative z-10 space-y-5">
 
-        <Card className="shadow-lg overflow-hidden border-0" data-testid="card-daily-verse">
+        <Card className="shadow-lg border-0 overflow-hidden" data-testid="card-daily-verse">
           <CardContent className="p-0">
             <div className="relative px-6 py-6">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#D4AF37]/30 rounded-r" />
+
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-4 h-4 text-[#EAB308]" />
-                <span className="text-xs font-bold text-[#EAB308] dark:text-[#EAB308] uppercase tracking-[0.2em]">
+                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-[0.2em]">
                   {t("todaysVerse")}
                 </span>
               </div>
@@ -159,14 +164,14 @@ export default function Home() {
                   </blockquote>
 
                   <div className="flex items-center justify-center gap-3">
-                    <div className="h-px w-8 bg-[#EAB308]/40" />
+                    <div className="h-px w-8 bg-[#D4AF37]/40" />
                     <p
-                      className="text-center text-[#EAB308] dark:text-[#EAB308] font-serif font-semibold text-sm"
+                      className="text-center text-[#D4AF37] font-serif font-semibold text-sm"
                       data-testid="text-verse-reference"
                     >
                       {verse.reference}
                     </p>
-                    <div className="h-px w-8 bg-[#EAB308]/40" />
+                    <div className="h-px w-8 bg-[#D4AF37]/40" />
                   </div>
                 </div>
               ) : (
@@ -179,11 +184,11 @@ export default function Home() {
         </Card>
 
         {pushSupported && !pushEnabled && !bannerDismissed && (
-          <Card className="shadow-md border-[#EAB308]/30 overflow-hidden" data-testid="card-notification-banner">
+          <Card className="shadow-md border-[#D4AF37]/20 overflow-hidden" data-testid="card-notification-banner">
             <CardContent className="p-0">
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-[#EAB308]/10 to-[#EAB308]/5 dark:from-[#EAB308]/15 dark:to-[#EAB308]/5">
-                <div className="w-10 h-10 rounded-full bg-[#EAB308]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bell className="w-5 h-5 text-[#EAB308]" />
+              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
+                <div className="w-10 h-10 rounded-full bg-[#D4AF37]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bell className="w-5 h-5 text-[#D4AF37]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm mb-1" data-testid="text-notification-banner-title">
@@ -196,7 +201,7 @@ export default function Home() {
                     size="sm"
                     onClick={handleTogglePush}
                     disabled={pushLoading}
-                    className="bg-[#EAB308] text-white border-[#EAB308]"
+                    className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold"
                     data-testid="button-notification-banner-enable"
                   >
                     <Bell className="w-3.5 h-3.5 mr-1.5" />
@@ -226,7 +231,7 @@ export default function Home() {
               {t("todaysDevotional")}
             </h2>
             <Link href="/devotion" data-testid="link-read-more">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-[#D4AF37]">
                 {t("readMore")}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -256,8 +261,8 @@ export default function Home() {
         <Card className="shadow-md overflow-hidden" data-testid="card-prayer-preview">
           <CardContent className="p-5">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <HandHeart className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-[#0A1F44]/8 dark:bg-white/8 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <HandHeart className="w-5 h-5 text-[#0A1F44] dark:text-[#D4AF37]" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-serif font-semibold text-lg text-foreground mb-2">
@@ -282,13 +287,71 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {featuredTrack && (
+          <div className="space-y-3" data-testid="section-featured-worship">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="font-serif font-semibold text-xl text-foreground">
+                {t("featuredWorship")}
+              </h2>
+              <Link href="/music">
+                <Button variant="ghost" size="sm" className="text-[#D4AF37]">
+                  {t("exploreAllMusic")}
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+
+            <Card
+              className="shadow-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer"
+              onClick={() => {
+                if (tracks && tracks.length > 0) {
+                  playTrack(featuredTrack, tracks, 0);
+                }
+              }}
+              data-testid="card-featured-worship"
+            >
+              <CardContent className="p-0">
+                <div className="flex items-center gap-4 p-4">
+                  <div className="relative flex-shrink-0">
+                    <div
+                      className="w-16 h-16 rounded-lg bg-cover bg-center shadow-sm"
+                      style={{
+                        backgroundImage: `url(${featuredTrack.albumArt})`,
+                        backgroundColor: "hsl(var(--muted))",
+                      }}
+                    />
+                    <div className="absolute inset-0 rounded-lg bg-black/20 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                        <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">
+                      {featuredTrack.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {featuredTrack.artist}
+                    </p>
+                    <p className="text-xs text-[#D4AF37] mt-1">
+                      {featuredTrack.duration}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="relative rounded-xl overflow-hidden" data-testid="section-encouragement">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A]/90 to-[#2D4BA0]/80 dark:from-[#0F1D45]/95 dark:to-[#1A2D6B]/85" />
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#EAB308]/10 rounded-full blur-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44]/95 to-[#132D5E]/90 dark:from-[#060E22]/98 dark:to-[#0E2040]/92" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/8 rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#D4AF37]/5 rounded-full blur-2xl" />
 
           <div className="relative px-6 py-6">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-[#EAB308]" />
+              <Sparkles className="w-4 h-4 text-[#D4AF37]" />
               <h2 className="font-serif font-semibold text-base text-white/90">
                 {t("encouragement")}
               </h2>
@@ -303,17 +366,17 @@ export default function Home() {
             ) : encouragement ? (
               <>
                 <p
-                  className="text-white/85 leading-relaxed text-base mb-3"
+                  className="text-white/80 leading-relaxed text-base mb-3"
                   data-testid="text-encouragement"
                 >
                   {encouragement.text}
                 </p>
-                <p className="text-[#EAB308] font-serif font-medium text-sm">
+                <p className="text-[#D4AF37] font-serif font-medium text-sm">
                   — {encouragement.author}
                 </p>
               </>
             ) : (
-              <p className="text-white/85 leading-relaxed">
+              <p className="text-white/80 leading-relaxed">
                 God's love for you is endless. Take heart in knowing that you are never alone on this journey.
               </p>
             )}
@@ -321,35 +384,51 @@ export default function Home() {
         </div>
 
         <div className="space-y-3 pb-3" data-testid="section-quick-links">
-          <h2 className="font-serif font-semibold text-xl text-foreground">
-            {t("welcome")}
-          </h2>
-          <div className="space-y-3">
-            {quickLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link key={link.path} href={link.path} data-testid={`link-explore-${link.labelKey}`}>
-                  <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible" data-testid={`card-explore-${link.labelKey}`}>
-                    <CardContent className="p-0">
-                      <div className={`flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r ${link.gradient}`}>
-                        <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center flex-shrink-0 shadow-sm">
-                          <Icon className="w-5 h-5 text-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-foreground mb-0.5">
-                            {t(link.labelKey)}
-                          </p>
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {t(link.descKey)}
-                          </p>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/devotion" data-testid="link-explore-devotion">
+              <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                  <div className="w-11 h-11 rounded-full bg-[#0A1F44]/8 dark:bg-[#D4AF37]/15 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-[#0A1F44] dark:text-[#D4AF37]" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">{t("devotion")}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{t("exploreDevotion")}</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/music" data-testid="link-explore-music">
+              <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                  <div className="w-11 h-11 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                    <Music className="w-5 h-5 text-[#D4AF37]" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">{t("music")}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{t("exploreMusic")}</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/prayer" data-testid="link-explore-prayer">
+              <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                  <div className="w-11 h-11 rounded-full bg-[#0A1F44]/8 dark:bg-[#D4AF37]/15 flex items-center justify-center">
+                    <HandHeart className="w-5 h-5 text-[#0A1F44] dark:text-[#D4AF37]" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">{t("prayer")}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{t("explorePrayer")}</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/videos" data-testid="link-explore-videos">
+              <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                  <div className="w-11 h-11 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">{t("videos")}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{t("exploreVideos")}</p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </div>
 

@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - Spiritual, Clean, Faith-Centered */
-/* Primary: #1E3A8A (deep blue) = 222 47% 33% */
-/* Accent: #EAB308 (soft gold) = 48 96% 47% */
-/* Background: #FAFAF7 (warm off-white) = 60 23% 97% */
+/* LIGHT MODE - Premium Devotional, Deep Blue & Warm Gold */
+/* Primary: #0A1F44 (deep navy) = 218 75% 15% */
+/* Accent/Gold: #D4AF37 (warm gold) = 43 65% 52% */
+/* Background: #FAF9F6 (warm ivory) = 40 25% 97% */
 /* Text: #111827 = 222 47% 11% */
 /* Secondary text: #6B7280 = 220 9% 46% */
 :root {
@@ -14,42 +14,42 @@
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 60 23% 97%;
+  --background: 40 25% 97%;
   --foreground: 222 47% 11%;
-  --border: 220 13% 89%;
-  --card: 0 0% 100%;
+  --border: 40 15% 88%;
+  --card: 40 30% 99%;
   --card-foreground: 222 47% 11%;
-  --card-border: 220 13% 91%;
-  --sidebar: 222 47% 20%;
+  --card-border: 40 15% 90%;
+  --sidebar: 218 75% 12%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 222 47% 25%;
-  --sidebar-primary: 48 96% 47%;
-  --sidebar-primary-foreground: 222 47% 11%;
-  --sidebar-accent: 222 47% 28%;
+  --sidebar-border: 218 60% 18%;
+  --sidebar-primary: 43 65% 52%;
+  --sidebar-primary-foreground: 218 75% 10%;
+  --sidebar-accent: 218 60% 22%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 48 96% 47%;
+  --sidebar-ring: 43 65% 52%;
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --popover-border: 220 13% 89%;
-  --primary: 222 47% 33%;
+  --popover-border: 40 15% 88%;
+  --primary: 218 75% 15%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 14% 93%;
+  --secondary: 40 15% 93%;
   --secondary-foreground: 222 47% 11%;
-  --muted: 220 14% 95%;
+  --muted: 40 12% 95%;
   --muted-foreground: 220 9% 46%;
-  --accent: 48 96% 47%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 43 65% 52%;
+  --accent-foreground: 218 75% 10%;
   --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 98%;
-  --input: 220 13% 82%;
-  --ring: 222 47% 33%;
-  --chart-1: 222 47% 33%;
-  --chart-2: 48 96% 47%;
+  --input: 40 12% 82%;
+  --ring: 218 75% 15%;
+  --chart-1: 218 75% 15%;
+  --chart-2: 43 65% 52%;
   --chart-3: 200 50% 45%;
   --chart-4: 220 9% 46%;
   --chart-5: 160 45% 40%;
-  --font-sans: 'Inter', 'Open Sans', sans-serif;
-  --font-serif: 'Playfair Display', 'Georgia', serif;
+  --font-sans: 'Inter', 'DM Sans', sans-serif;
+  --font-serif: 'Playfair Display', 'Lora', 'Georgia', serif;
   --font-mono: Menlo, monospace;
   --radius: 0.75rem;
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.04);
@@ -92,44 +92,44 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
-/* DARK MODE - Deep, Peaceful, Faith-Centered */
+/* DARK MODE - Deep Navy, Warm Gold Accents */
 .dark {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  --background: 222 33% 8%;
-  --foreground: 60 20% 95%;
-  --border: 222 20% 18%;
-  --card: 222 25% 12%;
-  --card-foreground: 60 20% 95%;
-  --card-border: 222 20% 16%;
-  --sidebar: 222 47% 14%;
-  --sidebar-foreground: 60 20% 95%;
-  --sidebar-border: 222 30% 22%;
-  --sidebar-primary: 48 96% 52%;
-  --sidebar-primary-foreground: 222 47% 11%;
-  --sidebar-accent: 222 30% 22%;
-  --sidebar-accent-foreground: 60 20% 95%;
-  --sidebar-ring: 48 96% 52%;
-  --popover: 222 25% 14%;
-  --popover-foreground: 60 20% 95%;
-  --popover-border: 222 20% 20%;
-  --primary: 222 50% 50%;
+  --background: 218 50% 7%;
+  --foreground: 40 20% 95%;
+  --border: 218 30% 16%;
+  --card: 218 35% 11%;
+  --card-foreground: 40 20% 95%;
+  --card-border: 218 25% 15%;
+  --sidebar: 218 60% 10%;
+  --sidebar-foreground: 40 20% 95%;
+  --sidebar-border: 218 40% 18%;
+  --sidebar-primary: 43 70% 55%;
+  --sidebar-primary-foreground: 218 75% 10%;
+  --sidebar-accent: 218 40% 20%;
+  --sidebar-accent-foreground: 40 20% 95%;
+  --sidebar-ring: 43 70% 55%;
+  --popover: 218 35% 13%;
+  --popover-foreground: 40 20% 95%;
+  --popover-border: 218 25% 18%;
+  --primary: 218 55% 45%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 222 18% 20%;
-  --secondary-foreground: 60 20% 95%;
-  --muted: 222 15% 16%;
+  --secondary: 218 20% 18%;
+  --secondary-foreground: 40 20% 95%;
+  --muted: 218 18% 14%;
   --muted-foreground: 220 10% 58%;
-  --accent: 48 90% 50%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 43 70% 55%;
+  --accent-foreground: 218 75% 10%;
   --destructive: 0 65% 48%;
   --destructive-foreground: 0 0% 98%;
-  --input: 222 18% 28%;
-  --ring: 222 50% 50%;
-  --chart-1: 222 50% 55%;
-  --chart-2: 48 90% 55%;
+  --input: 218 22% 25%;
+  --ring: 218 55% 45%;
+  --chart-1: 218 55% 50%;
+  --chart-2: 43 70% 58%;
   --chart-3: 200 50% 60%;
   --chart-4: 220 10% 58%;
   --chart-5: 160 45% 55%;

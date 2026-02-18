@@ -67,7 +67,7 @@ export default function Music() {
       <div className="px-5 mb-6">
         <Card className="shadow-md overflow-visible">
           <CardContent className="p-0">
-            <div className="relative mx-auto mt-6 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5" style={{ maxWidth: "280px", aspectRatio: "1" }}>
+            <div className="relative mx-auto mt-6 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-[#0A1F44]/20 to-[#0A1F44]/5 dark:from-[#D4AF37]/10 dark:to-[#D4AF37]/5" style={{ maxWidth: "280px", aspectRatio: "1" }}>
               {isLoading ? (
                 <Skeleton className="w-full h-full" />
               ) : displayTrack ? (
@@ -81,8 +81,8 @@ export default function Music() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center p-8">
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Volume2 className="w-10 h-10 text-primary/50" />
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[#0A1F44]/10 dark:bg-[#D4AF37]/10 flex items-center justify-center">
+                      <Volume2 className="w-10 h-10 text-[#0A1F44]/50 dark:text-[#D4AF37]/50" />
                     </div>
                     <p className="text-muted-foreground">{t("noResults")}</p>
                   </div>
@@ -129,7 +129,7 @@ export default function Music() {
               </Button>
 
               <button
-                className="w-16 h-16 rounded-full bg-[#1E3A8A] dark:bg-primary text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
+                className="w-16 h-16 rounded-full bg-[#0A1F44] dark:bg-[#D4AF37] text-white dark:text-[#0A1F44] flex items-center justify-center shadow-md transition-transform active:scale-95"
                 onClick={() => {
                   if (!currentTrack && tracks && tracks.length > 0) {
                     handlePlayTrack(0);
@@ -199,7 +199,7 @@ export default function Music() {
                   onClick={() => handlePlayTrack(index)}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
                     currentTrack?.id === track.id
-                      ? "bg-primary/10"
+                      ? "bg-[#D4AF37]/10"
                       : "hover-elevate active-elevate-2"
                   }`}
                   data-testid={`track-${track.id}`}
@@ -214,7 +214,7 @@ export default function Music() {
                   <div className="flex-1 min-w-0">
                     <p
                       className={`font-medium truncate ${
-                        currentTrack?.id === track.id ? "text-primary" : "text-foreground"
+                        currentTrack?.id === track.id ? "text-[#D4AF37]" : "text-foreground"
                       }`}
                     >
                       {track.title}

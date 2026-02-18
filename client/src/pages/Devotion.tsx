@@ -151,13 +151,13 @@ export default function Devotion() {
       <div className="flex-1 px-5 space-y-6">
         <Card className="shadow-md overflow-hidden">
           <CardContent className="p-0">
-            <div className="bg-primary/5 dark:bg-primary/10 px-6 py-6">
+            <div className="bg-[#0A1F44]/5 dark:bg-[#D4AF37]/5 px-6 py-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#EAB308]/20 flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-[#EAB308]" />
+                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-[#D4AF37]" />
                   </div>
-                  <span className="text-xs font-semibold text-primary uppercase tracking-widest">
+                  <span className="text-xs font-semibold text-[#0A1F44] dark:text-[#D4AF37] uppercase tracking-widest">
                     {t("todaysVerse")}
                   </span>
                 </div>
@@ -194,7 +194,7 @@ export default function Devotion() {
                     &laquo; {verse.verse} &raquo;
                   </blockquote>
                   <p 
-                    className="text-center text-[#EAB308] dark:text-[#EAB308] font-semibold"
+                    className="text-center text-[#D4AF37] font-semibold"
                     data-testid="text-verse-reference"
                   >
                     — {verse.reference}
@@ -250,7 +250,7 @@ export default function Devotion() {
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : verse ? (
-            <Card className="bg-primary/5 dark:bg-primary/10 shadow-sm">
+            <Card className="bg-[#0A1F44]/5 dark:bg-[#D4AF37]/5 shadow-sm">
               <CardContent className="p-5">
                 <p 
                   className="text-foreground leading-relaxed italic"
@@ -258,18 +258,18 @@ export default function Devotion() {
                 >
                   {verse.prayer}
                 </p>
-                <p className="text-right font-serif font-semibold text-[#EAB308] dark:text-[#EAB308] mt-4">
+                <p className="text-right font-serif font-semibold text-[#D4AF37] mt-4">
                   {t("amen")}
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-primary/5 dark:bg-primary/10 shadow-sm">
+            <Card className="bg-[#0A1F44]/5 dark:bg-[#D4AF37]/5 shadow-sm">
               <CardContent className="p-5">
                 <p className="text-foreground leading-relaxed italic">
                   Lord, thank You for being my Shepherd. Help me to trust in Your provision.
                 </p>
-                <p className="text-right font-serif font-semibold text-[#EAB308] dark:text-[#EAB308] mt-4">
+                <p className="text-right font-serif font-semibold text-[#D4AF37] mt-4">
                   {t("amen")}
                 </p>
               </CardContent>
