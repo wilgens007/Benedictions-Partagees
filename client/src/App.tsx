@@ -52,19 +52,17 @@ function AppLayout() {
 }
 
 function AppRouter() {
-  const [location] = useLocation();
-  const isAdmin = location.startsWith("/admin");
-
-  if (isAdmin) {
-    return (
-      <Switch>
-        <Route path="/admin/login" component={AdminLogin} />
-        <Route path="/admin/:rest*" component={AdminLayout} />
-      </Switch>
-    );
-  }
-
-  return <AppLayout />;
+  return (
+    <Switch>
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin" nest>
+        <AdminLayout />
+      </Route>
+      <Route>
+        <AppLayout />
+      </Route>
+    </Switch>
+  );
 }
 
 function App() {

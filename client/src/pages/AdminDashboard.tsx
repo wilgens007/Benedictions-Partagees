@@ -17,11 +17,11 @@ interface AdminStats {
 
 function AdminSidebar({ active, onNav, mobile, open, onClose }: { active: string; onNav: (p: string) => void; mobile: boolean; open: boolean; onClose: () => void }) {
   const items = [
-    { key: "overview", label: "Overview", icon: LayoutDashboard, path: "/admin" },
-    { key: "music", label: "Music", icon: Music, path: "/admin/music" },
-    { key: "testimonies", label: "Testimonies", icon: MessageSquareText, path: "/admin/testimonies" },
-    { key: "prayers", label: "Prayer Requests", icon: HandHeart, path: "/admin/prayers" },
-    { key: "users", label: "Users", icon: Users, path: "/admin/users" },
+    { key: "overview", label: "Overview", icon: LayoutDashboard, path: "/" },
+    { key: "music", label: "Music", icon: Music, path: "/music" },
+    { key: "testimonies", label: "Testimonies", icon: MessageSquareText, path: "/testimonies" },
+    { key: "prayers", label: "Prayer Requests", icon: HandHeart, path: "/prayers" },
+    { key: "users", label: "Users", icon: Users, path: "/users" },
   ];
 
   const sidebarContent = (

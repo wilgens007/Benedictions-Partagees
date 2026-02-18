@@ -10,10 +10,10 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function getActiveKey(path: string): string {
-  if (path.startsWith("/admin/music")) return "music";
-  if (path.startsWith("/admin/testimonies")) return "testimonies";
-  if (path.startsWith("/admin/prayers")) return "prayers";
-  if (path.startsWith("/admin/users")) return "users";
+  if (path.startsWith("/music")) return "music";
+  if (path.startsWith("/testimonies")) return "testimonies";
+  if (path.startsWith("/prayers")) return "prayers";
+  if (path.startsWith("/users")) return "users";
   return "overview";
 }
 
@@ -26,12 +26,12 @@ export default function AdminLayout() {
   useEffect(() => {
     const token = getAdminToken();
     if (!token) {
-      setLocation("/admin/login");
+      window.location.href = "/admin/login";
       return;
     }
     adminApi("/api/admin/me")
       .then(() => setAuthenticated(true))
-      .catch(() => setLocation("/admin/login"));
+      .catch(() => { window.location.href = "/admin/login"; });
   }, []);
 
   if (authenticated === null) {
@@ -66,11 +66,11 @@ export default function AdminLayout() {
         </header>
         <main className="flex-1 overflow-y-auto">
           <Switch>
-            <Route path="/admin/music" component={AdminMusic} />
-            <Route path="/admin/testimonies" component={AdminTestimonies} />
-            <Route path="/admin/prayers" component={AdminPrayers} />
-            <Route path="/admin/users" component={AdminUsers} />
-            <Route path="/admin" component={OverviewPage} />
+            <Route path="/music" component={AdminMusic} />
+            <Route path="/testimonies" component={AdminTestimonies} />
+            <Route path="/prayers" component={AdminPrayers} />
+            <Route path="/users" component={AdminUsers} />
+            <Route path="/" component={OverviewPage} />
           </Switch>
         </main>
       </div>
