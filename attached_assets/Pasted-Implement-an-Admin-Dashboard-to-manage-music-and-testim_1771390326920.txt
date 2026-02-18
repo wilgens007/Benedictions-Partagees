@@ -1,0 +1,106 @@
+Implement an Admin Dashboard to manage music and testimonies and to view users/premium status. The devotional system is automatic and must NOT be changed.
+
+ADMIN FEATURES REQUIRED:
+
+1) Admin Auth (simple + secure)
+- Create /admin/login page in React
+- Use a server-side session (express-session) or signed JWT cookie.
+- Admin access is ONLY allowed if user email is in ADMIN_EMAILS env var (comma-separated).
+- Add middleware requireAdmin that checks session and blocks all admin endpoints.
+- Never rely on frontend-only hiding.
+
+2) Music Manager (/admin/music)
+Data model:
+- Albums: id, title, artist, cover_url, created_at
+- Songs: id, album_id nullable, title, artist, cover_url, audio_url, is_early_access boolean, public_release_at datetime nullable, created_at, updated_at
+
+Music UI:
+- Tabs: Albums | Songs
+Albums:
+- Add / Edit / Delete
+- Cover image: allow either file upload OR paste URL.
+Songs:
+- Add / Edit / Delete
+- Album selection dropdown (optional)
+- Cover image: file upload OR URL
+- Audio: file upload OR URL (Suno link allowed)
+- Toggle: Early Access Only (Premium)
+- Public release date/time picker:
+   - If is_early_access=true and public_release_at is future -> Premium only
+   - If public_release_at is past -> becomes public automatically
+Badges in list:
+- Early Access
+- Scheduled
+- Public
+
+Uploads:
+- Implement upload endpoints on Express:
+   - POST /api/admin/upload/cover
+   - POST /api/admin/upload/audio
+- Store files in:
+   - Supabase Storage if env SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY + SUPABASE_STORAGE_BUCKET exist
+   - Otherwise fallback to local disk /uploads and serve statically from Express.
+- Return a URL that can be stored in DB.
+
+3) Testimony Manager (/admin/testimonies)
+Data model:
+- Testimony: id, user_id nullable, name_display, content_text, audio_url optional, status enum('pending','approved','rejected'), is_featured boolean, created_at
+
+Rules:
+- Admin can approve, reject, delete.
+- Admin can feature exactly ONE testimony of the week:
+   - setting one is_featured=true must automatically set all others to false
+- Admin can remove inappropriate content.
+
+UI:
+- Filter tabs: Pending / Approved / Rejected
+- List cards showing name, snippet, created date, audio link if any
+- Details modal/drawer to view full testimony
+- Buttons: Approve, Reject, Feature, Delete
+
+4) Users & Premium Status View (/admin/users) (Read-only)
+Assume a users table already exists or create one if missing:
+- users: id, email, created_at
+Premium fields:
+- is_premium boolean
+- premium_since datetime nullable
+Stripe IDs:
+- stripe_customer_id text nullable
+- stripe_subscription_id text nullable
+These fields may currently be in an existing table; if not, add them safely via migration.
+
+UI:
+- Search by email
+- Pagination
+- Columns: Email, Created, Premium (Active/Inactive), premium_since, stripe_customer_id (read-only), stripe_subscription_id (read-only)
+
+API ENDPOINTS:
+Create secure admin API routes:
+- /api/admin/albums CRUD
+- /api/admin/songs CRUD
+- /api/admin/testimonies list/update/delete + feature action
+- /api/admin/users list/search
+- /api/admin/upload/cover
+- /api/admin/upload/audio
+Every admin endpoint must use requireAdmin middleware.
+
+FRONTEND ADMIN UI:
+- Route group /admin with sidebar navigation:
+  - Overview (simple counts)
+  - Music
+  - Testimonies
+  - Users
+- BP branding: deep blue header (#0A1F44) with gold accents (#D4AF37), white rounded cards, soft shadows.
+- Mobile-friendly but optimized for desktop admin.
+
+SEED DATA:
+- Insert 1 sample album and 2 songs (one early access scheduled, one public).
+- Insert 2 testimonies (one pending, one approved).
+
+DELIVERABLES:
+- Working admin login and protected routes
+- Full admin UI pages
+- Full DB models + Drizzle migrations
+- Upload works (file or URL)
+- Feature testimony of the week works (only one featured at a time)
+- No changes to devotional automation system

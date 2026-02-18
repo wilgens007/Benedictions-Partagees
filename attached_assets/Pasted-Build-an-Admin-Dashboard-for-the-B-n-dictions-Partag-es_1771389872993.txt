@@ -1,0 +1,143 @@
+Build an Admin Dashboard for the “Bénédictions Partagées” Next.js (App Router) + TypeScript + Tailwind app.
+
+SCOPE:
+Only build:
+1) Admin Dashboard (/admin)
+2) Music Manager (songs + albums) with early access toggle + public release date
+3) Testimony Manager (approve/reject, feature testimony of the week, remove content)
+4) Users & Premium Status View (read-only)
+
+NO DEVOTIONAL MANAGEMENT:
+Devotional/verse content is handled automatically by the system. Do not build an admin interface for devotionals.
+
+TECH STACK:
+- Next.js App Router + TypeScript + Tailwind
+- PostgreSQL + Prisma ORM
+- Authentication already exists in the app (email/password)
+- Stripe subscriptions already exist (monthly/yearly) and user premium status is stored in DB
+- Use role-based access control for admins (RBAC)
+
+SECURITY / RBAC:
+1) Add a “role” field to user profile table: role = 'user' | 'admin'
+2) Only users with role='admin' can access /admin and all /api/admin/* endpoints.
+3) Enforce admin access server-side (middleware or server checks). Do NOT rely on hiding UI buttons only.
+4) Add a seed admin user setup:
+   - Provide a safe way to promote a user to admin (SQL script or a protected server action restricted by a hardcoded ADMIN_EMAILS env var).
+   - Use env var ADMIN_EMAILS (comma-separated list) as the initial allowlist.
+
+CONTENT STORAGE:
+Audio files and cover images:
+- Admin can either upload an audio file OR paste a URL.
+- Admin can upload a cover image OR paste a URL.
+Implement file uploads using a simple approach:
+- Store uploads in Supabase Storage (preferred) OR local /public/uploads for dev mode if storage keys not set.
+- Return stored file URLs to the DB.
+Also support external links like Suno URLs (audio_url can be any URL).
+
+DATABASE MODELS (Prisma):
+Create Prisma models for:
+- Profile (user role + premium + stripe ids)
+- Album
+- Song
+- Testimony
+Also ensure the existing Subscription data fields remain intact.
+
+Music:
+- Album: id, title, artist, cover_url, created_at
+- Song: id, album_id (nullable), title, artist, cover_url, audio_url, duration (optional), is_early_access boolean, public_release_at datetime nullable, created_at
+Rules:
+- If is_early_access=true AND public_release_at is in the future, only Premium users can play it.
+- If public_release_at is in the past, it becomes available to all users automatically.
+- Admin can set/edit these fields.
+
+Testimonies:
+- Testimony: id, user_id nullable (if anonymous submissions allowed), name_display, content_text, audio_url optional, status enum ('pending','approved','rejected'), is_featured boolean, created_at
+Rules:
+- Users can submit testimonies from the app (existing or create simple submission route).
+- Admin can approve/reject.
+- Admin can feature exactly ONE “Testimony of the Week” at a time (set is_featured=true and automatically set others to false).
+- Admin can delete/remove inappropriate content (hard delete or soft delete).
+
+Users & Premium Status:
+Create /admin/users page:
+- Table list: email, created_at, premium status (Active/Inactive), premium_since, stripe_customer_id, stripe_subscription_id
+- Read-only (no editing stripe ids).
+- Allow admin to search by email.
+
+ADMIN UI REQUIREMENTS:
+/ admin layout:
+- Left sidebar nav:
+  - Overview
+  - Music
+  - Testimonies
+  - Users
+- Clean “dashboard” look, matching BP branding:
+  - Deep blue header, gold accents, white cards.
+- Mobile-friendly but optimized for desktop admin usage.
+
+Admin pages:
+
+1) /admin/music
+- Tabs: Albums | Songs
+Albums:
+- Create album (title, artist, cover upload or URL)
+- Edit album
+- Delete album (warn if songs linked)
+Songs:
+- Create song:
+  - title, artist
+  - select album (optional)
+  - cover upload or URL
+  - audio upload or URL (Suno link allowed)
+  - toggle early access only
+  - set public release date/time (datetime picker)
+- Edit song
+- Delete song
+- Show badges:
+  - “Early Access” badge
+  - “Public” badge if release date passed
+  - “Scheduled” badge if release date in future
+
+2) /admin/testimonies
+- List with filters: Pending / Approved / Rejected
+- Each item shows:
+  - name_display
+  - snippet of content_text
+  - audio link if present
+  - created_at
+  - status
+Actions:
+- Approve
+- Reject
+- Feature (only if approved)
+- Remove (delete)
+- View full testimony details drawer/modal
+
+3) /admin/users
+- Search + pagination
+- Table columns:
+  - Email
+  - Created
+  - Premium status
+  - Stripe customer id
+  - Stripe subscription id
+- Read-only display.
+
+API ROUTES:
+Create secure admin API routes under /api/admin/* for:
+- albums CRUD
+- songs CRUD
+- testimonies approve/reject/feature/delete
+- users list/search
+Every admin route must verify admin role.
+
+DELIVERABLES:
+- Fully working /admin dashboard with all pages.
+- Prisma migrations applied.
+- Seed data: 1 album + 2 songs (one early access, one public) + 2 sample testimonies (one pending).
+- Clear README section: how to set ADMIN_EMAILS env var and how to make the first admin.
+
+IMPORTANT:
+- Do not break existing public app routes.
+- Keep the UI clean, premium, and consistent.
+- Ensure upload flow works even if admin chooses URL instead of file.
