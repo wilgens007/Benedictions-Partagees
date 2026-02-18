@@ -1,0 +1,91 @@
+You are building a mobile-first web app (PWA) for “Bénédictions Partagées” using Next.js (App Router) + TypeScript + Tailwind CSS. The UI must match a realistic iPhone screenshot-style devotional app.
+
+GOAL:
+Recreate the Home screen layout and styling exactly like this:
+- Blue-to-gold gradient header background
+- App name top-left: “Bénédictions Partagées”
+- Small mission line under header title: “Sharing blessings through the Gospel, worship, and testimonies.”
+- Large centered title: “Blessed Day”
+- Date line under it
+- Subtitle: “May God’s light guide your path today.”
+- White rounded verse card with gold accent + shadow
+- “Today’s Devotional” section with a gray card and “Read More →”
+- “Featured Worship” section with an album card containing image thumbnail on left, title + subtitle, and a gold play button on right, plus “Explore Music →”
+- “Testimony of the Week” card with a profile image circle + quote + “Share Your Testimony →”
+- Bottom navigation bar with 5 tabs: Home, Devotion, Music, Support, Prayer (icons included). It stays sticky at bottom, with blue background and gold active icon.
+
+DESIGN REQUIREMENTS:
+1) Use a calm deep blue gradient for header (#0A1F44) blending into warm gold light (#D4AF37) with subtle star/sparkle effect (can be CSS background or a faint overlay).
+2) Cards: rounded-2xl, soft shadow, clean spacing, premium feel.
+3) Typography:
+   - Header title uses an elegant serif (similar to Playfair Display).
+   - Body text uses a clean sans (similar to Inter).
+4) Keep the layout exactly as a phone screen: max-width around 430px, centered on desktop, full width on mobile.
+5) Add a light/dark mode toggle icon in header (moon icon).
+6) Add language toggle in header (EN/FR/HT). For now, EN works; others can be placeholders.
+
+DATA + CONTENT:
+- Today’s Verse defaults to Psalm 37:5–6 (KJV) with the verse text in italics style.
+- Devotional snippet: short paragraph (like the screenshot).
+- Featured Worship: one featured album/card placeholder with “Blessed Gospel Worship” and “Faith & Praise”.
+- Testimony: placeholder quote like “God opened doors for me when everything seemed impossible…”
+
+NAVIGATION:
+- / (Home)
+- /devotion (list devotionals + detail page)
+- /music (music list + album page)
+- /support (donation/support page)
+- /prayer (prayer page + prayer request form)
+Make these pages exist with simple placeholder content so navigation works.
+
+PREMIUM PLAN REQUIREMENTS:
+Add authentication + subscriptions:
+- Premium monthly: $4.99/month
+- Premium yearly: $50/year
+
+Premium features:
+1) Account login/signup (email + password).
+2) Save verses:
+   - On Home verse card, add a bookmark icon.
+   - When clicked, save verse to user’s dashboard (/dashboard/saved-verses).
+   - Non-logged users get a modal: “Create an account to save verses.”
+3) Playlist creation:
+   - In /music, add “Create Playlist” and allow users to add songs to a playlist.
+   - Playlists visible in /dashboard/playlists.
+   - Only Premium can create playlists. Free users see locked UI with upgrade CTA.
+4) Early access:
+   - Add a boolean field on songs/albums: earlyAccessOnly.
+   - If earlyAccessOnly=true, only Premium can play it; free users see a “Premium Early Access” badge and upgrade prompt.
+
+SUBSCRIPTION IMPLEMENTATION:
+- Use Stripe Checkout + Billing Portal.
+- Store users and subscriptions in a database (PostgreSQL with Prisma).
+- Enforce access control server-side in route handlers.
+- Provide a pricing page at /pricing with two tiers:
+   - Free (daily verse, devotion, prayer)
+   - Premium (save verses, playlists, early access)
+Include “Start Premium” buttons for monthly and yearly.
+After checkout, redirect back to /dashboard.
+
+DASHBOARD:
+Create /dashboard with these sections:
+- Saved Verses
+- Playlists
+- Premium status (Active/Inactive)
+- Manage Subscription (Stripe portal link for Premium)
+
+TECH REQUIREMENTS:
+- Next.js App Router + TypeScript + Tailwind.
+- Prisma + PostgreSQL.
+- Authentication with secure sessions (NextAuth or custom auth using cookies + bcrypt).
+- Stripe webhooks to update subscription status.
+- Clean architecture: /lib/auth, /lib/stripe, /lib/db.
+- Protect Premium features with middleware or server checks.
+
+DELIVERABLES:
+1) Implement the UI to match the screenshot-style layout on Home.
+2) Implement routing for all tabs.
+3) Implement auth + database + Stripe subscription system.
+4) Implement saved verses, playlists, and early access gating.
+5) Provide seed data for songs/albums and one earlyAccessOnly sample.
+6) Ensure it works end-to-end and looks premium on mobile.
