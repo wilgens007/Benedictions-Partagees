@@ -228,37 +228,6 @@ export default function Home() {
           </Card>
         )}
 
-        {(!user || !user.isPremium) && (
-          <Link href={user ? "/pricing" : "/login"}>
-            <Card className="shadow-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer" data-testid="card-premium-banner">
-              <CardContent className="p-0">
-                <div className="relative bg-gradient-to-r from-[#0A1F44] to-[#132D5E] dark:from-[#060E22] dark:to-[#0E2040] px-5 py-4">
-                  <div className="absolute top-0 right-0 w-28 h-28 bg-[#D4AF37]/10 rounded-full blur-2xl -translate-y-1/3 translate-x-1/4" />
-                  <div className="relative z-10 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
-                      <Crown className="w-5 h-5 text-[#D4AF37]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className="font-serif font-semibold text-white text-sm">
-                          {t("upgradeToPremium") || "Upgrade to Premium"}
-                        </p>
-                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-[10px] px-1.5 py-0">
-                          $4.99/mo
-                        </Badge>
-                      </div>
-                      <p className="text-white/60 text-xs leading-relaxed">
-                        {t("premiumBannerDesc") || "Unlimited saved verses, early access music & more"}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-[#D4AF37]/70 flex-shrink-0" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
-
         <div className="space-y-3" data-testid="section-devotional-preview">
           <div className="flex items-center justify-between gap-4">
             <h2 className="font-serif font-semibold text-xl text-foreground">
@@ -376,6 +345,37 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {(!user || !user.isPremium) && (
+          <Link href={user ? "/pricing" : "/login"}>
+            <Card className="shadow-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer" data-testid="card-premium-banner">
+              <CardContent className="p-0">
+                <div className="relative bg-gradient-to-r from-[#0A1F44] to-[#132D5E] dark:from-[#060E22] dark:to-[#0E2040] px-5 py-4">
+                  <div className="absolute top-0 right-0 w-28 h-28 bg-[#D4AF37]/10 rounded-full blur-2xl -translate-y-1/3 translate-x-1/4" />
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
+                      <Crown className="w-5 h-5 text-[#D4AF37]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-serif font-semibold text-white text-sm">
+                          {t("upgradeToPremium") || "Upgrade to Premium"}
+                        </p>
+                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-[10px] px-1.5 py-0">
+                          $4.99/mo
+                        </Badge>
+                      </div>
+                      <p className="text-white/60 text-xs leading-relaxed">
+                        {t("premiumBannerDesc") || "Unlimited saved verses, early access music & more"}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-[#D4AF37]/70 flex-shrink-0" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         )}
 
         <div className="relative rounded-xl overflow-hidden" data-testid="section-encouragement">
