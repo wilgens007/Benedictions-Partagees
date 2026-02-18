@@ -1,0 +1,157 @@
+You are working in an existing app with:
+- Frontend: React + Vite
+- Backend: Express
+- Database: PostgreSQL using Drizzle ORM
+
+TASK:
+Implement Premium subscriptions with Stripe:
+- $4.99/month
+- $50/year
+
+This task is ONLY about subscription setup + premium gating and does NOT include building the admin dashboard.
+
+REQUIREMENTS:
+
+A) ENV / CONFIG
+Add environment variables:
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- STRIPE_PRICE_MONTHLY (price_...)
+- STRIPE_PRICE_YEARLY (price_...)
+- APP_URL (public base URL)
+
+B) DATABASE (Drizzle)
+Create/extend tables:
+
+1) users table (if it already exists, extend safely):
+- id (uuid)
+- email (text unique)
+- password_hash (text) if email/password auth exists; if not, create minimal.
+- created_at timestamp
+
+2) subscriptions table:
+- id uuid
+- user_id uuid (FK users.id)
+- stripe_customer_id text
+- stripe_subscription_id text
+- stripe_price_id text
+- status text (active, trialing, past_due, canceled, unpaid, incomplete)
+- current_period_end timestamp
+- cancel_at_period_end boolean
+- created_at, updated_at
+
+3) Add premium flags to users for fast reads (optional but recommended):
+- is_premium boolean default false
+- premium_since timestamp nullable
+
+NOTE:
+Keep the subscriptions table as the source of truth, but update users.is_premium for quick gating.
+
+C) STRIPE BACKEND (Express)
+Implement routes:
+
+1) POST /api/billing/create-checkout-session
+Input: { plan: 'monthly' | 'yearly' }
+Auth required.
+- Determine priceId based on plan env vars
+- Create Stripe customer if user doesn't have one
+- Create Stripe Checkout Session:
+   - mode: 'subscription'
+   - line_items: [{ price: priceId, quantity: 1 }]
+   - success_url: APP_URL + '/dashboard?checkout=success'
+   - cancel_url: APP_URL + '/pricing?checkout=cancel'
+   - metadata: { userId }
+Return: { url } for client redirect
+
+2) POST /api/billing/create-portal-session
+Auth required.
+- Create Stripe Billing Portal session using stripe_customer_id
+Return: { url }
+
+3) POST /api/stripe/webhook
+Use raw body middleware for webhook verification.
+Handle events:
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+For each event:
+- Identify userId via metadata.userId OR via customer lookup in DB
+- Upsert into subscriptions table:
+   - status
+   - stripe_customer_id
+   - stripe_subscription_id
+   - stripe_price_id
+   - current_period_end
+   - cancel_at_period_end
+- Set users.is_premium = true if status in ('active','trialing')
+- Set users.is_premium = false otherwise
+- Set users.premium_since when becoming premium
+
+Add logging and error handling.
+On webhook signature failure: return 400.
+
+D) AUTH ASSUMPTION
+Use whatever auth you already have. If no auth exists yet, create minimal email/password auth:
+- POST /api/auth/register
+- POST /api/auth/login
+- Use bcrypt password hashing
+- Use httpOnly cookie session (express-session) or signed JWT cookie
+Premium endpoints MUST require auth.
+
+E) FRONTEND (React)
+Create /pricing page:
+- Two cards: Free and Premium
+- Premium shows:
+   - $4.99/month button -> plan=monthly
+   - $50/year button -> plan=yearly
+- When user clicks, call POST /api/billing/create-checkout-session and redirect browser to returned url.
+- If not logged in, redirect to /login and then back to /pricing.
+
+Create /dashboard page:
+- Show Premium status:
+   - Active/Inactive
+- If premium active:
+   - Show “Manage Subscription” button (billing portal)
+- If not premium:
+   - Show “Upgrade to Premium” button linking /pricing
+
+F) PREMIUM GATING (Server-side required)
+Implement a reusable function/middleware:
+- requirePremium(req,res,next)
+It checks the logged-in user and verifies:
+- users.is_premium === true
+OR
+- subscriptions.status in ('active','trialing') and current_period_end > now()
+Use server-side enforcement (not UI-only).
+
+Apply requirePremium to these routes/features (create stubs if features not built yet):
+1) POST /api/playlists/* (playlist creation is premium)
+2) POST /api/verses/save (saving verses is premium or at least requires account; implement toggle below)
+
+G) FEATURE RULES (as requested)
+1) Saved Verses:
+- Require login at minimum.
+- Option A: saving verses is PREMIUM-only (recommended for value)
+- Option B: saving verses is free but premium gets unlimited; free gets limit (e.g., 20)
+Implement whichever is easiest, default to Option A unless configured otherwise.
+Add env var:
+- SAVED_VERSES_MODE = 'premium_only' | 'free_limited'
+If free_limited, enforce limit server-side.
+
+2) Early Access Music:
+Add a boolean field on songs/albums:
+- is_early_access boolean
+- public_release_at timestamp nullable
+Playback rule:
+- If is_early_access = true AND public_release_at is in future => requirePremium to access/stream
+- Else public for all
+Enforce this server-side on the music stream endpoint.
+
+DELIVERABLES:
+- Stripe checkout subscription works for monthly/yearly
+- Webhook updates DB and user is_premium correctly
+- Pricing page + Dashboard status + billing portal
+- Premium gating middleware used server-side
+- Drizzle migrations included
+- README note explaining which env vars to set and which Stripe webhook events to enable
