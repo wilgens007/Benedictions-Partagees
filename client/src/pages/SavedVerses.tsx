@@ -37,14 +37,18 @@ export default function SavedVerses() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/verses/saved/${id}`);
+      const res = await apiRequest("DELETE", `/api/verses/saved/${id}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete verse");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/verses/saved"] });
       toast({ title: t("verseRemoved") || "Verse removed" });
     },
-    onError: () => {
-      toast({ title: t("error") || "Error", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: error.message || "Error", variant: "destructive" });
     },
   });
 
@@ -185,7 +189,7 @@ export default function SavedVerses() {
                 {t("verseLimitReached") || "Verse limit reached"}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {t("upgradForUnlimited") || "Upgrade to Premium for unlimited saved verses."}
+                {t("upgradeForUnlimited") || "Upgrade to Premium for unlimited saved verses."}
               </p>
               <Link href="/pricing">
                 <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37]" data-testid="button-upgrade-from-verses">

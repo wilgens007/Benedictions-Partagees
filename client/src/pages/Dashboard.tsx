@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
+import { useLanguage } from "@/lib/LanguageContext";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface SavedVersesInfo {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading, logout } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [isManaging, setIsManaging] = useState(false);
 
@@ -53,6 +55,12 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation("/login");
+    }
+  }, [authLoading, user, setLocation]);
+
   if (authLoading) {
     return (
       <div className="px-5 py-8 space-y-4">
@@ -64,7 +72,6 @@ export default function Dashboard() {
   }
 
   if (!user) {
-    setLocation("/login");
     return null;
   }
 
@@ -100,7 +107,7 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
               <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-              Subscription
+              {t("subscription") || "Subscription"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -109,7 +116,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge className="bg-[#D4AF37]/15 text-[#D4AF37] no-default-hover-elevate no-default-active-elevate" data-testid="badge-plan-active">
                     <Crown className="w-3 h-3 mr-1" />
-                    Premium Active
+                    {t("premiumActive") || "Premium Active"}
                   </Badge>
                   {user.premiumSince && (
                     <span className="text-xs text-muted-foreground" data-testid="text-premium-since">
@@ -132,7 +139,7 @@ export default function Dashboard() {
                   ) : (
                     <span className="flex items-center gap-2">
                       <Settings className="w-4 h-4" />
-                      Manage Subscription
+                      {t("manageSubscription") || "Manage Subscription"}
                     </span>
                   )}
                 </Button>
@@ -141,11 +148,11 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="secondary" data-testid="badge-plan-free">
-                    Free Plan
+                    {t("freePlan") || "Free Plan"}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Upgrade to Premium for unlimited saved verses, early access music, and more.
+                  {t("upgradeDescription") || "Upgrade to Premium for unlimited saved verses, early access music, and more."}
                 </p>
                 <Link href="/pricing">
                   <Button
@@ -153,7 +160,7 @@ export default function Dashboard() {
                     data-testid="button-upgrade"
                   >
                     <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Premium
+                    {t("upgradeToPremium") || "Upgrade to Premium"}
                   </Button>
                 </Link>
               </div>
@@ -166,7 +173,7 @@ export default function Dashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
                 <BookOpen className="w-5 h-5 text-muted-foreground" />
-                Saved Verses
+                {t("savedVerses") || "Saved Verses"}
                 <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
               </CardTitle>
             </CardHeader>
@@ -203,7 +210,7 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
               <User className="w-5 h-5 text-muted-foreground" />
-              Account
+              {t("account") || "Account"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -225,7 +232,7 @@ export default function Dashboard() {
           data-testid="button-logout"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
+          {t("signOut") || "Sign Out"}
         </Button>
       </div>
     </div>
