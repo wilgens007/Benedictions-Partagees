@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Crown, User, Mail, BookOpen, LogOut, Settings, Sparkles } from "lucide-react";
+import { Crown, User, Mail, BookOpen, LogOut, Settings, Sparkles, ChevronRight } from "lucide-react";
 
 interface SavedVersesInfo {
   count: number;
@@ -161,40 +161,43 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md" data-testid="card-saved-verses">
-          <CardHeader className="pb-3">
-            <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
-              <BookOpen className="w-5 h-5 text-muted-foreground" />
-              Saved Verses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {versesLoading ? (
-              <Skeleton className="h-6 w-32" />
-            ) : versesInfo ? (
-              <div className="space-y-2">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-2xl font-bold text-foreground" data-testid="text-verses-count">
-                    {versesInfo.count}
-                  </span>
-                  <span className="text-sm text-muted-foreground" data-testid="text-verses-limit">
-                    / {versesInfo.limit === null ? "Unlimited" : versesInfo.limit}
-                  </span>
-                </div>
-                {versesInfo.limit !== null && (
-                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#D4AF37] rounded-full transition-all"
-                      style={{ width: `${Math.min((versesInfo.count / (versesInfo.limit || 20)) * 100, 100)}%` }}
-                    />
+        <Link href="/saved-verses">
+          <Card className="shadow-md hover-elevate active-elevate-2 cursor-pointer overflow-visible" data-testid="card-saved-verses">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
+                <BookOpen className="w-5 h-5 text-muted-foreground" />
+                Saved Verses
+                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {versesLoading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : versesInfo ? (
+                <div className="space-y-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-2xl font-bold text-foreground" data-testid="text-verses-count">
+                      {versesInfo.count}
+                    </span>
+                    <span className="text-sm text-muted-foreground" data-testid="text-verses-limit">
+                      / {versesInfo.limit === null ? "Unlimited" : versesInfo.limit}
+                    </span>
                   </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground" data-testid="text-verses-count">0 saved</p>
-            )}
-          </CardContent>
-        </Card>
+                  {versesInfo.limit !== null && (
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#D4AF37] rounded-full transition-all"
+                        style={{ width: `${Math.min((versesInfo.count / (versesInfo.limit || 20)) * 100, 100)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground" data-testid="text-verses-count">0 saved</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card className="shadow-md" data-testid="card-account-info">
           <CardHeader className="pb-3">

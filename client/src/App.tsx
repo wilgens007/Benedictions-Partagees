@@ -21,6 +21,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Pricing from "@/pages/Pricing";
 import Dashboard from "@/pages/Dashboard";
+import SavedVerses from "@/pages/SavedVerses";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminLayout from "@/pages/AdminLayout";
 import NotFound from "@/pages/not-found";
@@ -39,6 +40,7 @@ function PublicRouter() {
       <Route path="/register" component={Register} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/saved-verses" component={SavedVerses} />
       <Route component={NotFound} />
     </Switch>
   );

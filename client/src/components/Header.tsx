@@ -1,4 +1,5 @@
-import { Moon, Sun, Globe } from "lucide-react";
+import { Moon, Sun, Globe, User, Crown } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/lib/ThemeContext";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useAuth } from "@/lib/AuthContext";
 import type { Language } from "@shared/schema";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
@@ -20,6 +22,7 @@ const languages: { code: Language; name: string; flag: string }[] = [
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { user } = useAuth();
 
   const currentLang = languages.find(l => l.code === language);
 
@@ -78,6 +81,22 @@ export function Header() {
               <Sun className="w-4 h-4" />
             )}
           </Button>
+
+          <Link href={user ? "/dashboard" : "/login"}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white/90 no-default-hover-elevate no-default-active-elevate relative"
+              data-testid="button-account"
+            >
+              <User className="w-4 h-4" />
+              {user?.isPremium && (
+                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                  <Crown className="w-2 h-2 text-[#0A1F44]" />
+                </div>
+              )}
+            </Button>
+          </Link>
         </div>
       </div>
     </header>
