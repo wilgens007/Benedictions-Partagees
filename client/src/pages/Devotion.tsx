@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Share2, Bookmark, BookOpen, Bell, BellOff, MessageCircle } from "lucide-react";
-import { SiFacebook, SiWhatsapp } from "react-icons/si";
+import { SiWhatsapp } from "react-icons/si";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -286,40 +286,14 @@ export default function Devotion() {
           </h2>
           <div className="flex gap-3 flex-wrap">
             {shareData && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(shareData.whatsappUrl, "_blank")}
-                  data-testid="button-share-whatsapp"
-                >
-                  <SiWhatsapp className="w-4 h-4 mr-2 text-green-600" />
-                  WhatsApp
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    if (navigator.share) {
-                      try {
-                        await navigator.share({
-                          title: t("dailyDevotion"),
-                          text: shareData.shareCaption,
-                          url: shareData.devotionUrl || "https://benedictionspartagees.org/devotion",
-                        });
-                      } catch (err) {
-                        if ((err as Error).name !== "AbortError") {
-                          window.open(shareData.facebookUrl, "_blank");
-                        }
-                      }
-                    } else {
-                      window.open(shareData.facebookUrl, "_blank");
-                    }
-                  }}
-                  data-testid="button-share-facebook"
-                >
-                  <SiFacebook className="w-4 h-4 mr-2 text-blue-600" />
-                  Facebook
-                </Button>
-              </>
+              <Button
+                variant="outline"
+                onClick={() => window.open(shareData.whatsappUrl, "_blank")}
+                data-testid="button-share-whatsapp"
+              >
+                <SiWhatsapp className="w-4 h-4 mr-2 text-green-600" />
+                WhatsApp
+              </Button>
             )}
             <Button
               variant="outline"
