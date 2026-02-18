@@ -7,7 +7,36 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email").unique(),
+  isPremium: boolean("is_premium").default(false),
+  premiumSince: timestamp("premium_since"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
 });
+
+export const userSessions = pgTable("user_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export type UserSession = typeof userSessions.$inferSelect;
+
+export const savedVerses = pgTable("saved_verses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  reference: text("reference").notNull(),
+  verseText: text("verse_text").notNull(),
+  savedAt: timestamp("saved_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("saved_verses_user_ref_idx").on(table.userId, table.reference),
+]);
+
+export type SavedVerse = typeof savedVerses.$inferSelect;
+export const insertSavedVerseSchema = createInsertSchema(savedVerses).omit({ id: true, savedAt: true });
+export type InsertSavedVerse = z.infer<typeof insertSavedVerseSchema>;
 
 export const dailyContent = pgTable("daily_content", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -118,6 +147,18 @@ export type AdminSession = typeof adminSessions.$inferSelect;
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+});
+
+export const registerUserSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "Name is required"),
+});
+
+export const loginUserSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

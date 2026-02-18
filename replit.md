@@ -39,10 +39,38 @@ Preferred communication style: Simple, everyday language.
 - **Startup Fallback**: On server boot, checks if today's content exists in DB; generates if missing
 - **Environment Variable**: `CRON_SECRET` — shared secret for authenticating the generation endpoint
 
+### Premium Subscriptions (Stripe)
+- **Integration**: stripe-replit-sync manages `stripe` schema automatically — never insert/update stripe schema directly
+- **Products**: "Bénédictions Premium" with monthly ($4.99) and yearly ($50) prices
+- **Stripe Client**: `server/stripeClient.ts` — fetches credentials from Replit connection API, provides `getUncachableStripeClient()`, `getStripeSync()`
+- **Webhook Handler**: `server/webhookHandlers.ts` — delegates to `stripe-replit-sync` for processing
+- **Webhook Route**: Registered BEFORE `express.json()` in `server/index.ts` using `express.raw()`
+- **Seed Script**: `server/seedProducts.ts` — idempotent product/price creation via Stripe API, runs on startup
+- **Billing Routes**: `server/billingRoutes.ts` — checkout session creation, portal session, subscription status, saved verses CRUD
+- **Pricing Page**: `/pricing` — Free vs Premium tier comparison with monthly/yearly toggle
+- **Dashboard**: `/dashboard` — user info, subscription status, manage subscription, saved verses count
+
+### User Authentication
+- **Auth Routes**: `server/authRoutes.ts` — register, login, logout, me endpoints
+- **Auth Logic**: `server/userAuth.ts` — bcrypt password hashing, session tokens via `user_sessions` table, cookie-based auth
+- **Auth Context**: `client/src/lib/AuthContext.tsx` — React context with `useAuth()` hook, TanStack Query for `/api/auth/me`
+- **Middleware**: `requireUser` (401 if not logged in), `optionalUser` (attach user if logged in), `requirePremium` (403 if not premium)
+- **Session Cookie**: `user_token` httpOnly cookie, 30-day expiry
+
+### Saved Verses System
+- **Mode**: `SAVED_VERSES_MODE=free_limited` with `FREE_SAVED_VERSES_LIMIT=20`
+- **DB Table**: `saved_verses` with unique constraint on `(user_id, reference)`
+- **Endpoints**: `GET/POST/DELETE /api/verses/saved` — enforces 20-verse cap for free users (HTTP 403), unlimited for premium
+- **Frontend**: Save button on daily verse, saved verses list on dashboard
+
+### Early Access Music
+- **Song Field**: `is_early_access` boolean on songs table
+- **Gating**: `GET /api/music` uses `optionalUser` middleware — early access songs return `audioUrl: null, locked: true` for non-premium users
+
 ### Key Design Patterns
 - **Shared Types**: TypeScript types and schemas in `shared/` directory are used by both client and server
 - **Path Aliases**: `@/` for client source, `@shared/` for shared code, `@assets/` for attached assets
-- **Context Providers**: Theme and Language contexts wrap the application for global state
+- **Context Providers**: Theme, Language, and Auth contexts wrap the application for global state
 - **Internationalization**: Translation system with support for English, French, and Haitian Creole
 
 ### Push Notifications

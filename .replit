@@ -50,3 +50,5 @@ VAPID_PUBLIC_KEY = "BHPA09VN1LAzbDLi-3firKGmkHY7z6P-PVuZiqUAoxfxxjV9CkFEaZdUmpyW
 VAPID_PRIVATE_KEY = "vgBsgW73pP04IopJIPS28u-72kYslKPCbF2wOpwgBuI"
 VAPID_SUBJECT = "mailto:contact@benedictionspartagees.org"
 ADMIN_EMAILS = "admin@benedictionspartagees.org"
+SAVED_VERSES_MODE = "free_limited"
+FREE_SAVED_VERSES_LIMIT = "20"

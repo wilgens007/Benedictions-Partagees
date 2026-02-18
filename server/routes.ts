@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema } from "@shared/schema";
+import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
@@ -11,6 +11,7 @@ import { supportConfig, dailyContent, pushSubscriptions } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
+import { optionalUser } from "./userAuth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -297,10 +298,25 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/music", async (req, res) => {
+  app.get("/api/music", optionalUser, async (req: any, res) => {
     try {
       const tracks = await storage.getMusicTracks();
-      res.json(tracks);
+      const user = req.user;
+      const isPremium = user?.isPremium || false;
+
+      const filteredTracks = tracks.map((track: any) => {
+        if (track.isEarlyAccess && !isPremium) {
+          return {
+            ...track,
+            audioUrl: null,
+            locked: true,
+            lockReason: "early_access",
+          };
+        }
+        return { ...track, locked: false };
+      });
+
+      res.json(filteredTracks);
     } catch (error) {
       console.error("Error fetching music tracks:", error);
       res.status(500).json({ error: "Failed to fetch music tracks" });
