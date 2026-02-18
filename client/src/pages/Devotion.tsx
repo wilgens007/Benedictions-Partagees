@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Share2, Bookmark, BookOpen, Bell, BellOff, MessageCircle } from "lucide-react";
+import { Share2, Bookmark, BookmarkCheck, BookOpen, Bell, BellOff, MessageCircle } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useAuth } from "@/lib/AuthContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { DailyVerse } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 
 export default function Devotion() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
@@ -108,11 +111,51 @@ export default function Devotion() {
     }
   };
 
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!verse) throw new Error("No verse to save");
+      const res = await apiRequest("POST", "/api/verses/saved", {
+        reference: verse.reference,
+        verseText: verse.verse,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save verse");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/verses/saved"] });
+      toast({
+        title: data?.message === "Verse already saved" ? (t("verseAlreadySaved") || "Verse already saved") : (t("verseSaved") || "Verse saved"),
+        description: verse?.reference || "",
+      });
+    },
+    onError: (error: Error) => {
+      if (error.message.includes("Free verse limit")) {
+        toast({
+          title: t("verseLimitReached") || "Verse limit reached",
+          description: t("upgradeForUnlimited") || "Upgrade to Premium for unlimited saved verses.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: error.message || "Error",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   const handleSave = () => {
-    toast({
-      title: t("verseSaved"),
-      description: verse?.reference || "",
-    });
+    if (!user) {
+      toast({
+        title: t("signInToSeeVerses") || "Sign in to save verses",
+        variant: "destructive",
+      });
+      return;
+    }
+    saveMutation.mutate();
   };
 
   const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {
@@ -175,6 +218,7 @@ export default function Devotion() {
                     variant="ghost" 
                     size="icon"
                     onClick={handleSave}
+                    disabled={saveMutation.isPending}
                     data-testid="button-save"
                   >
                     <Bookmark className="w-4 h-4" />
