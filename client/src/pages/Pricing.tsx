@@ -13,8 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Crown, Check, BookOpen, Music, ListMusic, Heart, Sparkles } from "lucide-react";
 
 interface PriceItem {
-  id: string;
-  nickname?: string;
+  price_id: string;
+  product_id: string;
+  product_name: string;
   unit_amount: number;
   currency: string;
   recurring?: {
@@ -69,7 +70,7 @@ export default function Pricing() {
     setIsCheckingOut(true);
     try {
       const res = await apiRequest("POST", "/api/billing/create-checkout-session", {
-        priceId: selectedPrice.id,
+        priceId: selectedPrice.price_id,
       });
       const { url } = await res.json();
       window.location.href = url;
