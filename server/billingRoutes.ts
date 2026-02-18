@@ -4,6 +4,7 @@ import { users, savedVerses } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { requireUser, optionalUser } from "./userAuth";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
+import { WebhookHandlers } from "./webhookHandlers";
 
 const router = Router();
 
@@ -101,18 +102,23 @@ router.post("/api/billing/create-portal-session", requireUser, async (req: any, 
 router.get("/api/billing/subscription", requireUser, async (req: any, res) => {
   try {
     const user = req.user;
-    if (!user.stripeSubscriptionId) {
-      return res.json({ subscription: null, isPremium: user.isPremium });
+
+    if (user.stripeCustomerId) {
+      await WebhookHandlers.syncUserPremiumStatus(user.id);
+      const [refreshedUser] = await db.select().from(users).where(eq(users.id, user.id));
+      if (refreshedUser) {
+        const subResult = refreshedUser.stripeSubscriptionId
+          ? await db.execute(sql`SELECT * FROM stripe.subscriptions WHERE id = ${refreshedUser.stripeSubscriptionId}`)
+          : { rows: [] };
+
+        return res.json({
+          subscription: subResult.rows[0] || null,
+          isPremium: refreshedUser.isPremium,
+        });
+      }
     }
 
-    const result = await db.execute(
-      sql`SELECT * FROM stripe.subscriptions WHERE id = ${user.stripeSubscriptionId}`
-    );
-
-    res.json({
-      subscription: result.rows[0] || null,
-      isPremium: user.isPremium,
-    });
+    res.json({ subscription: null, isPremium: user.isPremium });
   } catch (error: any) {
     console.error("Error fetching subscription:", error.message);
     res.status(500).json({ error: "Failed to fetch subscription" });

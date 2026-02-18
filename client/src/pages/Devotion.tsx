@@ -1,11 +1,21 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Share2, Bookmark, BookmarkCheck, BookOpen, Bell, BellOff, MessageCircle } from "lucide-react";
+import { useLocation } from "wouter";
+import { Share2, Bookmark, BookmarkCheck, BookOpen, Bell, BellOff, MessageCircle, LogIn, UserPlus } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAuth } from "@/lib/AuthContext";
@@ -17,6 +27,8 @@ export default function Devotion() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const pushSupported = isPushSupported();
@@ -149,10 +161,7 @@ export default function Devotion() {
 
   const handleSave = () => {
     if (!user) {
-      toast({
-        title: t("signInToSeeVerses") || "Sign in to save verses",
-        variant: "destructive",
-      });
+      setShowLoginDialog(true);
       return;
     }
     saveMutation.mutate();
@@ -373,6 +382,44 @@ export default function Devotion() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent data-testid="dialog-login-prompt">
+          <AlertDialogHeader>
+            <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2">
+              <Bookmark className="w-6 h-6 text-[#D4AF37]" />
+            </div>
+            <AlertDialogTitle className="text-center font-serif">
+              {t("signInToSave")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              {t("signInToSaveDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              className="w-full bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37]"
+              onClick={() => { setShowLoginDialog(false); setLocation("/login"); }}
+              data-testid="button-dialog-login"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              {t("signIn")}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => { setShowLoginDialog(false); setLocation("/register"); }}
+              data-testid="button-dialog-register"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              {t("createAccount")}
+            </Button>
+            <AlertDialogCancel data-testid="button-dialog-cancel">
+              {t("cancel") || "Cancel"}
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
