@@ -12,6 +12,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 import { optionalUser } from "./userAuth";
+import { getUncachableStripeClient } from "./stripeClient";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -295,6 +296,46 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Error fetching support config:", error);
       res.json({});
+    }
+  });
+
+  app.post("/api/support/create-donation-session", async (req, res) => {
+    try {
+      const { amount, customAmount } = req.body;
+      const donationAmount = customAmount ? Math.round(parseFloat(customAmount) * 100) : amount ? amount * 100 : null;
+
+      if (!donationAmount || donationAmount < 100) {
+        return res.status(400).json({ error: "Minimum donation is $1.00" });
+      }
+      if (donationAmount > 999999) {
+        return res.status(400).json({ error: "Maximum donation is $9,999.99" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Donation to Bénédictions Partagées",
+              description: "Thank you for supporting our ministry",
+            },
+            unit_amount: donationAmount,
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        success_url: `${baseUrl}/support/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/support`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Error creating donation session:", error.message);
+      res.status(500).json({ error: "Failed to create donation session" });
     }
   });
 
