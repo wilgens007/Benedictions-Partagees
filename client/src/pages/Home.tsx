@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X, Play } from "lucide-react";
+import { Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X, Play, Crown } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAudioPlayer } from "@/lib/AudioPlayerContext";
+import { useAuth } from "@/lib/AuthContext";
 import type { DailyVerse, Encouragement, MusicTrack } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
@@ -16,6 +18,7 @@ export default function Home() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const { playTrack, currentTrack, isPlaying } = useAudioPlayer();
+  const { user } = useAuth();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(() => {
@@ -223,6 +226,37 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {(!user || !user.isPremium) && (
+          <Link href={user ? "/pricing" : "/login"}>
+            <Card className="shadow-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer" data-testid="card-premium-banner">
+              <CardContent className="p-0">
+                <div className="relative bg-gradient-to-r from-[#0A1F44] to-[#132D5E] dark:from-[#060E22] dark:to-[#0E2040] px-5 py-4">
+                  <div className="absolute top-0 right-0 w-28 h-28 bg-[#D4AF37]/10 rounded-full blur-2xl -translate-y-1/3 translate-x-1/4" />
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
+                      <Crown className="w-5 h-5 text-[#D4AF37]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-serif font-semibold text-white text-sm">
+                          {t("upgradeToPremium") || "Upgrade to Premium"}
+                        </p>
+                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-[10px] px-1.5 py-0">
+                          $4.99/mo
+                        </Badge>
+                      </div>
+                      <p className="text-white/60 text-xs leading-relaxed">
+                        {t("premiumBannerDesc") || "Unlimited saved verses, early access music & more"}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-[#D4AF37]/70 flex-shrink-0" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         )}
 
         <div className="space-y-3" data-testid="section-devotional-preview">
