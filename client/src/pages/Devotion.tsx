@@ -39,6 +39,7 @@ export default function Devotion() {
     shareCaption: string;
     reference: string;
     verseExcerpt: string;
+    devotionUrl?: string;
   }>({
     queryKey: ["/api/share/today", language],
     queryFn: async () => {
@@ -296,7 +297,23 @@ export default function Devotion() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => window.open(shareData.facebookUrl, "_blank")}
+                  onClick={async () => {
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: t("dailyDevotion"),
+                          text: shareData.shareCaption,
+                          url: shareData.devotionUrl || "https://benedictionspartagees.org/devotion",
+                        });
+                      } catch (err) {
+                        if ((err as Error).name !== "AbortError") {
+                          window.open(shareData.facebookUrl, "_blank");
+                        }
+                      }
+                    } else {
+                      window.open(shareData.facebookUrl, "_blank");
+                    }
+                  }}
                   data-testid="button-share-facebook"
                 >
                   <SiFacebook className="w-4 h-4 mr-2 text-blue-600" />
