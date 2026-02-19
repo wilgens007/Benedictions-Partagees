@@ -476,6 +476,37 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══════════════ NOTIFICATION BANNER ═══════════════ */}
+      {pushSupported && !pushEnabled && (
+        <section className="px-5 md:px-8 pb-6 max-w-5xl mx-auto w-full" data-testid="section-notification-cta">
+          <Card className="shadow-sm border-[#D4AF37]/20 overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
+                <div className="w-10 h-10 rounded-full bg-[#D4AF37]/15 flex items-center justify-center flex-shrink-0">
+                  <Bell className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm" data-testid="text-notification-banner-title">
+                    {t("notificationBannerTitle")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t("notificationBannerDesc")}</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleTogglePush}
+                  disabled={pushLoading}
+                  className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold flex-shrink-0"
+                  data-testid="button-notification-enable"
+                >
+                  <Bell className="w-3.5 h-3.5 mr-1.5" />
+                  {t("turnOn")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
       {/* ═══════════════ FEATURED MUSIC CAROUSEL ═══════════════ */}
       {carouselTracks.length > 0 && (
         <section className="pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-featured-music-carousel" ref={worshipRef}>
@@ -768,37 +799,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
-      )}
-
-      {/* ═══════════════ NOTIFICATION BANNER ═══════════════ */}
-      {pushSupported && !pushEnabled && (
-        <section className="px-5 md:px-8 pb-6 max-w-5xl mx-auto w-full" data-testid="section-notification-cta">
-          <Card className="shadow-sm border-[#D4AF37]/20 overflow-hidden">
-            <CardContent className="p-0">
-              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
-                <div className="w-10 h-10 rounded-full bg-[#D4AF37]/15 flex items-center justify-center flex-shrink-0">
-                  <Bell className="w-5 h-5 text-[#D4AF37]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm" data-testid="text-notification-banner-title">
-                    {t("notificationBannerTitle")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{t("notificationBannerDesc")}</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleTogglePush}
-                  disabled={pushLoading}
-                  className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold flex-shrink-0"
-                  data-testid="button-notification-enable"
-                >
-                  <Bell className="w-3.5 h-3.5 mr-1.5" />
-                  {t("turnOn")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </section>
       )}
 
