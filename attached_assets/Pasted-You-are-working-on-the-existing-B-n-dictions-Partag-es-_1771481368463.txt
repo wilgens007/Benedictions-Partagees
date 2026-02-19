@@ -1,0 +1,120 @@
+You are working on the existing Bénédictions Partagées app. Implement a new feature: a Prayer Wall page that lists prayer requests publicly and allows authenticated users to react (“🙏 Prayed”, “❤️ Amen”) and leave short encouragement comments with their name attached. Do NOT break existing functionality (music player, daily verse/devotion, translations, auth). Use the existing database and server patterns already in this project (same ORM, same API style, same auth middleware). If any table already exists for prayer requests, extend it instead of creating duplicates.
+
+GOALS
+1) Add a new page route: /prayer-wall (or integrate into existing Prayer tab if it exists) with:
+   - A feed/list of prayer requests (newest first)
+   - Each request card shows: display name (or “Anonymous”), timestamp, category (optional), request text, and reaction counts.
+   - Buttons: “🙏 I Prayed” and “❤️ Amen”
+   - A comments drawer/section (collapsed by default) showing comments (newest last) with commenter name + time + text
+   - “Add Comment” input for logged-in users only
+   - A “Submit Prayer Request” button that opens a form (modal or dedicated page)
+2) Privacy for prayer requests:
+   - When submitting: allow user to choose display mode: Full name / First name only / Anonymous
+   - Store the chosen display mode with the request and render accordingly
+3) Safety/Moderation:
+   - Prayer requests and comments should be safe and respectful:
+     - Block links in comments and prayer text (strip or reject URLs)
+     - Enforce max length: prayer request 500 chars, comment 220 chars
+     - Rate limit: max 3 prayer requests per hour per user; max 10 comments per hour per user
+   - Add flagging:
+     - Each request and comment has a “Report” action for users
+     - Store reports in DB
+4) Admin moderation:
+   - Add /admin/prayer-wall page (or extend existing admin area) to:
+     - View all prayer requests and comments
+     - Filter: pending/approved/rejected/flagged
+     - Approve/Reject/Delete actions
+   - Default behavior:
+     - New prayer requests = PENDING
+     - Once approved they appear publicly in Prayer Wall
+     - Comments can be either:
+       A) Auto-approved with filters + rate limits OR
+       B) Pending approval (choose B if current app already uses approval flows)
+5) Keep UI consistent with current design system:
+   - Use the same Tailwind styles and components you already use
+   - Make it mobile-first: bottom nav remains, content should not be covered by the mini player
+   - Add a compact “reading mode” player on Prayer Wall if the full mini player overlaps content (reduce height by ~30% on text-heavy pages)
+
+DATABASE
+Create/extend tables (names can match your project conventions):
+- prayer_requests:
+   id (uuid/string), user_id (nullable if anonymous submission allowed), created_at, updated_at
+   status: PENDING | APPROVED | REJECTED
+   display_mode: FULL_NAME | FIRST_NAME | ANONYMOUS
+   display_name (string) // computed at creation time from user profile + display_mode
+   category (string, optional)
+   message (text)
+   prayed_count (int default 0)
+   amen_count (int default 0)
+
+- prayer_reactions:
+   id, prayer_request_id, user_id, type: PRAYED | AMEN, created_at
+   Unique constraint: (prayer_request_id, user_id, type) so a user can’t spam
+
+- prayer_comments:
+   id, prayer_request_id, user_id, created_at
+   status: PENDING | APPROVED | REJECTED
+   display_name (string) // commenter’s name
+   message (text)
+
+- prayer_reports:
+   id, target_type: REQUEST | COMMENT
+   target_id, reporter_user_id, reason (optional), created_at
+
+API ENDPOINTS
+Implement server routes (keep same patterns as existing API):
+- GET /api/prayer-wall/requests?status=approved&limit=20&cursor=...
+  returns approved requests with counts + comment_count
+- POST /api/prayer-wall/requests
+  body: { message, category?, display_mode }
+  auth required (unless app supports anonymous submit; if anonymous allowed, still rate limit by IP/session)
+  create as PENDING
+- POST /api/prayer-wall/requests/:id/react
+  body: { type: "PRAYED" | "AMEN" }
+  auth required; toggle behavior:
+    - If reaction exists, remove it and decrement count
+    - If not, add it and increment count
+- GET /api/prayer-wall/requests/:id/comments
+  returns approved comments
+- POST /api/prayer-wall/requests/:id/comments
+  body: { message }
+  auth required
+  enforce length and URL blocking
+  create as APPROVED or PENDING depending on moderation choice
+- POST /api/prayer-wall/report
+  body: { target_type, target_id, reason? }
+  auth required
+
+ADMIN API
+- GET /api/admin/prayer-wall/requests?status=pending
+- PATCH /api/admin/prayer-wall/requests/:id { status }
+- GET /api/admin/prayer-wall/comments?status=pending
+- PATCH /api/admin/prayer-wall/comments/:id { status }
+- DELETE endpoints if your admin style supports it
+
+UI DETAILS
+Prayer Wall page layout:
+- Top header: “Prayer Wall” + short description (“We stand together in prayer.”)
+- Submit Prayer button
+- List cards:
+  - message preview
+  - badges for category
+  - reaction buttons with counts
+  - “View comments” expands inline comments
+  - “Add comment” (logged-in) or “Sign in to encourage” (logged-out)
+- Infinite scroll or “Load more” button
+- Empty states:
+  - “No prayer requests yet. Be the first to share.”
+- Success toasts: “Your request was submitted for review.”
+
+IMPORTANT IMPLEMENTATION NOTES
+- Reuse existing auth/session logic. Comments must show real user name (from user profile) unless you support anonymous comments (do NOT by default).
+- Ensure this does not break the music player. If the mini player overlaps content, add padding-bottom to pages with bottom nav + player.
+- Add tests or at least manual test checklist at the end.
+
+DELIVERABLES
+1) DB migrations / schema updates
+2) API routes implemented
+3) New Prayer Wall page + Submit form
+4) Admin moderation screens
+5) Short manual test checklist for me to verify
