@@ -41,13 +41,20 @@ export default function Music() {
 
   const { data: tracks, isLoading } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music"],
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
-    if (tracks && tracks.length > 0 && playlist.length === 0) {
-      setPlaylist(tracks, 0);
+    if (tracks && tracks.length > 0) {
+      const trackIds = tracks.map(t => t.id).join(",");
+      const playlistIds = playlist.map(t => t.id).join(",");
+      if (trackIds !== playlistIds) {
+        const currentIndex = currentTrack ? tracks.findIndex(t => t.id === currentTrack.id) : 0;
+        setPlaylist(tracks, Math.max(currentIndex, 0));
+      }
     }
-  }, [tracks, playlist.length, setPlaylist]);
+  }, [tracks, playlist, currentTrack, setPlaylist]);
 
   const handlePlayTrack = (index: number) => {
     if (!tracks) return;

@@ -82,10 +82,14 @@ export default function Home() {
 
   const { data: tracks } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music"],
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: featuredSong } = useQuery<MusicTrack | null>({
     queryKey: ["/api/music/featured"],
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {

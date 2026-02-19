@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { adminApi, getAdminToken } from "@/lib/adminAuth";
+import { adminApi } from "@/lib/adminAuth";
 import { Plus, Pencil, Trash2, Upload, Link as LinkIcon, Music, Disc } from "lucide-react";
 import type { Album, Song } from "@shared/schema";
 
@@ -25,12 +25,22 @@ function AlbumForm({ album, onSave, onCancel }: { album?: Album; onSave: () => v
   const [coverUrl, setCoverUrl] = useState(album?.coverUrl || "");
   const [coverMode, setCoverMode] = useState<"url" | "upload">("url");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const handleUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const data = await adminApi<{ url: string }>("/api/admin/upload/cover", { method: "POST", body: formData, headers: { "x-admin-token": getAdminToken() || "" } });
-    setCoverUrl(data.url);
+    setUploading(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const data = await adminApi<{ url: string }>("/api/admin/upload/cover", { method: "POST", body: formData });
+      setCoverUrl(data.url);
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,8 +75,10 @@ function AlbumForm({ album, onSave, onCancel }: { album?: Album; onSave: () => v
         {coverMode === "url" ? (
           <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://..." data-testid="input-album-cover-url" />
         ) : (
-          <Input type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }} data-testid="input-album-cover-upload" />
+          <Input type="file" accept="image/*" disabled={uploading} onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }} data-testid="input-album-cover-upload" />
         )}
+        {uploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
+        {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
         {coverUrl && <img src={coverUrl} alt="Cover" className="w-20 h-20 object-cover rounded mt-2" />}
       </div>
       <div className="flex gap-2 justify-end">
@@ -90,14 +102,27 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
   const [coverMode, setCoverMode] = useState<"url" | "upload">("url");
   const [audioMode, setAudioMode] = useState<"url" | "upload">("url");
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const handleFileUpload = async (file: File, type: "cover" | "audio") => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const endpoint = type === "cover" ? "/api/admin/upload/cover" : "/api/admin/upload/audio";
-    const data = await adminApi<{ url: string }>(endpoint, { method: "POST", body: formData, headers: { "x-admin-token": getAdminToken() || "" } });
-    if (type === "cover") setCoverUrl(data.url);
-    else setAudioUrl(data.url);
+    if (type === "cover") setUploadingCover(true);
+    else setUploadingAudio(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const endpoint = type === "cover" ? "/api/admin/upload/cover" : "/api/admin/upload/audio";
+      const data = await adminApi<{ url: string }>(endpoint, { method: "POST", body: formData });
+      if (type === "cover") setCoverUrl(data.url);
+      else setAudioUrl(data.url);
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      if (type === "cover") setUploadingCover(false);
+      else setUploadingAudio(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,8 +179,10 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
         {audioMode === "url" ? (
           <Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://cdn1.suno.ai/... or any URL" required data-testid="input-song-audio-url" />
         ) : (
-          <Input type="file" accept="audio/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "audio"); }} data-testid="input-song-audio-upload" />
+          <Input type="file" accept="audio/*" disabled={uploadingAudio} onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "audio"); }} data-testid="input-song-audio-upload" />
         )}
+        {uploadingAudio && <p className="text-sm text-muted-foreground">Uploading audio...</p>}
+        {audioUrl && audioMode === "upload" && <p className="text-sm text-green-600">Audio uploaded</p>}
       </div>
       <div className="space-y-2">
         <Label>Cover Image (optional)</Label>
@@ -166,8 +193,10 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
         {coverMode === "url" ? (
           <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://..." data-testid="input-song-cover-url" />
         ) : (
-          <Input type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "cover"); }} data-testid="input-song-cover-upload" />
+          <Input type="file" accept="image/*" disabled={uploadingCover} onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "cover"); }} data-testid="input-song-cover-upload" />
         )}
+        {uploadingCover && <p className="text-sm text-muted-foreground">Uploading cover...</p>}
+        {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
       </div>
       <div className="space-y-2">
         <Label>Duration (e.g., 3:45)</Label>
