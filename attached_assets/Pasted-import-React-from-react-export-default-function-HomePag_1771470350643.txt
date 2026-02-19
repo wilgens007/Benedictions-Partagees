@@ -1,0 +1,369 @@
+import React from "react";
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-white text-slate-900">
+      {/* NAV */}
+      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-slate-900" />
+            <div className="leading-tight">
+              <div className="text-sm font-semibold">Bénédictions Partagées</div>
+              <div className="text-xs text-slate-500">Worship • Word • Prayer</div>
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-6 md:flex">
+            <a className="text-sm text-slate-700 hover:text-slate-900" href="#listen">Listen</a>
+            <a className="text-sm text-slate-700 hover:text-slate-900" href="#verse">Daily Verse</a>
+            <a className="text-sm text-slate-700 hover:text-slate-900" href="#prayer">Prayer</a>
+            <a className="text-sm text-slate-700 hover:text-slate-900" href="#testimonies">Testimonies</a>
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <button className="hidden rounded-lg border px-3 py-2 text-sm hover:bg-slate-50 md:inline-flex">
+              Sign in
+            </button>
+            <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+              Start Listening
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="border-b">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-2 md:py-16">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+              Live Gospel & Uplifting Worship
+            </div>
+
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
+              A place to worship, grow, and pray—every day.
+            </h1>
+
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600">
+              Listen to gospel worship, receive today’s Bible verse, submit prayer requests,
+              and share testimonies—one community, one faith, one hope in Christ.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href="#listen"
+                className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800"
+              >
+                ▶ Start Listening
+              </a>
+              <a
+                href="#prayer"
+                className="rounded-lg border px-5 py-3 text-sm font-medium hover:bg-slate-50"
+              >
+                🙏 Submit a Prayer
+              </a>
+            </div>
+
+            {/* quick stats */}
+            <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+              <Stat label="Daily Verse" value="365" />
+              <Stat label="Worship" value="24/7" />
+              <Stat label="Prayer" value="Always" />
+            </div>
+          </div>
+
+          {/* Featured Now Playing */}
+          <div className="rounded-2xl border bg-slate-50 p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-xs font-medium text-slate-600">Featured • Now Playing</div>
+                <div className="mt-1 text-lg font-semibold">“Souf Lavi”</div>
+                <div className="text-sm text-slate-600">BP Worship</div>
+              </div>
+              <button className="rounded-lg bg-white px-3 py-2 text-sm font-medium shadow-sm hover:bg-slate-100">
+                ▶ Play
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              <MiniRow title="New Worship Mix" meta="Kompa • Afrobeat • Gospel" />
+              <MiniRow title="Prayer Session" meta="10 min • Encouragement" />
+              <MiniRow title="Teaching Clip" meta="Faith • Growth • Hope" />
+            </div>
+
+            <div className="mt-5 rounded-xl bg-white p-4">
+              <div className="text-xs font-medium text-slate-600">Up next</div>
+              <div className="mt-1 text-sm font-semibold">“Benediksyon Pou Fanmi”</div>
+              <div className="text-xs text-slate-500">3:42</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TODAY'S BLESSING */}
+      <section id="verse" className="border-b">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <h2 className="text-xl font-semibold">Today’s Blessing</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            A verse, a prayer, and a testimony—fresh encouragement for today.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <Card title="Daily Verse" badge="KJV / LS1910">
+              <p className="text-sm leading-relaxed text-slate-700">
+                “Be still, and know that I am God…” <span className="text-slate-500">(Psalm 46:10)</span>
+              </p>
+              <div className="mt-4 flex gap-2">
+                <button className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-800">
+                  Save Verse
+                </button>
+                <button className="rounded-lg border px-3 py-2 text-xs font-medium hover:bg-slate-50">
+                  Share
+                </button>
+              </div>
+            </Card>
+
+            <Card title="Prayer of the Day" badge="Encouragement">
+              <p className="text-sm leading-relaxed text-slate-700">
+                Lord, strengthen our faith, guide our steps, and give us peace in every storm…
+              </p>
+              <div className="mt-4">
+                <button className="rounded-lg border px-3 py-2 text-xs font-medium hover:bg-slate-50">
+                  Read full prayer
+                </button>
+              </div>
+            </Card>
+
+            <Card title="Testimony Highlight" badge="Community">
+              <p className="text-sm leading-relaxed text-slate-700">
+                “God opened a door when I thought everything was closed…”
+              </p>
+              <div className="mt-4">
+                <a className="text-xs font-medium text-slate-900 underline" href="#testimonies">
+                  View testimonies →
+                </a>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED MUSIC */}
+      <section id="listen" className="border-b">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Featured Music</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Curated worship across styles: Afrobeat, Kompa, Jazz, and more.
+              </p>
+            </div>
+            <a className="text-sm font-medium text-slate-900 underline" href="#">
+              Browse all →
+            </a>
+          </div>
+
+          <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
+            <MusicCard title="Worship Flow" meta="Afrobeat • 18 tracks" />
+            <MusicCard title="Kompa Praise" meta="Kompa • 12 tracks" />
+            <MusicCard title="Quiet Time" meta="Soft • 1 hour" />
+            <MusicCard title="BP Favorites" meta="Mix • Updated weekly" />
+          </div>
+        </div>
+      </section>
+
+      {/* PRAYER WALL */}
+      <section id="prayer" className="border-b">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Prayer Wall</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Submit your request. We stand with you in prayer.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-slate-50">
+                View all
+              </button>
+              <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                Submit request
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <PrayerCard name="Anonymous" text="Please pray for my family’s unity and peace." />
+            <PrayerCard name="Marie" text="Pray for my job interview and open doors." />
+            <PrayerCard name="Jean" text="Healing and strength for my mother." />
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIES */}
+      <section id="testimonies" className="border-b">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Testimonies</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                God is still working. Share what He has done.
+              </p>
+            </div>
+            <button className="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-slate-50">
+              Share your testimony
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <Card title="Breakthrough" badge="Faith">
+              <p className="text-sm text-slate-700">
+                “After months of waiting, God answered right on time…”
+              </p>
+            </Card>
+            <Card title="Healing" badge="Hope">
+              <p className="text-sm text-slate-700">
+                “The doctors were surprised, but we knew it was God…”
+              </p>
+            </Card>
+            <Card title="Restoration" badge="Grace">
+              <p className="text-sm text-slate-700">
+                “God restored our marriage and brought us back to unity…”
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* PREMIUM */}
+      <section>
+        <div className="mx-auto max-w-6xl px-4 py-12">
+          <div className="rounded-2xl border bg-slate-50 p-6 md:p-10">
+            <div className="grid gap-6 md:grid-cols-2 md:items-center">
+              <div>
+                <h2 className="text-2xl font-semibold">Support the mission</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Free access stays available. Premium helps us improve playlists, add features,
+                  and reach more souls with the Gospel.
+                </p>
+                <div className="mt-5 flex gap-2">
+                  <button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                    Upgrade to Premium
+                  </button>
+                  <button className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-100">
+                    View plans
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Feature title="Save verses & favorites" />
+                <Feature title="Create playlists" />
+                <Feature title="Prayer history" />
+                <Feature title="Faster access & extras" />
+              </div>
+            </div>
+          </div>
+
+          <footer className="mx-auto mt-10 max-w-6xl border-t pt-6 text-sm text-slate-500">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>© {new Date().getFullYear()} Bénédictions Partagées</div>
+              <div className="flex gap-4">
+                <a className="hover:text-slate-700" href="#">Privacy</a>
+                <a className="hover:text-slate-700" href="#">Terms</a>
+                <a className="hover:text-slate-700" href="#">Contact</a>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border bg-white p-3">
+      <div className="text-lg font-semibold">{value}</div>
+      <div className="text-xs text-slate-500">{label}</div>
+    </div>
+  );
+}
+
+function Card({
+  title,
+  badge,
+  children,
+}: {
+  title: string;
+  badge?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border bg-white p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-sm font-semibold">{title}</div>
+        {badge ? (
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function MiniRow({ title, meta }: { title: string; meta: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-white p-3">
+      <div>
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="text-xs text-slate-500">{meta}</div>
+      </div>
+      <button className="rounded-lg border px-3 py-2 text-xs font-medium hover:bg-slate-50">
+        Play
+      </button>
+    </div>
+  );
+}
+
+function MusicCard({ title, meta }: { title: string; meta: string }) {
+  return (
+    <div className="min-w-[240px] rounded-2xl border bg-white p-4">
+      <div className="h-28 rounded-xl bg-slate-200" />
+      <div className="mt-3 text-sm font-semibold">{title}</div>
+      <div className="text-xs text-slate-500">{meta}</div>
+      <button className="mt-3 w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-800">
+        ▶ Play
+      </button>
+    </div>
+  );
+}
+
+function PrayerCard({ name, text }: { name: string; text: string }) {
+  return (
+    <div className="rounded-2xl border bg-white p-5">
+      <div className="text-xs font-medium text-slate-500">{name}</div>
+      <p className="mt-2 text-sm leading-relaxed text-slate-700">{text}</p>
+      <div className="mt-4 flex gap-2">
+        <button className="rounded-lg border px-3 py-2 text-xs font-medium hover:bg-slate-50">
+          Pray 🙏
+        </button>
+        <button className="rounded-lg border px-3 py-2 text-xs font-medium hover:bg-slate-50">
+          Share
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Feature({ title }: { title: string }) {
+  return (
+    <div className="rounded-xl border bg-white p-4">
+      <div className="text-sm font-semibold">{title}</div>
+      <div className="mt-1 text-xs text-slate-500">Included in Premium</div>
+    </div>
+  );
+}
