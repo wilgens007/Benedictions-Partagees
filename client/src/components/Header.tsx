@@ -27,7 +27,7 @@ export function Header() {
   const currentLang = languages.find(l => l.code === language);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0A1F44] dark:bg-[#060E22]">
+    <header className="sticky top-0 z-40 bg-[#0A1F44] dark:bg-[#060E22] md:hidden">
       <div className="flex items-center justify-between gap-4 px-4 h-14 max-w-lg mx-auto">
         <div className="flex items-center gap-2.5">
           <img 

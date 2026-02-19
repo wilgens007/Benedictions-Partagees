@@ -16,10 +16,10 @@ export function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 bg-[#0A1F44] dark:bg-[#060E22] z-50 safe-area-bottom"
+      className="fixed bottom-0 left-0 right-0 bg-[#0A1F44] dark:bg-[#060E22] z-50 safe-area-bottom md:hidden"
       data-testid="nav-bottom"
     >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+      <div className="flex items-center justify-around gap-1 h-16 max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.path;
           const Icon = item.icon;

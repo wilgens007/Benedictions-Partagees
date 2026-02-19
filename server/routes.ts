@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable } from "@shared/schema";
+import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable, testimonies } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
@@ -467,6 +467,16 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching prayer requests:", error);
       res.status(500).json({ error: "Failed to fetch prayer requests" });
+    }
+  });
+
+  app.get("/api/testimonies", async (_req, res) => {
+    try {
+      const rows = await db.select().from(testimonies).where(eq(testimonies.status, "approved")).orderBy(desc(testimonies.createdAt));
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching testimonies:", error);
+      res.status(500).json({ error: "Failed to fetch testimonies" });
     }
   });
 
