@@ -4,9 +4,9 @@ import { useLanguage } from "@/lib/LanguageContext";
 
 const navItems = [
   { path: "/", icon: Home, labelKey: "home" },
-  { path: "/devotion", icon: BookOpen, labelKey: "devotion" },
   { path: "/music", icon: Music, labelKey: "music" },
-  { path: "/support", icon: Heart, labelKey: "support" },
+  { path: "/videos", icon: Video, labelKey: "videos" },
+  { path: "/devotion", icon: BookOpen, labelKey: "devotion" },
   { path: "/prayer", icon: HandHeart, labelKey: "prayer" },
 ];
 

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAudioPlayer } from "@/lib/AudioPlayerContext";
 import { useAuth } from "@/lib/AuthContext";
-import type { DailyVerse, Encouragement, MusicTrack, Testimony } from "@shared/schema";
+import type { DailyVerse, Encouragement, MusicTrack, Testimony, Video } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
@@ -95,11 +95,16 @@ export default function Home() {
     staleTime: 60 * 1000,
   });
 
+  const { data: videosData } = useQuery<Video[]>({
+    queryKey: ["/api/videos"],
+  });
+
   const featuredTrack = featuredSong || tracks?.[0];
   const nextTrack = tracks && tracks.length > 1 ? tracks[1] : null;
   const displayTracks = tracks?.filter(tr => !tr.locked) || [];
   const displayPrayers = prayerRequests?.slice(0, 3) || [];
   const displayTestimonies = testimoniesData?.slice(0, 2) || [];
+  const displayVideos = videosData?.slice(0, 4) || [];
 
   const worshipPlaylists = [
     {
@@ -454,6 +459,70 @@ export default function Home() {
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* ═══════════════ VIDEO TEACHINGS ═══════════════ */}
+      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-video-teachings">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-serif font-bold text-2xl text-foreground">{t("videoTeachings")}</h2>
+          <Link href="/videos">
+            <Button variant="ghost" size="sm" className="text-[#D4AF37]" data-testid="link-see-all-videos">
+              {t("seeAll")} <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Link>
+        </div>
+
+        {displayVideos.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {displayVideos.map((video) => (
+              <Link key={video.id} href="/videos">
+                <Card
+                  className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer shadow-sm"
+                  data-testid={`card-video-${video.id}`}
+                >
+                  <div className="relative aspect-video">
+                    <img
+                      src={video.thumbnail || `https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+                        <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
+                      </div>
+                    </div>
+                    <Badge className="absolute top-2 left-2 bg-[#0A1F44]/80 text-white text-[10px] border-0 no-default-hover-elevate no-default-active-elevate capitalize">
+                      {video.category}
+                    </Badge>
+                  </div>
+                  <CardContent className="p-3">
+                    <h3 className="font-medium text-sm text-foreground line-clamp-2">{video.title}</h3>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { labelKey: "sermons", icon: BookOpen, desc: "sermonsDesc" },
+              { labelKey: "worship", icon: Music, desc: "worshipDesc" },
+              { labelKey: "teachings", icon: Sparkles, desc: "teachingsDesc" },
+            ].map((cat) => (
+              <Link key={cat.labelKey} href="/videos">
+                <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible" data-testid={`card-video-category-${cat.labelKey}`}>
+                  <CardContent className="p-5 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#0A1F44]/8 dark:bg-[#D4AF37]/15 flex items-center justify-center">
+                      <cat.icon className="w-5 h-5 text-[#0A1F44] dark:text-[#D4AF37]" />
+                    </div>
+                    <p className="font-semibold text-sm text-foreground">{t(cat.labelKey)}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ═══════════════ PRAYER WALL ═══════════════ */}

@@ -21,9 +21,9 @@ const languages: { code: Language; name: string; flag: string }[] = [
 
 const navLinks = [
   { path: "/music", labelKey: "listen" },
-  { path: "/prayer", labelKey: "prayer" },
+  { path: "/videos", labelKey: "videos" },
   { path: "/devotion", labelKey: "devotion" },
-  { path: "/videos", labelKey: "testimonies" },
+  { path: "/prayer", labelKey: "prayer" },
 ];
 
 export function TopNav() {
