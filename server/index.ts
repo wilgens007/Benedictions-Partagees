@@ -10,6 +10,7 @@ import cron from "node-cron";
 import { generateDailyContent, getTodayKeyET } from "./dailyContentGenerator";
 import { sendPushToAll } from "./pushService";
 import { WebhookHandlers } from "./webhookHandlers";
+import prayerWallRoutes from "./prayerWallRoutes";
 
 const app = express();
 const httpServer = createServer(app);
@@ -98,6 +99,7 @@ app.use((req, res, next) => {
 (async () => {
   app.use(authRoutes);
   app.use(billingRoutes);
+  app.use(prayerWallRoutes);
   registerAdminRoutes(app);
   await registerRoutes(httpServer, app);
 

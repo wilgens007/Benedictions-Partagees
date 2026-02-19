@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { db } from "./db";
 import {
-  albums, songs, testimonies, prayerRequests, users, adminSessions,
+  albums, songs, testimonies, prayerRequests, prayerComments, prayerReports, users, adminSessions,
   insertAlbumSchema, insertSongSchema, insertTestimonySchema,
   type Album, type Song, type Testimony, type DbPrayerRequest,
 } from "@shared/schema";
@@ -258,6 +258,43 @@ export function registerAdminRoutes(app: Express) {
       pendingPrayers: Number(pendingPrayers.count),
       users: Number(userCount.count),
     });
+  });
+
+  app.get("/api/admin/prayer-comments", requireAdmin, async (req: Request, res: Response) => {
+    const status = req.query.status as string | undefined;
+    let rows;
+    if (status && ["pending", "approved", "rejected"].includes(status)) {
+      rows = await db.select().from(prayerComments).where(eq(prayerComments.status, status)).orderBy(desc(prayerComments.createdAt));
+    } else {
+      rows = await db.select().from(prayerComments).orderBy(desc(prayerComments.createdAt));
+    }
+    res.json(rows);
+  });
+
+  app.put("/api/admin/prayer-comments/:id/status", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+    const [row] = await db.update(prayerComments).set({ status }).where(eq(prayerComments.id, id)).returning();
+    if (!row) return res.status(404).json({ error: "Comment not found" });
+    res.json(row);
+  });
+
+  app.delete("/api/admin/prayer-comments/:id", requireAdmin, async (req: Request, res: Response) => {
+    await db.delete(prayerComments).where(eq(prayerComments.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/prayer-reports", requireAdmin, async (_req: Request, res: Response) => {
+    const rows = await db.select().from(prayerReports).orderBy(desc(prayerReports.createdAt));
+    res.json(rows);
+  });
+
+  app.delete("/api/admin/prayer-reports/:id", requireAdmin, async (req: Request, res: Response) => {
+    await db.delete(prayerReports).where(eq(prayerReports.id, req.params.id));
+    res.json({ success: true });
   });
 
   app.use("/uploads", (req, res, next) => {

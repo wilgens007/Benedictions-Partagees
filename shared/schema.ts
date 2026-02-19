@@ -128,12 +128,53 @@ export const prayerRequests = pgTable("prayer_requests", {
   message: text("message").notNull(),
   language: varchar("language", { length: 5 }).notNull().default("en"),
   status: varchar("status", { length: 20 }).notNull().default("pending"),
+  userId: varchar("user_id"),
+  displayMode: varchar("display_mode", { length: 20 }).notNull().default("first_name"),
+  displayName: text("display_name").notNull().default("Anonymous"),
+  category: varchar("category", { length: 50 }),
+  prayedCount: integer("prayed_count").notNull().default(0),
+  amenCount: integer("amen_count").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export type DbPrayerRequest = typeof prayerRequests.$inferSelect;
-export const insertDbPrayerRequestSchema = createInsertSchema(prayerRequests).omit({ id: true, createdAt: true, status: true });
+export const insertDbPrayerRequestSchema = createInsertSchema(prayerRequests).omit({ id: true, createdAt: true, status: true, prayedCount: true, amenCount: true });
 export type InsertDbPrayerRequest = z.infer<typeof insertDbPrayerRequestSchema>;
+
+export const prayerReactions = pgTable("prayer_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  prayerRequestId: varchar("prayer_request_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  type: varchar("type", { length: 10 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("prayer_reactions_unique_idx").on(table.prayerRequestId, table.userId, table.type),
+]);
+
+export type PrayerReaction = typeof prayerReactions.$inferSelect;
+
+export const prayerComments = pgTable("prayer_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  prayerRequestId: varchar("prayer_request_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  displayName: text("display_name").notNull(),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("approved"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PrayerComment = typeof prayerComments.$inferSelect;
+export const insertPrayerCommentSchema = createInsertSchema(prayerComments).omit({ id: true, createdAt: true, status: true });
+export type InsertPrayerComment = z.infer<typeof insertPrayerCommentSchema>;
+
+export const prayerReports = pgTable("prayer_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  targetType: varchar("target_type", { length: 10 }).notNull(),
+  targetId: varchar("target_id").notNull(),
+  reporterUserId: varchar("reporter_user_id").notNull(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const adminSessions = pgTable("admin_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
