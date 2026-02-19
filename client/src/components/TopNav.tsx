@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Moon, Sun, Globe, User, Crown, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Moon, Sun, Globe, User, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,10 +20,10 @@ const languages: { code: Language; name: string; flag: string }[] = [
 ];
 
 const navLinks = [
-  { path: "/music", labelKey: "music", anchor: "#listen" },
-  { path: "/devotion", labelKey: "devotion", anchor: "#verse" },
-  { path: "/prayer", labelKey: "prayer", anchor: "#prayer" },
-  { path: "/support", labelKey: "support", anchor: "#premium" },
+  { path: "/music", labelKey: "listen" },
+  { path: "/prayer", labelKey: "prayer" },
+  { path: "/devotion", labelKey: "devotion" },
+  { path: "/videos", labelKey: "testimonies" },
 ];
 
 export function TopNav() {
@@ -32,10 +31,8 @@ export function TopNav() {
   const { language, setLanguage, t } = useLanguage();
   const { user } = useAuth();
   const [location] = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const currentLang = languages.find((l) => l.code === language);
-  const isHome = location === "/";
 
   return (
     <header
@@ -50,10 +47,7 @@ export function TopNav() {
               alt="Bénédictions Partagées"
               className="w-9 h-9 rounded-lg object-cover"
             />
-            <div className="leading-tight">
-              <div className="text-sm font-semibold text-foreground">{t("appName")}</div>
-              <div className="text-xs text-muted-foreground">Worship &middot; Word &middot; Prayer</div>
-            </div>
+            <span className="text-sm font-semibold text-foreground">{t("appName")}</span>
           </div>
         </Link>
 
@@ -108,7 +102,7 @@ export function TopNav() {
             <Link href="/dashboard">
               <Button variant="outline" size="sm" data-testid="button-topnav-account" className="relative">
                 <User className="w-4 h-4 mr-1" />
-                {t("home")}
+                {t("account")}
                 {user.isPremium && (
                   <Crown className="w-3 h-3 ml-1 text-[#D4AF37]" />
                 )}
@@ -117,14 +111,14 @@ export function TopNav() {
           ) : (
             <Link href="/login">
               <Button variant="outline" size="sm" data-testid="button-topnav-signin">
-                {t("welcome")}
+                {t("signIn")}
               </Button>
             </Link>
           )}
 
           <Link href="/music">
-            <Button size="sm" data-testid="button-topnav-start-listening">
-              {t("play")} &middot; {t("music")}
+            <Button size="sm" className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-topnav-get-app">
+              {t("getTheApp")}
             </Button>
           </Link>
         </div>

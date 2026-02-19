@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import {
-  Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff,
-  Play, Crown, Lock, Calendar, Heart, Headphones, BookMarked, Clock,
-  ArrowRight, Quote, Users, Star, Check
+  Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell,
+  Play, Crown, Lock, Heart, Headphones, BookMarked,
+  ArrowRight, Quote, Check, Share2, Bookmark
 } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,7 @@ export default function Home() {
   const { user } = useAuth();
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [premiumTab, setPremiumTab] = useState<"free" | "premium">("premium");
   const pushSupported = isPushSupported();
 
   useEffect(() => {
@@ -40,22 +41,13 @@ export default function Home() {
     try {
       if (pushEnabled) {
         const success = await unsubscribeFromPush();
-        if (success) {
-          setPushEnabled(false);
-          toast({ title: t("notificationsDisabled") });
-        }
+        if (success) { setPushEnabled(false); toast({ title: t("notificationsDisabled") }); }
       } else {
         const success = await subscribeToPush(language);
-        if (success) {
-          setPushEnabled(true);
-          toast({ title: t("notificationsEnabled") });
-        } else {
-          toast({ title: t("notificationsDenied"), variant: "destructive" });
-        }
+        if (success) { setPushEnabled(true); toast({ title: t("notificationsEnabled") }); }
+        else { toast({ title: t("notificationsDenied"), variant: "destructive" }); }
       }
-    } catch {
-      toast({ title: t("error"), variant: "destructive" });
-    }
+    } catch { toast({ title: t("error"), variant: "destructive" }); }
     setPushLoading(false);
   };
 
@@ -104,9 +96,47 @@ export default function Home() {
   });
 
   const featuredTrack = featuredSong || tracks?.[0];
-  const displayTracks = tracks?.filter(tr => !tr.locked)?.slice(0, 4) || [];
+  const nextTrack = tracks && tracks.length > 1 ? tracks[1] : null;
+  const displayTracks = tracks?.filter(tr => !tr.locked) || [];
   const displayPrayers = prayerRequests?.slice(0, 3) || [];
   const displayTestimonies = testimoniesData?.slice(0, 2) || [];
+
+  const worshipPlaylists = [
+    {
+      id: "worship-flow",
+      titleKey: "playlistWorshipFlow",
+      genre: "Afrobeat",
+      trackCount: displayTracks.length > 6 ? Math.min(displayTracks.length, 18) : displayTracks.length,
+      gradient: "from-orange-600/90 to-amber-700/80",
+      albumArt: displayTracks[0]?.albumArt,
+      startIndex: 0,
+    },
+    {
+      id: "kompa-praise",
+      titleKey: "playlistKompaPraise",
+      genre: "Kompa",
+      trackCount: displayTracks.length > 3 ? Math.min(12, displayTracks.length) : displayTracks.length,
+      gradient: "from-emerald-700/90 to-teal-800/80",
+      albumArt: displayTracks[2]?.albumArt,
+      startIndex: 2,
+    },
+    {
+      id: "quiet-time",
+      titleKey: "playlistQuietTime",
+      genre: language === "fr" ? "Louange Douce" : language === "ht" ? "Lwanj Dous" : "Soft Worship",
+      trackCount: displayTracks.length > 0 ? Math.min(displayTracks.length, 10) : 0,
+      gradient: "from-sky-700/90 to-indigo-800/80",
+      albumArt: displayTracks[4]?.albumArt,
+      startIndex: 4,
+    },
+  ];
+
+  const handlePlayPlaylist = (startIndex: number) => {
+    if (displayTracks.length > 0) {
+      const idx = Math.min(startIndex, displayTracks.length - 1);
+      playTrack(displayTracks[idx], displayTracks, idx);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-full">
@@ -116,103 +146,174 @@ export default function Home() {
         className="relative overflow-hidden bg-gradient-to-br from-[#0A1F44] via-[#0E2A55] to-[#132D5E] dark:from-[#060E22] dark:via-[#0A1833] dark:to-[#0E2040]"
         data-testid="section-hero"
       >
+        <div className="absolute inset-0 bg-gradient-to-t from-[#D4AF37]/5 via-transparent to-transparent" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/8 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-white/3 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-10 pb-14 md:pt-16 md:pb-20 md:px-8">
-          <div className="md:flex md:items-center md:gap-12">
-            <div className="md:flex-1 md:max-w-xl">
-              <div className="flex items-center gap-3 mb-6 md:hidden">
+        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-8 pb-14 md:pt-14 md:pb-20 md:px-8">
+          <div className="md:flex md:items-start md:gap-10">
+            <div className="md:flex-1">
+              <div className="flex items-center gap-3 mb-5 md:hidden">
                 <img
                   src={logoImage}
                   alt="Bénédictions Partagées"
-                  className="w-12 h-12 rounded-full object-cover border-2 border-[#D4AF37]/50 shadow-lg"
+                  className="w-11 h-11 rounded-full object-cover border-2 border-[#D4AF37]/50 shadow-lg"
                 />
-                <div>
-                  <p className="text-[#D4AF37]/80 text-xs font-semibold uppercase tracking-widest">{t("tagline")}</p>
-                </div>
+                <p className="text-[#D4AF37]/80 text-xs font-semibold uppercase tracking-widest">{t("tagline")}</p>
               </div>
 
-              <h1 className="font-serif text-3xl md:text-5xl font-bold text-white leading-tight mb-4" data-testid="text-hero-headline">
-                {t("heroHeadline")}
+              <h1 className="font-serif text-3xl md:text-5xl font-bold text-white leading-tight mb-2" data-testid="text-hero-headline">
+                {t("heroTitle")}
               </h1>
-              <p className="text-white/60 text-base md:text-lg leading-relaxed mb-8 max-w-lg" data-testid="text-hero-subtext">
+              <p className="font-serif text-lg md:text-xl text-white/80 mb-4" data-testid="text-hero-subtitle">
+                {t("heroHeadline")}
+              </p>
+              <p className="text-white/50 text-sm md:text-base leading-relaxed mb-7 max-w-lg" data-testid="text-hero-subtext">
                 {t("heroSubtext")}
               </p>
 
-              <div className="flex items-center gap-3 flex-wrap mb-8">
+              <div className="flex items-center gap-3 flex-wrap">
                 <Link href="/music">
                   <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-hero-listen">
-                    <Headphones className="w-4 h-4 mr-2" />
+                    <Play className="w-4 h-4 mr-2" />
                     {t("startListening")}
                   </Button>
                 </Link>
                 <Link href="/prayer">
-                  <Button variant="outline" className="text-white border-white/20 backdrop-blur-sm bg-white/5" data-testid="button-hero-prayer">
+                  <Button variant="outline" className="text-white border-white/30 backdrop-blur-sm bg-white/5 font-semibold" data-testid="button-hero-prayer">
                     <HandHeart className="w-4 h-4 mr-2" />
                     {t("submitAPrayer")}
                   </Button>
                 </Link>
               </div>
-
-              <div className="flex items-center gap-6 text-white/40 text-sm">
-                <div className="text-center">
-                  <div className="text-[#D4AF37] font-bold text-xl">{t("stat365")}</div>
-                  <div className="text-xs">{t("statDailyVerse")}</div>
-                </div>
-                <div className="w-px h-8 bg-white/15" />
-                <div className="text-center">
-                  <div className="text-[#D4AF37] font-bold text-xl">{t("stat247")}</div>
-                  <div className="text-xs">{t("statWorship")}</div>
-                </div>
-                <div className="w-px h-8 bg-white/15" />
-                <div className="text-center">
-                  <div className="text-[#D4AF37] font-bold text-xl">{t("statAlways")}</div>
-                  <div className="text-xs">{t("statPrayer")}</div>
-                </div>
-              </div>
             </div>
 
-            <div className="hidden md:block md:flex-1 md:max-w-sm">
-              {verse && (
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-md p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                    <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-[0.15em]">{t("todaysVerse")}</span>
-                  </div>
-                  <blockquote className="font-serif text-lg text-white/90 leading-relaxed italic mb-4">
-                    &laquo; {verse.verse} &raquo;
-                  </blockquote>
-                  <div className="flex items-center gap-2">
-                    <div className="h-px flex-1 bg-[#D4AF37]/30" />
-                    <p className="text-[#D4AF37] font-serif font-medium text-sm">{verse.reference}</p>
-                    <div className="h-px flex-1 bg-[#D4AF37]/30" />
-                  </div>
-                </div>
+            {/* Now Playing Card (desktop) */}
+            <div className="hidden md:block md:w-80 mt-2">
+              {featuredTrack && (
+                <Card
+                  className="shadow-xl border-0 overflow-hidden cursor-pointer hover-elevate active-elevate-2"
+                  onClick={() => {
+                    if (featuredTrack.locked) {
+                      toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
+                      return;
+                    }
+                    if (tracks && tracks.length > 0) {
+                      const idx = tracks.findIndex((tr) => tr.id === featuredTrack.id);
+                      playTrack(tracks[idx >= 0 ? idx : 0], tracks, idx >= 0 ? idx : 0);
+                    } else {
+                      playTrack(featuredTrack, [featuredTrack], 0);
+                    }
+                  }}
+                  data-testid="card-now-playing-hero"
+                >
+                  <CardContent className="p-0">
+                    <div className="relative bg-gradient-to-br from-[#1a3a6e] to-[#0d2040]">
+                      <div className="absolute inset-0 opacity-30">
+                        {featuredTrack.albumArt && (
+                          <div className="w-full h-full bg-cover bg-center blur-sm" style={{ backgroundImage: `url(${featuredTrack.albumArt})` }} />
+                        )}
+                      </div>
+                      <div className="relative p-5">
+                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-xs mb-3 no-default-hover-elevate no-default-active-elevate" data-testid="badge-now-playing">
+                          {t("nowPlaying")}
+                        </Badge>
+                        <p className="font-serif font-bold text-white text-xl mb-1 truncate" data-testid="text-featured-song-title">
+                          "{featuredTrack.title}"
+                        </p>
+                        <p className="text-white/60 text-sm mb-4">{featuredTrack.artist}</p>
+                        <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-hero-play">
+                          <Play className="w-4 h-4 mr-2" />
+                          {t("play")}
+                        </Button>
+                        {nextTrack && (
+                          <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
+                            <span className="text-white/40 text-xs">{t("upNext")}:</span>
+                            <span className="text-white/70 text-xs truncate flex-1">{nextTrack.title}</span>
+                            <span className="text-white/40 text-xs">{nextTrack.duration}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
+          </div>
+
+          {/* Now Playing Card (mobile) */}
+          <div className="md:hidden mt-6">
+            {featuredTrack && (
+              <Card
+                className="shadow-lg border-0 overflow-hidden cursor-pointer hover-elevate active-elevate-2"
+                onClick={() => {
+                  if (featuredTrack.locked) {
+                    toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
+                    return;
+                  }
+                  if (tracks && tracks.length > 0) {
+                    const idx = tracks.findIndex((tr) => tr.id === featuredTrack.id);
+                    playTrack(tracks[idx >= 0 ? idx : 0], tracks, idx >= 0 ? idx : 0);
+                  } else {
+                    playTrack(featuredTrack, [featuredTrack], 0);
+                  }
+                }}
+                data-testid="card-now-playing-mobile"
+              >
+                <CardContent className="p-0">
+                  <div className="relative bg-gradient-to-r from-[#1a3a6e] to-[#0d2040]">
+                    <div className="relative flex items-center gap-4 p-4">
+                      <div className="relative flex-shrink-0">
+                        <div
+                          className="w-16 h-16 rounded-md bg-cover bg-center"
+                          style={{
+                            backgroundImage: featuredTrack.albumArt ? `url(${featuredTrack.albumArt})` : undefined,
+                            backgroundColor: "#1a3a6e",
+                          }}
+                        />
+                        <div className="absolute inset-0 rounded-md bg-black/20 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                            <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Badge className="bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30 text-[10px] mb-1 no-default-hover-elevate no-default-active-elevate" data-testid="badge-now-playing-mobile">
+                          {t("nowPlaying")}
+                        </Badge>
+                        <p className="font-semibold text-white truncate" data-testid="text-mobile-song-title">{featuredTrack.title}</p>
+                        <p className="text-white/60 text-xs truncate">{featuredTrack.artist}</p>
+                      </div>
+                    </div>
+                    {nextTrack && (
+                      <div className="px-4 pb-3 flex items-center gap-2 border-t border-white/10 pt-2">
+                        <span className="text-white/40 text-xs">{t("upNext")}:</span>
+                        <span className="text-white/70 text-xs truncate flex-1">{nextTrack.title}</span>
+                        <span className="text-white/40 text-xs">{nextTrack.duration}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </section>
 
       {/* ═══════════════ TODAY'S BLESSING — 3 Cards ═══════════════ */}
-      <section className="px-5 md:px-8 -mt-6 relative z-10 max-w-5xl mx-auto w-full" data-testid="section-todays-blessing">
-        <div className="mb-6 md:hidden">
-          <h2 className="font-serif font-semibold text-xl text-foreground">{t("todaysBlessing")}</h2>
-          <p className="text-sm text-muted-foreground">{t("todaysBlessingDesc")}</p>
-        </div>
+      <section className="px-5 md:px-8 py-8 md:py-12 max-w-5xl mx-auto w-full" data-testid="section-todays-blessing">
+        <h2 className="font-serif font-bold text-2xl text-foreground mb-6" data-testid="text-todays-blessing-title">
+          {t("todaysBlessing")}
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Daily Verse Card */}
-          <Card className="shadow-lg border-0 overflow-hidden" data-testid="card-daily-verse">
+          <Card className="shadow-md overflow-hidden" data-testid="card-daily-verse">
             <CardContent className="p-0">
-              <div className="relative px-5 py-5">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#D4AF37]/30 rounded-r" />
-                <div className="flex items-center gap-2 mb-3">
-                  <BookMarked className="w-4 h-4 text-[#D4AF37]" />
-                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-[0.15em]">{t("dailyVerse")}</span>
-                </div>
+              <div className="bg-[#D4AF37] px-4 py-2">
+                <span className="text-sm font-bold text-[#0A1F44]">{t("dailyVerse")}</span>
+              </div>
+              <div className="px-5 py-4">
                 {verseLoading ? (
                   <div className="space-y-2">
                     <Skeleton className="h-5 w-full" />
@@ -221,86 +322,96 @@ export default function Home() {
                   </div>
                 ) : verse ? (
                   <>
-                    <blockquote className="font-serif text-base text-foreground leading-relaxed italic mb-3 line-clamp-4" data-testid="text-daily-verse">
-                      &laquo; {verse.verse} &raquo;
+                    <blockquote className="font-serif text-sm text-foreground leading-relaxed italic mb-1 line-clamp-3" data-testid="text-daily-verse">
+                      "{verse.verse}"
                     </blockquote>
-                    <p className="text-[#D4AF37] font-serif font-medium text-sm mb-3" data-testid="text-verse-reference">
-                      {verse.reference}
+                    <p className="text-muted-foreground text-xs mb-4" data-testid="text-verse-reference">
+                      ({verse.reference})
                     </p>
-                    <Link href="/devotion">
-                      <Button variant="ghost" size="sm" className="text-[#D4AF37] p-0 h-auto" data-testid="link-read-devotion">
-                        {t("readMore")} <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Link href="/devotion">
+                        <Button variant="ghost" size="sm" className="text-[#D4AF37] p-0 h-auto text-xs" data-testid="button-save-verse">
+                          <Bookmark className="w-3.5 h-3.5 mr-1" />
+                          {t("saveVerse")}
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground p-0 h-auto text-xs" data-testid="button-share-verse"
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({ text: `${verse.verse} — ${verse.reference}` }).catch(() => {});
+                          } else {
+                            navigator.clipboard.writeText(`${verse.verse} — ${verse.reference}`);
+                            toast({ title: t("copiedToClipboard") });
+                          }
+                        }}
+                      >
+                        <Share2 className="w-3.5 h-3.5 mr-1" />
+                        {t("share") || "Share"}
                       </Button>
-                    </Link>
+                    </div>
                   </>
                 ) : (
-                  <p className="font-serif text-base text-foreground italic">&laquo; For I know the plans I have for you... &raquo;</p>
+                  <p className="font-serif text-sm text-foreground italic">"Be still, and know that I am God..."</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
           {/* Prayer of the Day Card */}
-          <Card className="shadow-lg border-0 overflow-hidden" data-testid="card-prayer-of-day">
+          <Card className="shadow-md overflow-hidden" data-testid="card-prayer-of-day">
             <CardContent className="p-0">
-              <div className="relative px-5 py-5">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#0A1F44] to-[#0A1F44]/30 dark:from-[#D4AF37] dark:to-[#D4AF37]/30 rounded-r" />
-                <div className="flex items-center gap-2 mb-3">
-                  <HandHeart className="w-4 h-4 text-[#0A1F44] dark:text-[#D4AF37]" />
-                  <span className="text-xs font-bold text-[#0A1F44] dark:text-[#D4AF37] uppercase tracking-[0.15em]">{t("prayerOfTheDay")}</span>
-                </div>
+              <div className="bg-[#0A1F44] dark:bg-[#132D5E] px-4 py-2">
+                <span className="text-sm font-bold text-white">{t("prayerOfTheDay")}</span>
+              </div>
+              <div className="px-5 py-4">
                 {verseLoading ? (
                   <div className="space-y-2">
                     <Skeleton className="h-5 w-full" />
                     <Skeleton className="h-5 w-5/6" />
-                    <Skeleton className="h-5 w-3/4" />
                   </div>
                 ) : verse?.prayer ? (
                   <>
-                    <p className="text-muted-foreground leading-relaxed italic line-clamp-4 mb-3 text-sm" data-testid="text-prayer-preview">
+                    <p className="text-muted-foreground leading-relaxed text-sm line-clamp-3 mb-4" data-testid="text-prayer-preview">
                       {verse.prayer}
                     </p>
                     <Link href="/devotion">
-                      <Button variant="ghost" size="sm" className="text-[#0A1F44] dark:text-[#D4AF37] p-0 h-auto" data-testid="link-read-full-prayer">
-                        {t("readFullPrayer")} <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      <Button variant="outline" size="sm" className="text-[#0A1F44] dark:text-[#D4AF37] border-[#0A1F44] dark:border-[#D4AF37] font-semibold text-xs" data-testid="button-read-full-prayer">
+                        {t("readFullPrayer")}
                       </Button>
                     </Link>
                   </>
                 ) : (
-                  <p className="text-muted-foreground italic text-sm">Lord, guide our steps today...</p>
+                  <p className="text-muted-foreground italic text-sm">Lord, strengthen our faith and give us peace...</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
           {/* Testimony Highlight Card */}
-          <Card className="shadow-lg border-0 overflow-hidden" data-testid="card-testimony-highlight">
+          <Card className="shadow-md overflow-hidden" data-testid="card-testimony-highlight">
             <CardContent className="p-0">
-              <div className="relative px-5 py-5">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37]/70 to-[#D4AF37]/20 rounded-r" />
-                <div className="flex items-center gap-2 mb-3">
-                  <Quote className="w-4 h-4 text-[#D4AF37]" />
-                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-[0.15em]">{t("testimonyHighlight")}</span>
-                </div>
+              <div className="bg-[#D4AF37]/80 px-4 py-2">
+                <span className="text-sm font-bold text-[#0A1F44]">{t("testimonyHighlight")}</span>
+              </div>
+              <div className="px-5 py-4">
                 {displayTestimonies.length > 0 ? (
                   <>
-                    <p className="text-muted-foreground leading-relaxed italic line-clamp-4 mb-2 text-sm" data-testid="text-testimony-preview">
+                    <p className="text-muted-foreground leading-relaxed italic text-sm line-clamp-3 mb-4" data-testid="text-testimony-preview">
                       "{displayTestimonies[0].contentText}"
                     </p>
-                    <p className="text-xs font-medium text-foreground mb-3">— {displayTestimonies[0].nameDisplay}</p>
                     <Link href="/prayer">
-                      <Button variant="ghost" size="sm" className="text-[#D4AF37] p-0 h-auto" data-testid="link-view-testimonies">
-                        {t("viewTestimonies")} <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
+                      <span className="text-[#D4AF37] text-xs font-medium cursor-pointer inline-flex items-center gap-1" data-testid="link-view-testimonies">
+                        {t("viewTestimonies")} <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
                     </Link>
                   </>
                 ) : (
                   <>
                     <p className="text-muted-foreground italic text-sm mb-3">{t("noTestimoniesYet")}</p>
                     <Link href="/prayer">
-                      <Button variant="ghost" size="sm" className="text-[#D4AF37] p-0 h-auto">
-                        {t("submitAPrayer")} <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
+                      <span className="text-[#D4AF37] text-xs font-medium cursor-pointer inline-flex items-center gap-1">
+                        {t("submitAPrayer")} <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
                     </Link>
                   </>
                 )}
@@ -310,185 +421,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════ ENCOURAGEMENT ═══════════════ */}
-      {encouragement && (
-        <section className="px-5 md:px-8 mt-6 max-w-5xl mx-auto w-full" data-testid="section-encouragement">
-          <div className="relative rounded-md overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44]/95 to-[#132D5E]/90 dark:from-[#060E22]/98 dark:to-[#0E2040]/92" />
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/8 rounded-full blur-2xl" />
-            <div className="relative px-6 py-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                <span className="font-serif font-semibold text-sm text-white/90">{t("encouragement")}</span>
-              </div>
-              <p className="text-white/80 leading-relaxed text-sm mb-2" data-testid="text-encouragement">
-                {encouragement.text}
-              </p>
-              <p className="text-[#D4AF37] font-serif font-medium text-xs">— {encouragement.author}</p>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ═══════════════ FEATURED WORSHIP — Playlist Cards ═══════════════ */}
+      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-featured-worship">
+        <h2 className="font-serif font-bold text-2xl text-foreground mb-6">{t("featuredWorship")}</h2>
 
-      {/* ═══════════════ FEATURED MUSIC ═══════════════ */}
-      <section className="px-5 md:px-8 mt-8 max-w-5xl mx-auto w-full" data-testid="section-featured-music">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 className="font-serif font-semibold text-xl text-foreground">{t("featuredMusic")}</h2>
-            <p className="text-sm text-muted-foreground">{t("featuredMusicDesc")}</p>
-          </div>
-          <Link href="/music">
-            <Button variant="ghost" size="sm" className="text-[#D4AF37] flex-shrink-0" data-testid="link-browse-all-music">
-              {t("browseAll")} <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
-        </div>
-
-        {featuredTrack && (
-          <Card
-            className="shadow-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer mb-4"
-            onClick={() => {
-              if (featuredTrack.locked) {
-                toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
-                return;
-              }
-              if (tracks && tracks.length > 0) {
-                const trackIndex = tracks.findIndex((tr) => tr.id === featuredTrack.id);
-                if (trackIndex >= 0) {
-                  playTrack(tracks[trackIndex], tracks, trackIndex);
-                } else {
-                  playTrack(featuredTrack, [featuredTrack], 0);
-                }
-              } else {
-                playTrack(featuredTrack, [featuredTrack], 0);
-              }
-            }}
-            data-testid="card-featured-track"
-          >
-            <CardContent className="p-0">
-              <div className="relative bg-gradient-to-r from-[#0A1F44] to-[#132D5E] dark:from-[#060E22] dark:to-[#0E2040]">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#D4AF37]/8 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-                <div className="relative flex items-center gap-4 p-4">
-                  <div className="relative flex-shrink-0">
-                    <div
-                      className="w-20 h-20 rounded-md bg-cover bg-center shadow-sm"
-                      style={{
-                        backgroundImage: featuredTrack.albumArt ? `url(${featuredTrack.albumArt})` : undefined,
-                        backgroundColor: "hsl(var(--muted))",
-                      }}
-                    />
-                    <div className="absolute inset-0 rounded-md bg-black/20 flex items-center justify-center">
-                      {featuredTrack.locked ? (
-                        <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
-                          <Lock className="w-5 h-5 text-[#0A1F44]" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center">
-                          <Play className="w-5 h-5 text-[#0A1F44] ml-0.5" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Badge className="bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30 text-[10px] mb-1 no-default-hover-elevate no-default-active-elevate">
-                      {t("nowPlaying")}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {worshipPlaylists.map((pl) => (
+            <Card
+              key={pl.id}
+              className="shadow-md overflow-hidden cursor-pointer hover-elevate active-elevate-2 border-0"
+              onClick={() => handlePlayPlaylist(pl.startIndex)}
+              data-testid={`card-playlist-${pl.id}`}
+            >
+              <CardContent className="p-0">
+                <div className="relative h-44 sm:h-40">
+                  {pl.albumArt ? (
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pl.albumArt})` }} />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44] to-[#132D5E]" />
+                  )}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${pl.gradient}`} />
+                  <div className="absolute inset-0 flex flex-col justify-end p-4">
+                    <p className="font-bold text-white text-lg leading-tight mb-0.5">{t(pl.titleKey)}</p>
+                    <p className="text-white/70 text-xs mb-3">{pl.genre} {pl.trackCount > 0 ? `\u00b7 ${pl.trackCount} Tracks` : ""}</p>
+                    <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-xs w-fit no-default-hover-elevate no-default-active-elevate">
+                      <Play className="w-3 h-3 mr-1" />
+                      {t("play")}
                     </Badge>
-                    <p className="font-semibold text-white text-lg truncate" data-testid="text-featured-song-title">
-                      {featuredTrack.title}
-                    </p>
-                    <p className="text-white/60 text-sm truncate">{featuredTrack.artist}</p>
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      <span className="text-xs text-[#D4AF37]">{featuredTrack.duration}</span>
-                      {featuredTrack.isEarlyAccess && (
-                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-[10px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">
-                          <Crown className="w-3 h-3 mr-0.5" />
-                          {t("earlyAccess")}
-                        </Badge>
-                      )}
-                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {displayTracks.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {displayTracks.slice(0, 4).map((track, idx) => (
-              <Card
-                key={track.id}
-                className="shadow-sm overflow-hidden hover-elevate active-elevate-2 cursor-pointer"
-                onClick={() => {
-                  if (track.locked) {
-                    toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
-                    return;
-                  }
-                  const allTracks = tracks || [];
-                  const trackIndex = allTracks.findIndex((tr) => tr.id === track.id);
-                  playTrack(track, allTracks, trackIndex >= 0 ? trackIndex : 0);
-                }}
-                data-testid={`card-track-${track.id}`}
-              >
-                <CardContent className="p-0">
-                  <div className="flex items-center gap-3 p-3">
-                    <div className="relative flex-shrink-0">
-                      <div
-                        className="w-12 h-12 rounded-md bg-cover bg-center"
-                        style={{
-                          backgroundImage: track.albumArt ? `url(${track.albumArt})` : undefined,
-                          backgroundColor: "hsl(var(--muted))",
-                        }}
-                      />
-                      <div className="absolute inset-0 rounded-md bg-black/15 flex items-center justify-center">
-                        {track.locked ? (
-                          <Lock className="w-3.5 h-3.5 text-white" />
-                        ) : (
-                          <Play className="w-3.5 h-3.5 text-white ml-0.5" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate">{track.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">{track.duration}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </section>
 
       {/* ═══════════════ PRAYER WALL ═══════════════ */}
-      <section className="px-5 md:px-8 mt-8 max-w-5xl mx-auto w-full" data-testid="section-prayer-wall">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 className="font-serif font-semibold text-xl text-foreground">{t("prayerWall")}</h2>
-            <p className="text-sm text-muted-foreground">{t("prayerWallDesc")}</p>
-          </div>
-          <Link href="/prayer">
-            <Button variant="ghost" size="sm" className="text-[#D4AF37] flex-shrink-0" data-testid="link-view-all-prayers">
-              {t("viewAll")} <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
-        </div>
+      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-prayer-wall">
+        <h2 className="font-serif font-bold text-2xl text-foreground mb-6">{t("prayerWall")}</h2>
 
         {displayPrayers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {displayPrayers.map((pr: any) => (
               <Card key={pr.id} className="shadow-sm" data-testid={`card-prayer-${pr.id}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#0A1F44]/8 dark:bg-[#D4AF37]/15 flex items-center justify-center flex-shrink-0">
-                      <HandHeart className="w-4 h-4 text-[#0A1F44] dark:text-[#D4AF37]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground mb-1">{pr.name}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-3">{pr.request || pr.message}</p>
-                    </div>
-                  </div>
+                <CardContent className="p-5">
+                  <p className="text-sm font-bold text-foreground mb-2">{pr.name}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-3">{pr.request || pr.message}</p>
                 </CardContent>
               </Card>
             ))}
@@ -502,77 +480,99 @@ export default function Home() {
           </Card>
         )}
 
-        <div className="mt-4 text-center">
+        <div className="flex items-center justify-center gap-4 mt-6 flex-wrap">
           <Link href="/prayer">
-            <Button className="bg-[#0A1F44] dark:bg-[#D4AF37] text-white dark:text-[#0A1F44] border-[#0A1F44] dark:border-[#D4AF37]" data-testid="button-submit-prayer-request">
-              <HandHeart className="w-4 h-4 mr-2" />
-              {t("submitRequest")}
+            <Button variant="outline" className="border-[#0A1F44] dark:border-[#D4AF37] text-[#0A1F44] dark:text-[#D4AF37] font-semibold" data-testid="button-view-all-requests">
+              {t("viewAllRequests")}
+            </Button>
+          </Link>
+          <Link href="/prayer">
+            <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-submit-prayer-request">
+              {t("submitAPrayer")}
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* ═══════════════ SUPPORT THE MISSION / PREMIUM ═══════════════ */}
+      {/* ═══════════════ UPGRADE TO PREMIUM ═══════════════ */}
       {(!user || !user.isPremium) && (
-        <section className="px-5 md:px-8 mt-8 max-w-5xl mx-auto w-full" data-testid="section-premium">
-          <Card className="shadow-md overflow-hidden border-0">
-            <CardContent className="p-0">
-              <div className="relative bg-gradient-to-br from-[#0A1F44] via-[#0E2A55] to-[#132D5E] dark:from-[#060E22] dark:via-[#0A1833] dark:to-[#0E2040] px-6 py-8 md:px-10 md:py-10">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#D4AF37]/6 rounded-full blur-2xl translate-y-1/4 -translate-x-1/4" />
+        <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-premium">
+          <div className="relative rounded-md overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44]/95 to-[#132D5E]/90 dark:from-[#060E22]/98 dark:to-[#0E2040]/95" />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#D4AF37]/6 rounded-full blur-2xl translate-y-1/4 -translate-x-1/4" />
 
-                <div className="relative z-10 md:flex md:items-center md:gap-10">
-                  <div className="md:flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Crown className="w-5 h-5 text-[#D4AF37]" />
-                      <h2 className="font-serif font-bold text-xl text-white">{t("supportTheMission")}</h2>
-                    </div>
-                    <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-lg">
-                      {t("supportTheMissionDesc")}
-                    </p>
+            <div className="relative z-10 px-6 py-8 md:px-10 md:py-10">
+              <h2 className="font-serif font-bold text-2xl text-white text-center mb-6" data-testid="text-upgrade-title">
+                {t("upgradeToPremium")}
+              </h2>
 
-                    <ul className="space-y-2 mb-6">
-                      {[t("saveFavorites"), t("createPlaylists"), t("prayerHistory"), t("fasterAccess")].map((feature) => (
-                        <li key={feature} className="flex items-center gap-2 text-white/80 text-sm">
-                          <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Link href={user ? "/pricing" : "/login"}>
-                        <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-view-plans">
-                          <Crown className="w-4 h-4 mr-2" />
-                          {t("viewPlans")}
-                        </Button>
-                      </Link>
-                      <div className="flex items-center gap-1.5 text-white/40">
-                        <span className="text-sm">{t("freePlan")}</span>
-                        <span className="text-xs">|</span>
-                        <span className="text-[#D4AF37] font-semibold text-sm">$4.99/mo</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="hidden md:flex md:flex-col md:items-center md:gap-3 md:w-48">
-                    <div className="w-24 h-24 rounded-full bg-[#D4AF37]/15 flex items-center justify-center">
-                      <Crown className="w-12 h-12 text-[#D4AF37]" />
-                    </div>
-                    <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] no-default-hover-elevate no-default-active-elevate">
-                      Premium
-                    </Badge>
-                  </div>
+              {/* Tab Toggle */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="inline-flex rounded-md overflow-hidden border border-white/20">
+                  <button
+                    onClick={() => setPremiumTab("free")}
+                    className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                      premiumTab === "free"
+                        ? "bg-white text-[#0A1F44]"
+                        : "bg-transparent text-white/60"
+                    }`}
+                    data-testid="button-tab-free"
+                  >
+                    {t("freePlan")}
+                  </button>
+                  <button
+                    onClick={() => setPremiumTab("premium")}
+                    className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                      premiumTab === "premium"
+                        ? "bg-[#D4AF37] text-[#0A1F44]"
+                        : "bg-transparent text-white/60"
+                    }`}
+                    data-testid="button-tab-premium"
+                  >
+                    {t("premiumPlan")}
+                  </button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Plan Features */}
+              <div className="max-w-sm mx-auto">
+                {premiumTab === "free" ? (
+                  <ul className="space-y-3 mb-6">
+                    {[t("listenAnytime"), t("dailyVerses")].map((feature) => (
+                      <li key={feature} className="flex items-center gap-3 text-white/80 text-sm">
+                        <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-3 mb-6">
+                    {[t("saveFavorites"), t("createPlaylists"), t("noAdsOffline")].map((feature) => (
+                      <li key={feature} className="flex items-center gap-3 text-white/80 text-sm">
+                        <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="text-center">
+                  <Link href={user ? "/pricing" : "/login"}>
+                    <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-bold" data-testid="button-upgrade-now">
+                      {t("upgradeNow")}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
       {/* ═══════════════ NOTIFICATION BANNER ═══════════════ */}
       {pushSupported && !pushEnabled && (
-        <section className="px-5 md:px-8 mt-6 max-w-5xl mx-auto w-full" data-testid="section-notification-cta">
+        <section className="px-5 md:px-8 pb-6 max-w-5xl mx-auto w-full" data-testid="section-notification-cta">
           <Card className="shadow-sm border-[#D4AF37]/20 overflow-hidden">
             <CardContent className="p-0">
               <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#D4AF37]/8 to-transparent">
@@ -602,35 +602,10 @@ export default function Home() {
       )}
 
       {/* ═══════════════ FOOTER ═══════════════ */}
-      <footer className="mt-10 pb-6 px-5 md:px-8 max-w-5xl mx-auto w-full" data-testid="section-footer">
-        <div className="border-t border-border/50 pt-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <img src={logoImage} alt="Bénédictions Partagées" className="w-8 h-8 rounded-md object-cover" />
-              <div>
-                <p className="text-sm font-semibold text-foreground">{t("appName")}</p>
-                <p className="text-xs text-muted-foreground">{t("tagline")}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 flex-wrap">
-              <Link href="/devotion">
-                <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">{t("devotion")}</span>
-              </Link>
-              <Link href="/music">
-                <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">{t("music")}</span>
-              </Link>
-              <Link href="/prayer">
-                <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">{t("prayer")}</span>
-              </Link>
-              <Link href="/support">
-                <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">{t("support")}</span>
-              </Link>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground/60 mt-4 text-center md:text-left">
-            {t("scriptureAttribution")}
-          </p>
-        </div>
+      <footer className="py-6 px-5 md:px-8 text-center border-t border-border/30" data-testid="section-footer">
+        <p className="text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} {t("appName")}
+        </p>
       </footer>
 
     </div>
