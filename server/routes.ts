@@ -341,11 +341,25 @@ export async function registerRoutes(
 
   app.get("/api/music", optionalUser, async (req: any, res) => {
     try {
-      const tracks = await storage.getMusicTracks();
+      const inMemoryTracks = await storage.getMusicTracks();
       const user = req.user;
       const isPremium = user?.isPremium || false;
 
-      const filteredTracks = tracks.map((track: any) => {
+      const dbSongs = await db.select().from(songsTable).orderBy(desc(songsTable.releaseDate));
+      const dbTracks = dbSongs.map((s) => ({
+        id: s.id,
+        title: s.title,
+        artist: s.artist,
+        duration: s.duration || "",
+        audioUrl: s.audioUrl,
+        albumArt: s.coverUrl || "",
+        isEarlyAccess: s.isEarlyAccess || false,
+        releaseDate: s.releaseDate ? s.releaseDate.toISOString() : s.createdAt ? s.createdAt.toISOString() : null,
+      }));
+
+      const allTracks = [...dbTracks, ...inMemoryTracks];
+
+      const filteredTracks = allTracks.map((track: any) => {
         if (track.isEarlyAccess && !isPremium) {
           return {
             ...track,
@@ -361,6 +375,42 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching music tracks:", error);
       res.status(500).json({ error: "Failed to fetch music tracks" });
+    }
+  });
+
+  app.get("/api/music/featured", optionalUser, async (req: any, res) => {
+    try {
+      const user = req.user;
+      const isPremium = user?.isPremium || false;
+
+      const [latestSong] = await db.select().from(songsTable).orderBy(desc(songsTable.releaseDate)).limit(1);
+
+      if (!latestSong) {
+        return res.json(null);
+      }
+
+      const track: any = {
+        id: latestSong.id,
+        title: latestSong.title,
+        artist: latestSong.artist,
+        duration: latestSong.duration || "",
+        audioUrl: latestSong.audioUrl,
+        albumArt: latestSong.coverUrl || "",
+        isEarlyAccess: latestSong.isEarlyAccess || false,
+        releaseDate: latestSong.releaseDate ? latestSong.releaseDate.toISOString() : latestSong.createdAt ? latestSong.createdAt.toISOString() : null,
+        locked: false,
+      };
+
+      if (track.isEarlyAccess && !isPremium) {
+        track.audioUrl = null;
+        track.locked = true;
+        track.lockReason = "early_access";
+      }
+
+      res.json(track);
+    } catch (error) {
+      console.error("Error fetching featured song:", error);
+      res.status(500).json({ error: "Failed to fetch featured song" });
     }
   });
 

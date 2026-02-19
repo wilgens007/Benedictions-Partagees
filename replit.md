@@ -63,9 +63,12 @@ Preferred communication style: Simple, everyday language.
 - **Endpoints**: `GET/POST/DELETE /api/verses/saved` — enforces 20-verse cap for free users (HTTP 403), unlimited for premium
 - **Frontend**: Save button on daily verse, saved verses list on dashboard
 
-### Early Access Music
-- **Song Field**: `is_early_access` boolean on songs table
+### Early Access Music & Featured Song
+- **Song Fields**: `is_early_access` boolean, `release_date` timestamp on songs table
 - **Gating**: `GET /api/music` uses `optionalUser` middleware — early access songs return `audioUrl: null, locked: true` for non-premium users
+- **Music Sources**: `/api/music` combines DB songs (admin-managed, ordered by release_date) with in-memory songs from `server/data/songs.ts`
+- **Featured Song**: `GET /api/music/featured` returns the latest DB song (by release_date desc) — displayed on Home page with early access badge, release date, and lock/play icons
+- **Admin Form**: `releaseDate` field added to admin song form — defaults to now if empty
 
 ### Key Design Patterns
 - **Shared Types**: TypeScript types and schemas in `shared/` directory are used by both client and server

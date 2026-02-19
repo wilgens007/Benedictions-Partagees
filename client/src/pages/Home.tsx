@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X, Play, Crown } from "lucide-react";
+import { Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell, BellOff, X, Play, Crown, Lock, Calendar } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,10 @@ export default function Home() {
     queryKey: ["/api/music"],
   });
 
+  const { data: featuredSong } = useQuery<MusicTrack | null>({
+    queryKey: ["/api/music/featured"],
+  });
+
   const today = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US", {
     weekday: "long",
     year: "numeric",
@@ -91,7 +95,7 @@ export default function Home() {
     day: "numeric",
   });
 
-  const featuredTrack = tracks?.[0];
+  const featuredTrack = featuredSong || tracks?.[0];
 
   return (
     <div className="flex flex-col min-h-full">
@@ -294,7 +298,7 @@ export default function Home() {
           <div className="space-y-3" data-testid="section-featured-worship">
             <div className="flex items-center justify-between gap-4">
               <h2 className="font-serif font-semibold text-xl text-foreground">
-                {t("featuredWorship")}
+                {t("featuredSong")}
               </h2>
               <Link href="/music">
                 <Button variant="ghost" size="sm" className="text-[#D4AF37]">
@@ -307,8 +311,22 @@ export default function Home() {
             <Card
               className="shadow-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer"
               onClick={() => {
+                if (featuredTrack.locked) {
+                  toast({
+                    title: t("earlyAccessOnly"),
+                    description: t("earlyAccessDesc"),
+                  });
+                  return;
+                }
                 if (tracks && tracks.length > 0) {
-                  playTrack(featuredTrack, tracks, 0);
+                  const trackIndex = tracks.findIndex((tr) => tr.id === featuredTrack.id);
+                  if (trackIndex >= 0) {
+                    playTrack(tracks[trackIndex], tracks, trackIndex);
+                  } else {
+                    playTrack(featuredTrack, [featuredTrack], 0);
+                  }
+                } else {
+                  playTrack(featuredTrack, [featuredTrack], 0);
                 }
               }}
               data-testid="card-featured-worship"
@@ -319,26 +337,51 @@ export default function Home() {
                     <div
                       className="w-16 h-16 rounded-lg bg-cover bg-center shadow-sm"
                       style={{
-                        backgroundImage: `url(${featuredTrack.albumArt})`,
+                        backgroundImage: featuredTrack.albumArt ? `url(${featuredTrack.albumArt})` : undefined,
                         backgroundColor: "hsl(var(--muted))",
                       }}
                     />
                     <div className="absolute inset-0 rounded-lg bg-black/20 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center">
-                        <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
-                      </div>
+                      {featuredTrack.locked ? (
+                        <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">
+                          <Lock className="w-4 h-4 text-[#0A1F44]" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                          <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">
-                      {featuredTrack.title}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-foreground truncate" data-testid="text-featured-song-title">
+                        {featuredTrack.title}
+                      </p>
+                      {featuredTrack.isEarlyAccess && (
+                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-[10px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate" data-testid="badge-early-access">
+                          <Crown className="w-3 h-3 mr-0.5" />
+                          {t("earlyAccess")}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground truncate">
                       {featuredTrack.artist}
                     </p>
-                    <p className="text-xs text-[#D4AF37] mt-1">
-                      {featuredTrack.duration}
-                    </p>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      <p className="text-xs text-[#D4AF37]">
+                        {featuredTrack.duration}
+                      </p>
+                      {featuredTrack.releaseDate && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1" data-testid="text-release-date">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(featuredTrack.releaseDate).toLocaleDateString(
+                            language === "fr" ? "fr-FR" : language === "ht" ? "fr-HT" : "en-US",
+                            { month: "short", day: "numeric", year: "numeric" }
+                          )}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                 </div>

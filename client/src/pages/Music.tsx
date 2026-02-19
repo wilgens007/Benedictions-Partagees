@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Lock, Crown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAudioPlayer } from "@/lib/AudioPlayerContext";
 import type { MusicTrack } from "@shared/schema";
@@ -19,6 +21,7 @@ function formatTime(seconds: number) {
 
 export default function Music() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const {
     currentTrack,
     currentTrackIndex,
@@ -48,7 +51,15 @@ export default function Music() {
 
   const handlePlayTrack = (index: number) => {
     if (!tracks) return;
-    playTrack(tracks[index], tracks, index);
+    const track = tracks[index];
+    if (track.locked) {
+      toast({
+        title: t("earlyAccessOnly"),
+        description: t("earlyAccessDesc"),
+      });
+      return;
+    }
+    playTrack(track, tracks, index);
   };
 
   const displayTrack = currentTrack || tracks?.[0] || null;
@@ -212,20 +223,31 @@ export default function Music() {
                     }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p
-                      className={`font-medium truncate ${
-                        currentTrack?.id === track.id ? "text-[#D4AF37]" : "text-foreground"
-                      }`}
-                    >
-                      {track.title}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p
+                        className={`font-medium truncate ${
+                          currentTrack?.id === track.id ? "text-[#D4AF37]" : "text-foreground"
+                        }`}
+                      >
+                        {track.title}
+                      </p>
+                      {track.isEarlyAccess && (
+                        <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-[9px] px-1 py-0 no-default-hover-elevate no-default-active-elevate">
+                          <Crown className="w-2.5 h-2.5 mr-0.5" />
+                          {t("earlyAccess")}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground truncate">
                       {track.artist}
                     </p>
                   </div>
-                  <span className="text-sm text-muted-foreground flex-shrink-0">
-                    {track.duration}
-                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {track.locked && <Lock className="w-4 h-4 text-muted-foreground" />}
+                    <span className="text-sm text-muted-foreground">
+                      {track.duration}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>

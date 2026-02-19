@@ -116,6 +116,7 @@ export function registerAdminRoutes(app: Express) {
   app.post("/api/admin/songs", requireAdmin, async (req: Request, res: Response) => {
     const body = { ...req.body };
     if (body.publicReleaseAt) body.publicReleaseAt = new Date(body.publicReleaseAt);
+    if (body.releaseDate) body.releaseDate = new Date(body.releaseDate);
     const parsed = insertSongSchema.safeParse(body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const [row] = await db.insert(songs).values(parsed.data).returning();
@@ -127,6 +128,8 @@ export function registerAdminRoutes(app: Express) {
     const updates: any = { ...req.body, updatedAt: new Date() };
     if (updates.publicReleaseAt) updates.publicReleaseAt = new Date(updates.publicReleaseAt);
     if (updates.publicReleaseAt === null) updates.publicReleaseAt = null;
+    if (updates.releaseDate) updates.releaseDate = new Date(updates.releaseDate);
+    if (updates.releaseDate === null) updates.releaseDate = null;
     delete updates.id;
     delete updates.createdAt;
     const [row] = await db.update(songs).set(updates).where(eq(songs.id, id)).returning();

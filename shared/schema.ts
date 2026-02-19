@@ -97,6 +97,7 @@ export const songs = pgTable("songs", {
   audioUrl: text("audio_url").notNull(),
   duration: text("duration"),
   isEarlyAccess: boolean("is_early_access").default(false),
+  releaseDate: timestamp("release_date").defaultNow(),
   publicReleaseAt: timestamp("public_release_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -196,6 +197,10 @@ export interface MusicTrack {
   duration: string;
   audioUrl: string;
   albumArt: string;
+  isEarlyAccess?: boolean;
+  releaseDate?: string | null;
+  locked?: boolean;
+  lockReason?: string;
 }
 
 export interface Video {

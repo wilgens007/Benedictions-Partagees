@@ -85,6 +85,7 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
   const [audioUrl, setAudioUrl] = useState(song?.audioUrl || "");
   const [duration, setDuration] = useState(song?.duration || "");
   const [isEarlyAccess, setIsEarlyAccess] = useState(song?.isEarlyAccess || false);
+  const [releaseDate, setReleaseDate] = useState(song?.releaseDate ? new Date(song.releaseDate).toISOString().slice(0, 16) : "");
   const [publicReleaseAt, setPublicReleaseAt] = useState(song?.publicReleaseAt ? new Date(song.publicReleaseAt).toISOString().slice(0, 16) : "");
   const [coverMode, setCoverMode] = useState<"url" | "upload">("url");
   const [audioMode, setAudioMode] = useState<"url" | "upload">("url");
@@ -110,6 +111,7 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
         audioUrl,
         duration: duration || null,
         isEarlyAccess,
+        releaseDate: releaseDate ? new Date(releaseDate).toISOString() : null,
         publicReleaseAt: publicReleaseAt ? new Date(publicReleaseAt).toISOString() : null,
       };
       if (song) {
@@ -170,6 +172,11 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
       <div className="space-y-2">
         <Label>Duration (e.g., 3:45)</Label>
         <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="3:45" data-testid="input-song-duration" />
+      </div>
+      <div className="space-y-2">
+        <Label>Release Date</Label>
+        <Input type="datetime-local" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} data-testid="input-song-release-date" />
+        <p className="text-xs text-muted-foreground">When this song was released. Defaults to now if empty.</p>
       </div>
       <div className="flex items-center gap-3">
         <Switch checked={isEarlyAccess} onCheckedChange={setIsEarlyAccess} data-testid="switch-early-access" />
@@ -293,7 +300,7 @@ export default function AdminMusic() {
                           <p className="font-semibold truncate" data-testid={`song-title-${s.id}`}>{s.title}</p>
                           <Badge variant={status.variant} data-testid={`song-badge-${s.id}`}>{status.label}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{s.artist}{album ? ` \u2022 ${album.title}` : ""}{s.duration ? ` \u2022 ${s.duration}` : ""}</p>
+                        <p className="text-sm text-muted-foreground">{s.artist}{album ? ` \u2022 ${album.title}` : ""}{s.duration ? ` \u2022 ${s.duration}` : ""}{s.releaseDate ? ` \u2022 ${new Date(s.releaseDate).toLocaleDateString()}` : ""}</p>
                       </div>
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" onClick={() => { setEditSong(s); setShowSongForm(true); }} data-testid={`button-edit-song-${s.id}`}><Pencil className="w-4 h-4" /></Button>
