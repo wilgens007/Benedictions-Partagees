@@ -95,6 +95,15 @@ Preferred communication style: Simple, everyday language.
 - **DB Table**: `support_config` — key-value store for Stripe links, CashApp, PayPal, Zelle handles
 - **Stage 2 (pending)**: Stripe payment link integration when user provides links
 
+### Custom Playlists (Premium)
+- **DB Tables**: `playlists` (id, userId, name, description, isPublic, createdAt) and `playlist_songs` (id, playlistId, songId, sortOrder, addedAt) with unique constraint
+- **Routes**: `server/playlistRoutes.ts` — CRUD for playlists, add/remove songs, public playlist view
+- **Limits**: Max 20 playlists per user, max 100 songs per playlist
+- **Gating**: All playlist CRUD requires `requirePremium` middleware; public playlist view is unauthenticated
+- **UI**: Playlist section in Music page with create dialog, add-to-playlist from track list, playlist detail dialog, play all, share/copy link
+- **Public Sharing**: Public playlists accessible via `/playlist/:id` route (`client/src/pages/SharedPlaylist.tsx`)
+- **Translations**: 30+ playlist-related keys across EN/FR/HT
+
 ### Global Audio Player
 - **Context**: `client/src/lib/AudioPlayerContext.tsx` — persistent Audio() instance that survives route changes
 - **State**: currentTrack, playlist, isPlaying, currentTime, duration, volume — all managed globally

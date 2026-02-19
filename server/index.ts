@@ -11,6 +11,7 @@ import { generateDailyContent, getTodayKeyET } from "./dailyContentGenerator";
 import { sendPushToAll } from "./pushService";
 import { WebhookHandlers } from "./webhookHandlers";
 import prayerWallRoutes from "./prayerWallRoutes";
+import playlistRoutes from "./playlistRoutes";
 
 const app = express();
 const httpServer = createServer(app);
@@ -100,6 +101,7 @@ app.use((req, res, next) => {
   app.use(authRoutes);
   app.use(billingRoutes);
   app.use(prayerWallRoutes);
+  app.use(playlistRoutes);
   registerAdminRoutes(app);
   await registerRoutes(httpServer, app);
 

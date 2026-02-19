@@ -176,6 +176,33 @@ export const prayerReports = pgTable("prayer_reports", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const playlists = pgTable("playlists", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Playlist = typeof playlists.$inferSelect;
+export const insertPlaylistSchema = createInsertSchema(playlists).omit({ id: true, createdAt: true });
+export type InsertPlaylist = z.infer<typeof insertPlaylistSchema>;
+
+export const playlistSongs = pgTable("playlist_songs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  playlistId: varchar("playlist_id").notNull(),
+  songId: varchar("song_id").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  addedAt: timestamp("added_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("playlist_songs_unique_idx").on(table.playlistId, table.songId),
+]);
+
+export type PlaylistSong = typeof playlistSongs.$inferSelect;
+export const insertPlaylistSongSchema = createInsertSchema(playlistSongs).omit({ id: true, addedAt: true });
+export type InsertPlaylistSong = z.infer<typeof insertPlaylistSongSchema>;
+
 export const adminSessions = pgTable("admin_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull(),
