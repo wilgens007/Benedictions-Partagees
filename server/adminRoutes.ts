@@ -14,6 +14,33 @@ import { requireAdmin, isAdminEmail, createAdminSession, validateAdminToken } fr
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
+async function resolveSunoAudioUrl(url: string): Promise<string> {
+  if (!url) return url;
+  if (url.includes("cdn1.suno.ai") && url.endsWith(".mp3")) return url;
+
+  const sunoShareMatch = url.match(/suno\.com\/s\/([A-Za-z0-9_-]+)/);
+  const sunoSongMatch = url.match(/suno\.com\/song\/([0-9a-f-]{36})/);
+
+  if (sunoSongMatch) {
+    return `https://cdn1.suno.ai/${sunoSongMatch[1]}.mp3`;
+  }
+
+  if (sunoShareMatch) {
+    try {
+      const resp = await fetch(url, { method: "HEAD", redirect: "follow" });
+      const finalUrl = resp.url;
+      const uuidMatch = finalUrl.match(/song\/([0-9a-f-]{36})/);
+      if (uuidMatch) {
+        return `https://cdn1.suno.ai/${uuidMatch[1]}.mp3`;
+      }
+    } catch (err) {
+      console.log(`[SUNO] Failed to resolve share URL: ${url}`, err);
+    }
+  }
+
+  return url;
+}
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
   filename: (_req, file, cb) => {
@@ -117,6 +144,7 @@ export function registerAdminRoutes(app: Express) {
     const body = { ...req.body };
     if (body.publicReleaseAt) body.publicReleaseAt = new Date(body.publicReleaseAt);
     if (body.releaseDate) body.releaseDate = new Date(body.releaseDate);
+    if (body.audioUrl) body.audioUrl = await resolveSunoAudioUrl(body.audioUrl);
     const parsed = insertSongSchema.safeParse(body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const [row] = await db.insert(songs).values(parsed.data).returning();
@@ -130,6 +158,7 @@ export function registerAdminRoutes(app: Express) {
     if (updates.publicReleaseAt === null) updates.publicReleaseAt = null;
     if (updates.releaseDate) updates.releaseDate = new Date(updates.releaseDate);
     if (updates.releaseDate === null) updates.releaseDate = null;
+    if (updates.audioUrl) updates.audioUrl = await resolveSunoAudioUrl(updates.audioUrl);
     delete updates.id;
     delete updates.createdAt;
     const [row] = await db.update(songs).set(updates).where(eq(songs.id, id)).returning();

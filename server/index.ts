@@ -211,6 +211,43 @@ async function runStartupGeneration() {
   }
 
   try {
+    const { db: fixDb } = await import("./db");
+    const { songs: songsTable } = await import("@shared/schema");
+    const { like } = await import("drizzle-orm");
+    const sunoSongs = await fixDb.select().from(songsTable).where(like(songsTable.audioUrl, '%suno.com/s/%'));
+    for (const song of sunoSongs) {
+      if (song.audioUrl) {
+        try {
+          const resp = await fetch(song.audioUrl, { method: "HEAD", redirect: "follow" });
+          const uuidMatch = resp.url.match(/song\/([0-9a-f-]{36})/);
+          if (uuidMatch) {
+            const cdnUrl = `https://cdn1.suno.ai/${uuidMatch[1]}.mp3`;
+            const { eq } = await import("drizzle-orm");
+            await fixDb.update(songsTable).set({ audioUrl: cdnUrl }).where(eq(songsTable.id, song.id));
+            log(`[STARTUP] Fixed Suno URL for song "${song.title}": ${cdnUrl}`, "startup");
+          }
+        } catch (err: any) {
+          log(`[STARTUP] Failed to resolve Suno URL for "${song.title}": ${err.message}`, "startup");
+        }
+      }
+    }
+    const sunoSongs2 = await fixDb.select().from(songsTable).where(like(songsTable.audioUrl, '%suno.com/song/%'));
+    for (const song of sunoSongs2) {
+      if (song.audioUrl) {
+        const uuidMatch = song.audioUrl.match(/song\/([0-9a-f-]{36})/);
+        if (uuidMatch && !song.audioUrl.includes("cdn1.suno.ai")) {
+          const cdnUrl = `https://cdn1.suno.ai/${uuidMatch[1]}.mp3`;
+          const { eq } = await import("drizzle-orm");
+          await fixDb.update(songsTable).set({ audioUrl: cdnUrl }).where(eq(songsTable.id, song.id));
+          log(`[STARTUP] Fixed Suno song URL for "${song.title}": ${cdnUrl}`, "startup");
+        }
+      }
+    }
+  } catch (err: any) {
+    log(`[STARTUP] Suno URL fix: ${err.message || err}`, "startup");
+  }
+
+  try {
     const { runMigrations } = await import('stripe-replit-sync');
     const { getStripeSync } = await import('./stripeClient');
 
