@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell,
   Play, Crown, Lock, Heart, Headphones, BookMarked,
-  ArrowRight, Quote, Check, Share2, Bookmark
+  ArrowRight, Quote, Check, Share2, Bookmark, ChevronLeft, Pause
 } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,9 @@ import { useAudioPlayer } from "@/lib/AudioPlayerContext";
 import { useAuth } from "@/lib/AuthContext";
 import type { DailyVerse, Encouragement, MusicTrack, Testimony, Video } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
+import { useScrollRevealChildren } from "@/hooks/useScrollReveal";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import logoImage from "@assets/Logo_company_logo_alphabet_logo_brand_logo_(1)_1766604339283.png";
 
 export default function Home() {
@@ -27,6 +30,12 @@ export default function Home() {
   const [pushLoading, setPushLoading] = useState(false);
   const [premiumTab, setPremiumTab] = useState<"free" | "premium">("premium");
   const pushSupported = isPushSupported();
+
+  const blessingRef = useScrollRevealChildren();
+  const worshipRef = useScrollRevealChildren();
+  const videoRef = useScrollRevealChildren();
+  const prayerRef = useScrollRevealChildren();
+  const premiumRef = useScrollRevealChildren();
 
   useEffect(() => {
     isPushSubscribed().then(setPushEnabled);
@@ -106,41 +115,77 @@ export default function Home() {
   const displayTestimonies = testimoniesData?.slice(0, 2) || [];
   const displayVideos = videosData?.slice(0, 4) || [];
 
-  const worshipPlaylists = [
-    {
-      id: "worship-flow",
-      titleKey: "playlistWorshipFlow",
-      genre: "Afrobeat",
-      trackCount: displayTracks.length > 6 ? Math.min(displayTracks.length, 18) : displayTracks.length,
-      gradient: "from-orange-600/90 to-amber-700/80",
-      albumArt: displayTracks[0]?.albumArt,
-      startIndex: 0,
-    },
-    {
-      id: "kompa-praise",
-      titleKey: "playlistKompaPraise",
-      genre: "Kompa",
-      trackCount: displayTracks.length > 3 ? Math.min(12, displayTracks.length) : displayTracks.length,
-      gradient: "from-emerald-700/90 to-teal-800/80",
-      albumArt: displayTracks[2]?.albumArt,
-      startIndex: 2,
-    },
-    {
-      id: "quiet-time",
-      titleKey: "playlistQuietTime",
-      genre: language === "fr" ? "Louange Douce" : language === "ht" ? "Lwanj Dous" : "Soft Worship",
-      trackCount: displayTracks.length > 0 ? Math.min(displayTracks.length, 10) : 0,
-      gradient: "from-sky-700/90 to-indigo-800/80",
-      albumArt: displayTracks[4]?.albumArt,
-      startIndex: 4,
-    },
-  ];
+  const carouselTracks = displayTracks.slice(0, 8);
 
-  const handlePlayPlaylist = (startIndex: number) => {
-    if (displayTracks.length > 0) {
-      const idx = Math.min(startIndex, displayTracks.length - 1);
-      playTrack(displayTracks[idx], displayTracks, idx);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const autoplayPlugin = useRef(
+    Autoplay({
+      delay: 4000,
+      stopOnInteraction: true,
+      stopOnMouseEnter: true,
+    })
+  );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: "start", skipSnaps: false, dragFree: false },
+    prefersReducedMotion ? [] : [autoplayPlugin.current]
+  );
+
+  const [selectedCarouselIndex, setSelectedCarouselIndex] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedCarouselIndex(emblaApi.selectedScrollSnap());
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("reInit", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const handlePlayFeatured = () => {
+    if (!featuredTrack) return;
+    if (featuredTrack.locked) {
+      toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
+      return;
     }
+    if (tracks && tracks.length > 0) {
+      const idx = tracks.findIndex((tr) => tr.id === featuredTrack.id);
+      playTrack(tracks[idx >= 0 ? idx : 0], tracks, idx >= 0 ? idx : 0);
+    } else {
+      playTrack(featuredTrack, [featuredTrack], 0);
+    }
+  };
+
+  const handlePlayCarouselTrack = (track: MusicTrack) => {
+    if (track.locked) {
+      toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
+      return;
+    }
+    const idx = displayTracks.findIndex((tr) => tr.id === track.id);
+    playTrack(displayTracks[idx >= 0 ? idx : 0], displayTracks, idx >= 0 ? idx : 0);
   };
 
   return (
@@ -148,36 +193,46 @@ export default function Home() {
 
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section
-        className="relative overflow-hidden bg-gradient-to-br from-[#0A1F44] via-[#0E2A55] to-[#132D5E] dark:from-[#060E22] dark:via-[#0A1833] dark:to-[#0E2040]"
+        className="relative overflow-hidden"
         data-testid="section-hero"
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#D4AF37]/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44] via-[#0E2A55] to-[#132D5E] dark:from-[#060E22] dark:via-[#0A1833] dark:to-[#0E2040]" />
+
+        {featuredTrack?.albumArt && (
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-10 blur-md"
+            style={{ backgroundImage: `url(${featuredTrack.albumArt})` }}
+          />
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A1F44] via-transparent to-transparent" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/8 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-8 pb-14 md:pt-14 md:pb-20 md:px-8">
-          <div className="md:flex md:items-start md:gap-10">
+        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-10 pb-16 md:pt-16 md:pb-24 md:px-8">
+          <div className="md:flex md:items-center md:gap-12">
             <div className="md:flex-1">
-              <div className="flex items-center gap-3 mb-5 md:hidden">
+              <div className="flex items-center gap-3 mb-5 md:hidden animate-hero-enter">
                 <img
                   src={logoImage}
                   alt="Bénédictions Partagées"
                   className="w-11 h-11 rounded-full object-cover border-2 border-[#D4AF37]/50 shadow-lg"
+                  loading="lazy"
                 />
                 <p className="text-[#D4AF37]/80 text-xs font-semibold uppercase tracking-widest">{t("tagline")}</p>
               </div>
 
-              <h1 className="font-serif text-3xl md:text-5xl font-bold text-white leading-tight mb-2" data-testid="text-hero-headline">
+              <h1 className="font-serif text-3xl md:text-5xl font-bold text-white leading-tight mb-3 animate-hero-enter" data-testid="text-hero-headline">
                 {t("heroTitle")}
               </h1>
-              <p className="font-serif text-lg md:text-xl text-white/80 mb-4" data-testid="text-hero-subtitle">
+              <p className="font-serif text-lg md:text-xl text-white/80 mb-3 animate-hero-enter-delay-1" data-testid="text-hero-subtitle">
                 {t("heroHeadline")}
               </p>
-              <p className="text-white/50 text-sm md:text-base leading-relaxed mb-7 max-w-lg" data-testid="text-hero-subtext">
+              <p className="text-white/50 text-sm md:text-base leading-relaxed mb-8 max-w-lg animate-hero-enter-delay-2" data-testid="text-hero-subtext">
                 {t("heroSubtext")}
               </p>
 
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap animate-hero-enter-delay-3">
                 <Link href="/music">
                   <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-hero-listen">
                     <Play className="w-4 h-4 mr-2" />
@@ -194,29 +249,23 @@ export default function Home() {
             </div>
 
             {/* Now Playing Card (desktop) */}
-            <div className="hidden md:block md:w-80 mt-2">
+            <div className="hidden md:block md:w-80 animate-hero-enter-delay-2">
               {featuredTrack && (
                 <Card
-                  className="shadow-xl border-0 overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                  onClick={() => {
-                    if (featuredTrack.locked) {
-                      toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
-                      return;
-                    }
-                    if (tracks && tracks.length > 0) {
-                      const idx = tracks.findIndex((tr) => tr.id === featuredTrack.id);
-                      playTrack(tracks[idx >= 0 ? idx : 0], tracks, idx >= 0 ? idx : 0);
-                    } else {
-                      playTrack(featuredTrack, [featuredTrack], 0);
-                    }
-                  }}
+                  className="shadow-2xl border-0 overflow-hidden cursor-pointer hover-elevate active-elevate-2"
+                  onClick={handlePlayFeatured}
                   data-testid="card-now-playing-hero"
                 >
                   <CardContent className="p-0">
                     <div className="relative bg-gradient-to-br from-[#1a3a6e] to-[#0d2040]">
                       <div className="absolute inset-0 opacity-30">
                         {featuredTrack.albumArt && (
-                          <div className="w-full h-full bg-cover bg-center blur-sm" style={{ backgroundImage: `url(${featuredTrack.albumArt})` }} />
+                          <img
+                            src={featuredTrack.albumArt}
+                            alt=""
+                            className="w-full h-full object-cover blur-sm"
+                            loading="lazy"
+                          />
                         )}
                       </div>
                       <div className="relative p-5">
@@ -226,11 +275,20 @@ export default function Home() {
                         <p className="font-serif font-bold text-white text-xl mb-1 truncate" data-testid="text-featured-song-title">
                           "{featuredTrack.title}"
                         </p>
-                        <p className="text-white/60 text-sm mb-4">{featuredTrack.artist}</p>
-                        <Button className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] font-semibold" data-testid="button-hero-play">
-                          <Play className="w-4 h-4 mr-2" />
-                          {t("play")}
-                        </Button>
+                        <p className="text-white/60 text-sm mb-5">{featuredTrack.artist}</p>
+
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-[#D4AF37] flex items-center justify-center animate-gentle-glow" data-testid="button-hero-play-glow">
+                            <Play className="w-5 h-5 text-[#0A1F44] ml-0.5" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-white/80 text-xs font-medium">{t("play")}</p>
+                            {featuredTrack.duration && (
+                              <p className="text-white/40 text-[10px]">{featuredTrack.duration}</p>
+                            )}
+                          </div>
+                        </div>
+
                         {nextTrack && (
                           <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
                             <span className="text-white/40 text-xs">{t("upNext")}:</span>
@@ -247,37 +305,29 @@ export default function Home() {
           </div>
 
           {/* Now Playing Card (mobile) */}
-          <div className="md:hidden mt-6">
+          <div className="md:hidden mt-7 animate-hero-enter-delay-3">
             {featuredTrack && (
               <Card
                 className="shadow-lg border-0 overflow-hidden cursor-pointer hover-elevate active-elevate-2"
-                onClick={() => {
-                  if (featuredTrack.locked) {
-                    toast({ title: t("earlyAccessOnly"), description: t("earlyAccessDesc") });
-                    return;
-                  }
-                  if (tracks && tracks.length > 0) {
-                    const idx = tracks.findIndex((tr) => tr.id === featuredTrack.id);
-                    playTrack(tracks[idx >= 0 ? idx : 0], tracks, idx >= 0 ? idx : 0);
-                  } else {
-                    playTrack(featuredTrack, [featuredTrack], 0);
-                  }
-                }}
+                onClick={handlePlayFeatured}
                 data-testid="card-now-playing-mobile"
               >
                 <CardContent className="p-0">
                   <div className="relative bg-gradient-to-r from-[#1a3a6e] to-[#0d2040]">
                     <div className="relative flex items-center gap-4 p-4">
                       <div className="relative flex-shrink-0">
-                        <div
-                          className="w-16 h-16 rounded-md bg-cover bg-center"
-                          style={{
-                            backgroundImage: featuredTrack.albumArt ? `url(${featuredTrack.albumArt})` : undefined,
-                            backgroundColor: "#1a3a6e",
-                          }}
-                        />
+                        {featuredTrack.albumArt ? (
+                          <img
+                            src={featuredTrack.albumArt}
+                            alt={featuredTrack.title}
+                            className="w-16 h-16 rounded-md object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-md bg-[#1a3a6e]" />
+                        )}
                         <div className="absolute inset-0 rounded-md bg-black/20 flex items-center justify-center">
-                          <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center animate-gentle-glow">
                             <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
                           </div>
                         </div>
@@ -306,14 +356,14 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ TODAY'S BLESSING — 3 Cards ═══════════════ */}
-      <section className="px-5 md:px-8 py-8 md:py-12 max-w-5xl mx-auto w-full" data-testid="section-todays-blessing">
-        <h2 className="font-serif font-bold text-2xl text-foreground mb-6" data-testid="text-todays-blessing-title">
+      <section className="px-5 md:px-8 py-8 md:py-12 max-w-5xl mx-auto w-full" data-testid="section-todays-blessing" ref={blessingRef}>
+        <h2 className="font-serif font-bold text-2xl text-foreground mb-6 animate-fade-in-up" data-testid="text-todays-blessing-title">
           {t("todaysBlessing")}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Daily Verse Card */}
-          <Card className="shadow-md overflow-hidden" data-testid="card-daily-verse">
+          <Card className="shadow-md overflow-hidden animate-fade-in-up animate-stagger-1" data-testid="card-daily-verse">
             <CardContent className="p-0">
               <div className="bg-[#D4AF37] px-4 py-2">
                 <span className="text-sm font-bold text-[#0A1F44]">{t("dailyVerse")}</span>
@@ -363,7 +413,7 @@ export default function Home() {
           </Card>
 
           {/* Prayer of the Day Card */}
-          <Card className="shadow-md overflow-hidden" data-testid="card-prayer-of-day">
+          <Card className="shadow-md overflow-hidden animate-fade-in-up animate-stagger-2" data-testid="card-prayer-of-day">
             <CardContent className="p-0">
               <div className="bg-[#0A1F44] dark:bg-[#132D5E] px-4 py-2">
                 <span className="text-sm font-bold text-white">{t("prayerOfTheDay")}</span>
@@ -393,7 +443,7 @@ export default function Home() {
           </Card>
 
           {/* Testimony Highlight Card */}
-          <Card className="shadow-md overflow-hidden" data-testid="card-testimony-highlight">
+          <Card className="shadow-md overflow-hidden animate-fade-in-up animate-stagger-3" data-testid="card-testimony-highlight">
             <CardContent className="p-0">
               <div className="bg-[#D4AF37]/80 px-4 py-2">
                 <span className="text-sm font-bold text-[#0A1F44]">{t("testimonyHighlight")}</span>
@@ -426,44 +476,128 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════ FEATURED WORSHIP — Playlist Cards ═══════════════ */}
-      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-featured-worship">
-        <h2 className="font-serif font-bold text-2xl text-foreground mb-6">{t("featuredWorship")}</h2>
+      {/* ═══════════════ FEATURED MUSIC CAROUSEL ═══════════════ */}
+      {carouselTracks.length > 0 && (
+        <section className="pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-featured-music-carousel" ref={worshipRef}>
+          <div className="px-5 md:px-8 flex items-center justify-between mb-5 animate-fade-in-up">
+            <h2 className="font-serif font-bold text-2xl text-foreground">{t("featuredWorship")}</h2>
+            <Link href="/music">
+              <Button variant="ghost" size="sm" className="text-[#D4AF37]" data-testid="link-see-all-music">
+                {t("seeAll")} <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {worshipPlaylists.map((pl) => (
-            <Card
-              key={pl.id}
-              className="shadow-md overflow-hidden cursor-pointer hover-elevate active-elevate-2 border-0"
-              onClick={() => handlePlayPlaylist(pl.startIndex)}
-              data-testid={`card-playlist-${pl.id}`}
-            >
-              <CardContent className="p-0">
-                <div className="relative h-44 sm:h-40">
-                  {pl.albumArt ? (
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pl.albumArt})` }} />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44] to-[#132D5E]" />
-                  )}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${pl.gradient}`} />
-                  <div className="absolute inset-0 flex flex-col justify-end p-4">
-                    <p className="font-bold text-white text-lg leading-tight mb-0.5">{t(pl.titleKey)}</p>
-                    <p className="text-white/70 text-xs mb-3">{pl.genre} {pl.trackCount > 0 ? `\u00b7 ${pl.trackCount} Tracks` : ""}</p>
-                    <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37] text-xs w-fit no-default-hover-elevate no-default-active-elevate">
-                      <Play className="w-3 h-3 mr-1" />
-                      {t("play")}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+          <div className="relative animate-fade-in-up animate-stagger-2">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex gap-4 pl-5 md:pl-8">
+                {carouselTracks.map((track, index) => {
+                  const isCurrentTrack = currentTrack?.id === track.id;
+                  return (
+                    <div
+                      key={track.id}
+                      className="flex-none w-44 sm:w-52"
+                      data-testid={`carousel-track-${track.id}`}
+                    >
+                      <div
+                        className="relative rounded-md overflow-hidden cursor-pointer group"
+                        onClick={() => handlePlayCarouselTrack(track)}
+                      >
+                        <div className="aspect-square">
+                          {track.albumArt ? (
+                            <img
+                              src={track.albumArt}
+                              alt={track.title}
+                              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#0A1F44] to-[#132D5E] flex items-center justify-center">
+                              <Music className="w-10 h-10 text-[#D4AF37]/40" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-200 ${
+                            isCurrentTrack && isPlaying
+                              ? "bg-[#D4AF37] animate-gentle-glow"
+                              : "bg-white/90 group-hover:bg-[#D4AF37] group-hover:scale-105"
+                          }`}>
+                            {isCurrentTrack && isPlaying ? (
+                              <Pause className="w-4 h-4 text-[#0A1F44]" />
+                            ) : (
+                              <Play className="w-4 h-4 text-[#0A1F44] ml-0.5" />
+                            )}
+                          </div>
+                        </div>
+                        {track.locked && (
+                          <div className="absolute top-2 right-2">
+                            <Lock className="w-4 h-4 text-white/70" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2 px-0.5">
+                        <p className={`font-medium text-sm truncate ${isCurrentTrack ? "text-[#D4AF37]" : "text-foreground"}`}>
+                          {track.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex-none w-5 md:w-8" aria-hidden="true" />
+              </div>
+            </div>
+
+            {carouselTracks.length > 3 && (
+              <>
+                <button
+                  onClick={() => emblaApi?.scrollPrev()}
+                  className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 items-center justify-center text-foreground shadow-md transition-opacity duration-150 hover:bg-background disabled:opacity-0"
+                  disabled={!canScrollPrev}
+                  data-testid="button-carousel-prev"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => emblaApi?.scrollNext()}
+                  className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 items-center justify-center text-foreground shadow-md transition-opacity duration-150 hover:bg-background disabled:opacity-0"
+                  disabled={!canScrollNext}
+                  data-testid="button-carousel-next"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {carouselTracks.length > 1 && (
+              <div className="flex justify-center gap-1.5 mt-4" data-testid="carousel-dots">
+                {carouselTracks.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => emblaApi?.scrollTo(index)}
+                    className={`rounded-full transition-all duration-200 ${
+                      index === selectedCarouselIndex
+                        ? "w-6 h-2 bg-[#D4AF37]"
+                        : "w-2 h-2 bg-muted-foreground/30"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                    aria-current={index === selectedCarouselIndex ? "true" : undefined}
+                    data-testid={`carousel-dot-${index}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════ VIDEO TEACHINGS ═══════════════ */}
-      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-video-teachings">
-        <div className="flex items-center justify-between mb-6">
+      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-video-teachings" ref={videoRef}>
+        <div className="flex items-center justify-between mb-6 animate-fade-in-up">
           <h2 className="font-serif font-bold text-2xl text-foreground">{t("videoTeachings")}</h2>
           <Link href="/videos">
             <Button variant="ghost" size="sm" className="text-[#D4AF37]" data-testid="link-see-all-videos">
@@ -474,10 +608,10 @@ export default function Home() {
 
         {displayVideos.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {displayVideos.map((video) => (
+            {displayVideos.map((video, i) => (
               <Link key={video.id} href="/videos">
                 <Card
-                  className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer shadow-sm"
+                  className={`overflow-hidden hover-elevate active-elevate-2 cursor-pointer shadow-sm animate-fade-in-up animate-stagger-${Math.min(i + 1, 4)}`}
                   data-testid={`card-video-${video.id}`}
                 >
                   <div className="relative aspect-video">
@@ -506,12 +640,12 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { labelKey: "sermons", icon: BookOpen, desc: "sermonsDesc" },
-              { labelKey: "worship", icon: Music, desc: "worshipDesc" },
-              { labelKey: "teachings", icon: Sparkles, desc: "teachingsDesc" },
-            ].map((cat) => (
+              { labelKey: "sermons", icon: BookOpen },
+              { labelKey: "worship", icon: Music },
+              { labelKey: "teachings", icon: Sparkles },
+            ].map((cat, i) => (
               <Link key={cat.labelKey} href="/videos">
-                <Card className="hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible" data-testid={`card-video-category-${cat.labelKey}`}>
+                <Card className={`hover-elevate active-elevate-2 cursor-pointer shadow-sm overflow-visible animate-fade-in-up animate-stagger-${i + 1}`} data-testid={`card-video-category-${cat.labelKey}`}>
                   <CardContent className="p-5 flex flex-col items-center text-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-[#0A1F44]/8 dark:bg-[#D4AF37]/15 flex items-center justify-center">
                       <cat.icon className="w-5 h-5 text-[#0A1F44] dark:text-[#D4AF37]" />
@@ -526,13 +660,13 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ PRAYER WALL ═══════════════ */}
-      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-prayer-wall">
-        <h2 className="font-serif font-bold text-2xl text-foreground mb-6">{t("prayerWall")}</h2>
+      <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-prayer-wall" ref={prayerRef}>
+        <h2 className="font-serif font-bold text-2xl text-foreground mb-6 animate-fade-in-up">{t("prayerWall")}</h2>
 
         {displayPrayers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {displayPrayers.map((pr: any) => (
-              <Card key={pr.id} className="shadow-sm" data-testid={`card-prayer-${pr.id}`}>
+            {displayPrayers.map((pr: any, i: number) => (
+              <Card key={pr.id} className={`shadow-sm animate-fade-in-up animate-stagger-${Math.min(i + 1, 3)}`} data-testid={`card-prayer-${pr.id}`}>
                 <CardContent className="p-5">
                   <p className="text-sm font-bold text-foreground mb-2">{pr.name}</p>
                   <p className="text-sm text-muted-foreground line-clamp-3">{pr.request || pr.message}</p>
@@ -541,7 +675,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <Card className="shadow-sm">
+          <Card className="shadow-sm animate-fade-in-up">
             <CardContent className="p-6 text-center">
               <HandHeart className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">{t("noPrayerRequestsYet")}</p>
@@ -549,7 +683,7 @@ export default function Home() {
           </Card>
         )}
 
-        <div className="flex items-center justify-center gap-4 mt-6 flex-wrap">
+        <div className="flex items-center justify-center gap-4 mt-6 flex-wrap animate-fade-in-up animate-stagger-3">
           <Link href="/prayer">
             <Button variant="outline" className="border-[#0A1F44] dark:border-[#D4AF37] text-[#0A1F44] dark:text-[#D4AF37] font-semibold" data-testid="button-view-all-requests">
               {t("viewAllRequests")}
@@ -565,8 +699,8 @@ export default function Home() {
 
       {/* ═══════════════ UPGRADE TO PREMIUM ═══════════════ */}
       {(!user || !user.isPremium) && (
-        <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-premium">
-          <div className="relative rounded-md overflow-hidden">
+        <section className="px-5 md:px-8 pb-8 md:pb-12 max-w-5xl mx-auto w-full" data-testid="section-premium" ref={premiumRef}>
+          <div className="relative rounded-md overflow-hidden animate-fade-in-up">
             <div className="absolute inset-0 bg-gradient-to-br from-[#0A1F44]/95 to-[#132D5E]/90 dark:from-[#060E22]/98 dark:to-[#0E2040]/95" />
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#D4AF37]/6 rounded-full blur-2xl translate-y-1/4 -translate-x-1/4" />
@@ -576,12 +710,11 @@ export default function Home() {
                 {t("upgradeToPremium")}
               </h2>
 
-              {/* Tab Toggle */}
               <div className="flex items-center justify-center mb-6">
                 <div className="inline-flex rounded-md overflow-hidden border border-white/20">
                   <button
                     onClick={() => setPremiumTab("free")}
-                    className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                    className={`px-6 py-2 text-sm font-semibold transition-colors duration-150 ${
                       premiumTab === "free"
                         ? "bg-white text-[#0A1F44]"
                         : "bg-transparent text-white/60"
@@ -592,7 +725,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setPremiumTab("premium")}
-                    className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                    className={`px-6 py-2 text-sm font-semibold transition-colors duration-150 ${
                       premiumTab === "premium"
                         ? "bg-[#D4AF37] text-[#0A1F44]"
                         : "bg-transparent text-white/60"
@@ -604,7 +737,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Plan Features */}
               <div className="max-w-sm mx-auto">
                 {premiumTab === "free" ? (
                   <ul className="space-y-3 mb-6">
