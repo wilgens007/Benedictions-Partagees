@@ -6,7 +6,8 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
 export async function registerUser(email: string, password: string, name: string) {
-  const existing = await db.select().from(users).where(eq(users.email, email));
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await db.select().from(users).where(eq(users.email, normalizedEmail));
   if (existing.length > 0) {
     throw new Error("Email already registered");
   }
@@ -15,7 +16,7 @@ export async function registerUser(email: string, password: string, name: string
   const [user] = await db.insert(users).values({
     username: name,
     password: passwordHash,
-    email,
+    email: normalizedEmail,
     isPremium: false,
   }).returning();
 
@@ -23,13 +24,16 @@ export async function registerUser(email: string, password: string, name: string
 }
 
 export async function loginUser(email: string, password: string) {
-  const [user] = await db.select().from(users).where(eq(users.email, email));
+  const normalizedEmail = email.trim().toLowerCase();
+  const [user] = await db.select().from(users).where(eq(users.email, normalizedEmail));
   if (!user) {
+    console.log(`[AUTH] No user found for email: ${normalizedEmail}`);
     throw new Error("Invalid email or password");
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
+    console.log(`[AUTH] Password mismatch for user: ${user.id}, email: ${normalizedEmail}`);
     throw new Error("Invalid email or password");
   }
 
