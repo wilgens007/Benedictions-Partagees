@@ -8,6 +8,7 @@ const navItems = [
   { path: "/videos", icon: Video, labelKey: "videos" },
   { path: "/devotion", icon: BookOpen, labelKey: "devotion" },
   { path: "/prayer", icon: HandHeart, labelKey: "prayer" },
+  { path: "/support", icon: Heart, labelKey: "support" },
 ];
 
 export function BottomNav() {
@@ -19,7 +20,7 @@ export function BottomNav() {
       className="fixed bottom-0 left-0 right-0 bg-[#0A1F44] dark:bg-[#060E22] z-50 safe-area-bottom md:hidden"
       data-testid="nav-bottom"
     >
-      <div className="flex items-center justify-around gap-1 h-16 max-w-lg mx-auto px-2">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-1">
         {navItems.map((item) => {
           const isActive = location === item.path;
           const Icon = item.icon;
@@ -27,7 +28,7 @@ export function BottomNav() {
           return (
             <Link key={item.path} href={item.path}>
               <button
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-[56px] ${
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg transition-all duration-200 min-w-[48px] ${
                   isActive 
                     ? "text-[#D4AF37]" 
                     : "text-white/60"
