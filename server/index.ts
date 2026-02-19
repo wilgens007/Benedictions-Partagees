@@ -197,6 +197,20 @@ async function runStartupGeneration() {
   }
 
   try {
+    const { db: startupDb } = await import("./db");
+    const { users: usersTable } = await import("@shared/schema");
+    const { eq } = await import("drizzle-orm");
+    const ownerEmail = "wilgens007@gmail.com";
+    const [owner] = await startupDb.select().from(usersTable).where(eq(usersTable.email, ownerEmail));
+    if (owner && !owner.isPremium) {
+      await startupDb.update(usersTable).set({ isPremium: true, premiumSince: new Date() }).where(eq(usersTable.id, owner.id));
+      log(`[STARTUP] Granted premium to owner: ${ownerEmail}`, "startup");
+    }
+  } catch (err: any) {
+    log(`[STARTUP] Owner premium check: ${err.message || err}`, "startup");
+  }
+
+  try {
     const { runMigrations } = await import('stripe-replit-sync');
     const { getStripeSync } = await import('./stripeClient');
 

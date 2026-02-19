@@ -240,6 +240,17 @@ export function registerAdminRoutes(app: Express) {
     });
   });
 
+  app.put("/api/admin/users/:id/premium", requireAdmin, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { isPremium } = req.body;
+    const [updated] = await db.update(users).set({
+      isPremium: !!isPremium,
+      premiumSince: isPremium ? new Date() : null,
+    }).where(eq(users.id, id)).returning();
+    if (!updated) return res.status(404).json({ error: "User not found" });
+    res.json({ id: updated.id, username: updated.username, isPremium: updated.isPremium });
+  });
+
   app.get("/api/admin/stats", requireAdmin, async (_req: Request, res: Response) => {
     const [songCount] = await db.select({ count: sql<number>`count(*)` }).from(songs);
     const [albumCount] = await db.select({ count: sql<number>`count(*)` }).from(albums);
