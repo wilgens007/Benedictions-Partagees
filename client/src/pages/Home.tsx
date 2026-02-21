@@ -3,8 +3,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Music, BookOpen, HandHeart, ChevronRight, Sparkles, Bell,
   Play, Crown, Lock, Heart, Headphones, BookMarked,
-  ArrowRight, Quote, Check, Share2, Bookmark, ChevronLeft, Pause
+  ArrowRight, Quote, Check, Share2, Bookmark, ChevronLeft, Pause, Youtube
 } from "lucide-react";
+import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -804,6 +805,38 @@ export default function Home() {
 
       {/* ═══════════════ FOOTER ═══════════════ */}
       <footer className="py-6 px-5 md:px-8 text-center border-t border-border/30" data-testid="section-footer">
+        <div className="flex items-center justify-center gap-4 mb-3">
+          <a
+            href="https://www.facebook.com/share/1A82SPwjrB/?mibextid=wwXIfr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground transition-colors"
+            data-testid="link-footer-facebook"
+            aria-label="Facebook"
+          >
+            <SiFacebook className="w-5 h-5" />
+          </a>
+          <a
+            href="https://youtube.com/@benedictionspartagees?si=zwojIRYi5-xp7EOD"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground transition-colors"
+            data-testid="link-footer-youtube"
+            aria-label="YouTube"
+          >
+            <Youtube className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.instagram.com/benedictions_partagees?igsh=MXhscHBtNWhyYXlqdg=="
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground transition-colors"
+            data-testid="link-footer-instagram"
+            aria-label="Instagram"
+          >
+            <SiInstagram className="w-5 h-5" />
+          </a>
+        </div>
         <p className="text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} {t("appName")}
         </p>

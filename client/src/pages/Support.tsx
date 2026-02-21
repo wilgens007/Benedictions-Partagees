@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, DollarSign, ExternalLink, Loader2 } from "lucide-react";
+import { Heart, DollarSign, ExternalLink, Loader2, Youtube } from "lucide-react";
+import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -241,6 +242,49 @@ export default function Support() {
             </div>
           </>
         )}
+
+        <Separator />
+
+        <div className="space-y-3">
+          <h2 className="font-serif font-semibold text-xl text-foreground" data-testid="text-follow-us-title">
+            {t("followUs")}
+          </h2>
+          <p className="text-sm text-muted-foreground" data-testid="text-follow-us-desc">
+            {t("followUsDesc")}
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <a
+              href="https://www.facebook.com/share/1A82SPwjrB/?mibextid=wwXIfr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-[#1877F2] text-white transition-opacity"
+              data-testid="link-social-facebook"
+              aria-label="Facebook"
+            >
+              <SiFacebook className="w-5 h-5" />
+            </a>
+            <a
+              href="https://youtube.com/@benedictionspartagees?si=zwojIRYi5-xp7EOD"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FF0000] text-white transition-opacity"
+              data-testid="link-social-youtube"
+              aria-label="YouTube"
+            >
+              <Youtube className="w-5 h-5" />
+            </a>
+            <a
+              href="https://www.instagram.com/benedictions_partagees?igsh=MXhscHBtNWhyYXlqdg=="
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white transition-opacity"
+              data-testid="link-social-instagram"
+              aria-label="Instagram"
+            >
+              <SiInstagram className="w-5 h-5" />
+            </a>
+          </div>
+        </div>
 
         <Separator />
 

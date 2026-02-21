@@ -240,6 +240,8 @@ export const translations: Record<Language, Record<string, string>> = {
     noAdsOffline: "No Ads \u00b7 Offline Listening",
     getTheApp: "Get the App",
     listen: "Listen",
+    followUs: "Follow Us",
+    followUsDesc: "Stay connected with our community on social media.",
   },
   fr: {
     appName: "B\u00e9n\u00e9dictions Partag\u00e9es",
@@ -480,6 +482,8 @@ export const translations: Record<Language, Record<string, string>> = {
     noAdsOffline: "Sans Pub · Écoute Hors-ligne",
     getTheApp: "Installer l'App",
     listen: "Écouter",
+    followUs: "Suivez-Nous",
+    followUsDesc: "Restez connecté avec notre communauté sur les réseaux sociaux.",
   },
   ht: {
     appName: "B\u00e9n\u00e9dictions Partag\u00e9es",
@@ -720,6 +724,8 @@ export const translations: Record<Language, Record<string, string>> = {
     noAdsOffline: "San Piblisite · Koute San Entènèt",
     getTheApp: "Jwenn Aplikasyon an",
     listen: "Koute",
+    followUs: "Swiv Nou",
+    followUsDesc: "Rete konekte ak kominote nou sou rezo sosyal yo.",
   },
 };
 

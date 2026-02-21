@@ -93,3 +93,53 @@ export async function generateDailyContent(dayKey: string): Promise<{
 
   return { status, languages: generated, dayKey };
 }
+
+export async function postDailyToFacebook(): Promise<{ status: string; postId?: string; error?: string }> {
+  const pageId = process.env.FACEBOOK_PAGE_ID;
+  const pageToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+
+  if (!pageId || !pageToken) {
+    console.log("[FACEBOOK] Auto-post disabled: FACEBOOK_PAGE_ID or FACEBOOK_PAGE_ACCESS_TOKEN not set");
+    return { status: "disabled" };
+  }
+
+  try {
+    const dayKey = getTodayKeyET();
+    const content = await getDailyContentForDay(dayKey, "en");
+
+    if (!content) {
+      console.log("[FACEBOOK] No content for today yet, skipping auto-post");
+      return { status: "no_content" };
+    }
+
+    const appUrl = process.env.REPLIT_DEPLOYMENT_URL || process.env.REPLIT_DEV_DOMAIN || "benedictionspartagees.org";
+    const baseUrl = appUrl.startsWith("http") ? appUrl : `https://${appUrl}`;
+    const devotionLink = `${baseUrl}/devotion`;
+    const message = content.shareCaption || `BP \u2014 Devotion du jour (${dayKey})\n${content.reference}\n\n${devotionLink}`;
+
+    const fbResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${pageId}/feed`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          link: devotionLink,
+          access_token: pageToken,
+        }),
+      }
+    );
+
+    const fbData = await fbResponse.json() as any;
+    console.log(`[FACEBOOK] Post result: status=${fbResponse.status}, response=${JSON.stringify(fbData)}`);
+
+    if (!fbResponse.ok) {
+      return { status: "error", error: fbData?.error?.message || "Facebook API error" };
+    }
+
+    return { status: "posted", postId: fbData.id };
+  } catch (error: any) {
+    console.error("[FACEBOOK] ERROR posting:", error.message || error);
+    return { status: "error", error: error.message || "Unknown error" };
+  }
+}

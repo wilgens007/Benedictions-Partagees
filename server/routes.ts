@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable, testimonies } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
-import { generateDailyContent, getTodayKeyET, getDailyContentForDay } from "./dailyContentGenerator";
+import { generateDailyContent, getTodayKeyET, getDailyContentForDay, postDailyToFacebook } from "./dailyContentGenerator";
 import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
 import { db } from "./db";
 import { supportConfig, dailyContent, pushSubscriptions } from "@shared/schema";
@@ -243,48 +243,12 @@ export async function registerRoutes(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const pageId = process.env.FACEBOOK_PAGE_ID;
-    const pageToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-
-    if (!pageId || !pageToken) {
-      console.log("[FACEBOOK] Auto-post disabled: FACEBOOK_PAGE_ID or FACEBOOK_PAGE_ACCESS_TOKEN not set");
-      return res.json({ status: "disabled", message: "Facebook auto-post not configured" });
-    }
-
     try {
-      const dayKey = getTodayKeyET();
-      const content = await getDailyContentForDay(dayKey, "en");
-
-      if (!content) {
-        return res.status(404).json({ error: "Today's content not generated yet" });
+      const result = await postDailyToFacebook();
+      if (result.status === "error") {
+        return res.status(500).json(result);
       }
-
-      const protocol = req.headers["x-forwarded-proto"] || "https";
-      const host = req.headers.host || "benedictionspartagees.org";
-      const devotionLink = `${protocol}://${host}/devotion`;
-      const message = content.shareCaption || `BP \u2014 Devotion du jour (${dayKey})\n${content.reference}\n\n${devotionLink}`;
-
-      const fbResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${pageId}/feed`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message,
-            link: devotionLink,
-            access_token: pageToken,
-          }),
-        }
-      );
-
-      const fbData = await fbResponse.json();
-      console.log(`[FACEBOOK] Post result: status=${fbResponse.status}, response=${JSON.stringify(fbData)}`);
-
-      if (!fbResponse.ok) {
-        return res.status(fbResponse.status).json({ error: "Facebook API error", details: fbData });
-      }
-
-      res.json({ status: "posted", postId: fbData.id });
+      res.json(result);
     } catch (error: any) {
       console.error("[FACEBOOK] ERROR posting:", error.message || error);
       res.status(500).json({ error: "Failed to post to Facebook" });

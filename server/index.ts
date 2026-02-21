@@ -7,7 +7,7 @@ import billingRoutes from "./billingRoutes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import cron from "node-cron";
-import { generateDailyContent, getTodayKeyET } from "./dailyContentGenerator";
+import { generateDailyContent, getTodayKeyET, postDailyToFacebook } from "./dailyContentGenerator";
 import { sendPushToAll } from "./pushService";
 import { WebhookHandlers } from "./webhookHandlers";
 import prayerWallRoutes from "./prayerWallRoutes";
@@ -166,6 +166,12 @@ app.use((req, res, next) => {
       log(`[CRON-6AM] Push notifications sent: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`, "cron");
     } catch (pushErr: any) {
       log(`[CRON-6AM] ERROR sending push notifications: ${pushErr.message || pushErr}`, "cron");
+    }
+    try {
+      const fbResult = await postDailyToFacebook();
+      log(`[CRON-6AM] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "cron");
+    } catch (fbErr: any) {
+      log(`[CRON-6AM] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "cron");
     }
   }, {
     timezone: "America/New_York",
