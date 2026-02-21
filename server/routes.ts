@@ -214,8 +214,11 @@ export async function registerRoutes(
       }
 
       const excerpt = content.verse.length > 120 ? content.verse.substring(0, 117) + "..." : content.verse;
-      const whatsappMessage = `BP \u2014 Devotion du jour (${dayKey})\n${content.reference} \u2014 "${excerpt}"\nLire: https://benedictionspartagees.org/devotion`;
-      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://benedictionspartagees.org/devotion")}`;
+      const protocol = req.headers["x-forwarded-proto"] || "https";
+      const host = req.headers.host || "benedictionspartagees.org";
+      const devotionUrl = `${protocol}://${host}/devotion`;
+      const whatsappMessage = `BP \u2014 Devotion du jour (${dayKey})\n${content.reference} \u2014 "${excerpt}"\n\n${devotionUrl}`;
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(devotionUrl)}`;
 
       res.json({
         dayKey,
@@ -224,7 +227,7 @@ export async function registerRoutes(
         shareCaption: content.shareCaption || whatsappMessage,
         whatsappUrl: `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`,
         facebookUrl,
-        devotionUrl: "https://benedictionspartagees.org/devotion",
+        devotionUrl,
       });
     } catch (error: any) {
       console.error("Error getting share data:", error.message || error);
@@ -256,7 +259,10 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Today's content not generated yet" });
       }
 
-      const message = content.shareCaption || `BP \u2014 Devotion du jour (${dayKey})\n${content.reference}\nLire: https://benedictionspartagees.org/devotion`;
+      const protocol = req.headers["x-forwarded-proto"] || "https";
+      const host = req.headers.host || "benedictionspartagees.org";
+      const devotionLink = `${protocol}://${host}/devotion`;
+      const message = content.shareCaption || `BP \u2014 Devotion du jour (${dayKey})\n${content.reference}\n\n${devotionLink}`;
 
       const fbResponse = await fetch(
         `https://graph.facebook.com/v18.0/${pageId}/feed`,
@@ -265,7 +271,7 @@ export async function registerRoutes(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message,
-            link: "https://benedictionspartagees.org/devotion",
+            link: devotionLink,
             access_token: pageToken,
           }),
         }

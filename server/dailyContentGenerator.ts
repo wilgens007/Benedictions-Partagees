@@ -28,7 +28,9 @@ function getDayIndex(dayKey: string): number {
 
 function generateShareCaption(verse: { verse: string; reference: string }, dayKey: string): string {
   const excerpt = verse.verse.length > 120 ? verse.verse.substring(0, 117) + "..." : verse.verse;
-  return `BP — Devotion du jour (${dayKey})\n${verse.reference} — "${excerpt}"\nLire: https://benedictionspartagees.org/devotion`;
+  const appUrl = process.env.REPLIT_DEPLOYMENT_URL || process.env.REPLIT_DEV_DOMAIN || "benedictionspartagees.org";
+  const baseUrl = appUrl.startsWith("http") ? appUrl : `https://${appUrl}`;
+  return `BP — Devotion du jour (${dayKey})\n${verse.reference} — "${excerpt}"\n\n${baseUrl}/devotion`;
 }
 
 export async function getDailyContentForDay(dayKey: string, language: Language): Promise<DailyContent | null> {

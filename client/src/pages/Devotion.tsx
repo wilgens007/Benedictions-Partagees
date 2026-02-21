@@ -97,13 +97,15 @@ export default function Devotion() {
   const handleShare = async () => {
     if (!verse) return;
 
-    const shareText = `"${verse.verse}" - ${verse.reference}\n\n${verse.devotional}`;
+    const devotionLink = `${window.location.origin}/devotion`;
+    const shareText = `"${verse.verse}" - ${verse.reference}\n\n${verse.devotional}\n\n${devotionLink}`;
     
     if (navigator.share) {
       try {
         await navigator.share({
           title: t("dailyDevotion"),
           text: shareText,
+          url: devotionLink,
         });
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
