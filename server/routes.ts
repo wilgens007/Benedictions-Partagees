@@ -224,7 +224,7 @@ export async function registerRoutes(
         dayKey,
         reference: content.reference,
         verseExcerpt: excerpt,
-        shareCaption: content.shareCaption || whatsappMessage,
+        shareCaption: whatsappMessage,
         whatsappUrl: `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`,
         facebookUrl,
         devotionUrl,

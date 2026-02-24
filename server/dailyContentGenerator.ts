@@ -112,10 +112,11 @@ export async function postDailyToFacebook(): Promise<{ status: string; postId?: 
       return { status: "no_content" };
     }
 
-    const appUrl = process.env.REPLIT_DEPLOYMENT_URL || process.env.REPLIT_DEV_DOMAIN || "benedictionspartagees.org";
+    const appUrl = process.env.PUBLIC_APP_URL || process.env.REPLIT_DEPLOYMENT_URL || process.env.REPLIT_DEV_DOMAIN || "benedictionspartagees.org";
     const baseUrl = appUrl.startsWith("http") ? appUrl : `https://${appUrl}`;
     const devotionLink = `${baseUrl}/devotion`;
-    const message = content.shareCaption || `BP \u2014 Devotion du jour (${dayKey})\n${content.reference}\n\n${devotionLink}`;
+    const excerpt = content.verse.length > 120 ? content.verse.substring(0, 117) + "..." : content.verse;
+    const message = `BP \u2014 Devotion du jour (${dayKey})\n${content.reference} \u2014 "${excerpt}"\n\n${devotionLink}`;
 
     const fbResponse = await fetch(
       `https://graph.facebook.com/v18.0/${pageId}/feed`,
