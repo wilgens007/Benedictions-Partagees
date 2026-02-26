@@ -9,8 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { adminApi } from "@/lib/adminAuth";
-import { Plus, Pencil, Trash2, Upload, Link as LinkIcon, Music, Disc } from "lucide-react";
-import type { Album, Song } from "@shared/schema";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Pencil, Trash2, Upload, Link as LinkIcon, Music, Disc, Star } from "lucide-react";
+import type { Album, Song, Genre, Mood } from "@shared/schema";
+
+type SongWithAssociations = Song & { genreIds?: string[]; moodIds?: string[] };
 
 function getSongStatus(song: Song): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
   if (!song.isEarlyAccess) return { label: "Public", variant: "default" };
@@ -89,7 +92,7 @@ function AlbumForm({ album, onSave, onCancel }: { album?: Album; onSave: () => v
   );
 }
 
-function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsList: Album[]; onSave: () => void; onCancel: () => void }) {
+function SongForm({ song, albumsList, genresList, moodsList, onSave, onCancel }: { song?: SongWithAssociations; albumsList: Album[]; genresList: Genre[]; moodsList: Mood[]; onSave: () => void; onCancel: () => void }) {
   const [title, setTitle] = useState(song?.title || "");
   const [artist, setArtist] = useState(song?.artist || "Bénédictions Partagées Music");
   const [albumId, setAlbumId] = useState(song?.albumId || "");
@@ -97,6 +100,10 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
   const [audioUrl, setAudioUrl] = useState(song?.audioUrl || "");
   const [duration, setDuration] = useState(song?.duration || "");
   const [isEarlyAccess, setIsEarlyAccess] = useState(song?.isEarlyAccess || false);
+  const [isFeatured, setIsFeatured] = useState(song?.isFeatured || false);
+  const [featuredRank, setFeaturedRank] = useState(song?.featuredRank ?? 999);
+  const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>(song?.genreIds || []);
+  const [selectedMoodIds, setSelectedMoodIds] = useState<string[]>(song?.moodIds || []);
   const [releaseDate, setReleaseDate] = useState(song?.releaseDate ? new Date(song.releaseDate).toISOString().slice(0, 16) : "");
   const [publicReleaseAt, setPublicReleaseAt] = useState(song?.publicReleaseAt ? new Date(song.publicReleaseAt).toISOString().slice(0, 16) : "");
   const [coverMode, setCoverMode] = useState<"url" | "upload">("url");
@@ -125,6 +132,14 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
     }
   };
 
+  const toggleGenre = (id: string) => {
+    setSelectedGenreIds((prev) => prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]);
+  };
+
+  const toggleMood = (id: string) => {
+    setSelectedMoodIds((prev) => prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -136,6 +151,10 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
         audioUrl,
         duration: duration || null,
         isEarlyAccess,
+        isFeatured,
+        featuredRank,
+        genreIds: selectedGenreIds,
+        moodIds: selectedMoodIds,
         releaseDate: releaseDate ? new Date(releaseDate).toISOString() : null,
         publicReleaseAt: publicReleaseAt ? new Date(publicReleaseAt).toISOString() : null,
       };
@@ -202,6 +221,54 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
         <Label>Duration (e.g., 3:45)</Label>
         <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="3:45" data-testid="input-song-duration" />
       </div>
+      {genresList.length > 0 && (
+        <div className="space-y-2">
+          <Label>Genres</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {genresList.map((g) => (
+              <div key={g.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={`genre-${g.id}`}
+                  checked={selectedGenreIds.includes(g.id)}
+                  onCheckedChange={() => toggleGenre(g.id)}
+                  data-testid={`checkbox-genre-${g.slug}`}
+                />
+                <Label htmlFor={`genre-${g.id}`} className="text-sm font-normal cursor-pointer">{g.name}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {moodsList.length > 0 && (
+        <div className="space-y-2">
+          <Label>Moods</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {moodsList.map((m) => (
+              <div key={m.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={`mood-${m.id}`}
+                  checked={selectedMoodIds.includes(m.id)}
+                  onCheckedChange={() => toggleMood(m.id)}
+                  data-testid={`checkbox-mood-${m.slug}`}
+                />
+                <Label htmlFor={`mood-${m.id}`} className="text-sm font-normal cursor-pointer">{m.name}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center gap-3">
+        <Switch checked={isFeatured} onCheckedChange={setIsFeatured} data-testid="switch-featured" />
+        <Label>Featured</Label>
+        <Star className={`w-4 h-4 ${isFeatured ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
+      </div>
+      {isFeatured && (
+        <div className="space-y-2">
+          <Label>Featured Rank</Label>
+          <Input type="number" value={featuredRank} onChange={(e) => setFeaturedRank(parseInt(e.target.value) || 0)} min={0} data-testid="input-featured-rank" />
+          <p className="text-xs text-muted-foreground">Lower number = higher priority. Default is 999.</p>
+        </div>
+      )}
       <div className="space-y-2">
         <Label>Release Date</Label>
         <Input type="datetime-local" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} data-testid="input-song-release-date" />
@@ -228,15 +295,19 @@ function SongForm({ song, albumsList, onSave, onCancel }: { song?: Song; albumsL
 
 export default function AdminMusic() {
   const [albumsList, setAlbumsList] = useState<Album[]>([]);
-  const [songsList, setSongsList] = useState<Song[]>([]);
+  const [songsList, setSongsList] = useState<SongWithAssociations[]>([]);
+  const [genresList, setGenresList] = useState<Genre[]>([]);
+  const [moodsList, setMoodsList] = useState<Mood[]>([]);
   const [showAlbumForm, setShowAlbumForm] = useState(false);
   const [editAlbum, setEditAlbum] = useState<Album | undefined>();
   const [showSongForm, setShowSongForm] = useState(false);
-  const [editSong, setEditSong] = useState<Song | undefined>();
+  const [editSong, setEditSong] = useState<SongWithAssociations | undefined>();
 
   const loadData = () => {
     adminApi<Album[]>("/api/admin/albums").then(setAlbumsList).catch(() => {});
-    adminApi<Song[]>("/api/admin/songs").then(setSongsList).catch(() => {});
+    adminApi<SongWithAssociations[]>("/api/admin/songs").then(setSongsList).catch(() => {});
+    adminApi<Genre[]>("/api/genres").then(setGenresList).catch(() => {});
+    adminApi<Mood[]>("/api/moods").then(setMoodsList).catch(() => {});
   };
 
   useEffect(loadData, []);
@@ -309,7 +380,7 @@ export default function AdminMusic() {
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader><DialogTitle>{editSong ? "Edit Song" : "New Song"}</DialogTitle></DialogHeader>
-                <SongForm song={editSong} albumsList={albumsList} onSave={() => { setShowSongForm(false); setEditSong(undefined); loadData(); }} onCancel={() => { setShowSongForm(false); setEditSong(undefined); }} />
+                <SongForm song={editSong} albumsList={albumsList} genresList={genresList} moodsList={moodsList} onSave={() => { setShowSongForm(false); setEditSong(undefined); loadData(); }} onCancel={() => { setShowSongForm(false); setEditSong(undefined); }} />
               </DialogContent>
             </Dialog>
           </div>
@@ -320,6 +391,8 @@ export default function AdminMusic() {
               {songsList.map((s) => {
                 const status = getSongStatus(s);
                 const album = albumsList.find((a) => a.id === s.albumId);
+                const songGenreNames = (s.genreIds || []).map((gId) => genresList.find((g) => g.id === gId)?.name).filter(Boolean);
+                const songMoodNames = (s.moodIds || []).map((mId) => moodsList.find((m) => m.id === mId)?.name).filter(Boolean);
                 return (
                   <Card key={s.id}>
                     <CardContent className="p-4 flex items-center gap-4">
@@ -328,8 +401,15 @@ export default function AdminMusic() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold truncate" data-testid={`song-title-${s.id}`}>{s.title}</p>
                           <Badge variant={status.variant} data-testid={`song-badge-${s.id}`}>{status.label}</Badge>
+                          {s.isFeatured && <Badge variant="secondary" data-testid={`song-featured-${s.id}`}><Star className="w-3 h-3 mr-1 fill-yellow-500 text-yellow-500" />Featured</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{s.artist}{album ? ` \u2022 ${album.title}` : ""}{s.duration ? ` \u2022 ${s.duration}` : ""}{s.releaseDate ? ` \u2022 ${new Date(s.releaseDate).toLocaleDateString()}` : ""}</p>
+                        {(songGenreNames.length > 0 || songMoodNames.length > 0) && (
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            {songGenreNames.map((name) => <Badge key={name} variant="outline" className="text-xs">{name}</Badge>)}
+                            {songMoodNames.map((name) => <Badge key={name} variant="outline" className="text-xs">{name}</Badge>)}
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" onClick={() => { setEditSong(s); setShowSongForm(true); }} data-testid={`button-edit-song-${s.id}`}><Pencil className="w-4 h-4" /></Button>

@@ -5,10 +5,11 @@ import fs from "fs";
 import { db } from "./db";
 import {
   albums, songs, testimonies, prayerRequests, prayerComments, prayerReports, users, adminSessions,
+  genres, moods, songGenres, songMoods,
   insertAlbumSchema, insertSongSchema, insertTestimonySchema,
   type Album, type Song, type Testimony, type DbPrayerRequest,
 } from "@shared/schema";
-import { eq, desc, ilike, sql, and } from "drizzle-orm";
+import { eq, desc, ilike, sql, and, inArray } from "drizzle-orm";
 import { requireAdmin, isAdminEmail, createAdminSession, validateAdminToken } from "./adminAuth";
 
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -137,23 +138,44 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/songs", requireAdmin, async (_req: Request, res: Response) => {
     const rows = await db.select().from(songs).orderBy(desc(songs.createdAt));
-    res.json(rows);
+    const allSongGenres = await db.select().from(songGenres);
+    const allSongMoods = await db.select().from(songMoods);
+    const enriched = rows.map((s) => ({
+      ...s,
+      genreIds: allSongGenres.filter((sg) => sg.songId === s.id).map((sg) => sg.genreId),
+      moodIds: allSongMoods.filter((sm) => sm.songId === s.id).map((sm) => sm.moodId),
+    }));
+    res.json(enriched);
   });
 
   app.post("/api/admin/songs", requireAdmin, async (req: Request, res: Response) => {
     const body = { ...req.body };
+    const genreIds: string[] = body.genreIds || [];
+    const moodIds: string[] = body.moodIds || [];
+    delete body.genreIds;
+    delete body.moodIds;
     if (body.publicReleaseAt) body.publicReleaseAt = new Date(body.publicReleaseAt);
     if (body.releaseDate) body.releaseDate = new Date(body.releaseDate);
     if (body.audioUrl) body.audioUrl = await resolveSunoAudioUrl(body.audioUrl);
     const parsed = insertSongSchema.safeParse(body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const [row] = await db.insert(songs).values(parsed.data).returning();
-    res.status(201).json(row);
+    if (genreIds.length > 0) {
+      await db.insert(songGenres).values(genreIds.map((gId) => ({ songId: row.id, genreId: gId })));
+    }
+    if (moodIds.length > 0) {
+      await db.insert(songMoods).values(moodIds.map((mId) => ({ songId: row.id, moodId: mId })));
+    }
+    res.status(201).json({ ...row, genreIds, moodIds });
   });
 
   app.put("/api/admin/songs/:id", requireAdmin, async (req: Request, res: Response) => {
     const { id } = req.params;
     const updates: any = { ...req.body, updatedAt: new Date() };
+    const genreIds: string[] | undefined = updates.genreIds;
+    const moodIds: string[] | undefined = updates.moodIds;
+    delete updates.genreIds;
+    delete updates.moodIds;
     if (updates.publicReleaseAt) updates.publicReleaseAt = new Date(updates.publicReleaseAt);
     if (updates.publicReleaseAt === null) updates.publicReleaseAt = null;
     if (updates.releaseDate) updates.releaseDate = new Date(updates.releaseDate);
@@ -163,11 +185,26 @@ export function registerAdminRoutes(app: Express) {
     delete updates.createdAt;
     const [row] = await db.update(songs).set(updates).where(eq(songs.id, id)).returning();
     if (!row) return res.status(404).json({ error: "Song not found" });
-    res.json(row);
+    if (genreIds !== undefined) {
+      await db.delete(songGenres).where(eq(songGenres.songId, id));
+      if (genreIds.length > 0) {
+        await db.insert(songGenres).values(genreIds.map((gId) => ({ songId: id, genreId: gId })));
+      }
+    }
+    if (moodIds !== undefined) {
+      await db.delete(songMoods).where(eq(songMoods.songId, id));
+      if (moodIds.length > 0) {
+        await db.insert(songMoods).values(moodIds.map((mId) => ({ songId: id, moodId: mId })));
+      }
+    }
+    res.json({ ...row, genreIds: genreIds || [], moodIds: moodIds || [] });
   });
 
   app.delete("/api/admin/songs/:id", requireAdmin, async (req: Request, res: Response) => {
-    await db.delete(songs).where(eq(songs.id, req.params.id));
+    const { id } = req.params;
+    await db.delete(songGenres).where(eq(songGenres.songId, id));
+    await db.delete(songMoods).where(eq(songMoods.songId, id));
+    await db.delete(songs).where(eq(songs.id, id));
     res.json({ success: true });
   });
 

@@ -99,6 +99,9 @@ export const songs = pgTable("songs", {
   isEarlyAccess: boolean("is_early_access").default(false),
   releaseDate: timestamp("release_date").defaultNow(),
   publicReleaseAt: timestamp("public_release_at"),
+  playsCount: integer("plays_count").notNull().default(0),
+  isFeatured: boolean("is_featured").default(false),
+  featuredRank: integer("featured_rank").notNull().default(999),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -106,6 +109,55 @@ export const songs = pgTable("songs", {
 export type Song = typeof songs.$inferSelect;
 export const insertSongSchema = createInsertSchema(songs).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertSong = z.infer<typeof insertSongSchema>;
+
+export const genres = pgTable("genres", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export type Genre = typeof genres.$inferSelect;
+export const insertGenreSchema = createInsertSchema(genres).omit({ id: true });
+export type InsertGenre = z.infer<typeof insertGenreSchema>;
+
+export const moods = pgTable("moods", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+export type Mood = typeof moods.$inferSelect;
+export const insertMoodSchema = createInsertSchema(moods).omit({ id: true });
+export type InsertMood = z.infer<typeof insertMoodSchema>;
+
+export const songGenres = pgTable("song_genres", {
+  songId: varchar("song_id").notNull().references(() => songs.id, { onDelete: "cascade" }),
+  genreId: varchar("genre_id").notNull().references(() => genres.id, { onDelete: "cascade" }),
+}, (table) => [
+  uniqueIndex("song_genres_unique_idx").on(table.songId, table.genreId),
+]);
+
+export type SongGenre = typeof songGenres.$inferSelect;
+
+export const songMoods = pgTable("song_moods", {
+  songId: varchar("song_id").notNull().references(() => songs.id, { onDelete: "cascade" }),
+  moodId: varchar("mood_id").notNull().references(() => moods.id, { onDelete: "cascade" }),
+}, (table) => [
+  uniqueIndex("song_moods_unique_idx").on(table.songId, table.moodId),
+]);
+
+export type SongMood = typeof songMoods.$inferSelect;
+
+export const songPlays = pgTable("song_plays", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  songId: varchar("song_id").notNull().references(() => songs.id, { onDelete: "cascade" }),
+  userId: varchar("user_id"),
+  playedAt: timestamp("played_at").defaultNow(),
+});
+
+export type SongPlay = typeof songPlays.$inferSelect;
 
 export const testimonies = pgTable("testimonies", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

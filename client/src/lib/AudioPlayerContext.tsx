@@ -1,5 +1,6 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect } from "react";
 import type { MusicTrack } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AudioPlayerState {
   currentTrack: MusicTrack | null;
@@ -42,6 +43,21 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(80);
+
+  const lastLoggedSongIdRef = useRef<string | null>(null);
+  const playLogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const logPlay = useCallback((songId: string) => {
+    if (lastLoggedSongIdRef.current === songId) return;
+    if (playLogTimerRef.current) {
+      clearTimeout(playLogTimerRef.current);
+    }
+    playLogTimerRef.current = setTimeout(() => {
+      lastLoggedSongIdRef.current = songId;
+      apiRequest("POST", "/api/songs/play", { songId }).catch(() => {});
+      playLogTimerRef.current = null;
+    }, 1000);
+  }, []);
 
   useEffect(() => {
     const audio = new Audio();
@@ -86,6 +102,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             audioRef.current.src = nextTrack.audioUrl;
             audioRef.current.play().catch(() => {});
             updateMediaSession(nextTrack);
+            logPlay(nextTrack.id);
           }
           return nextIndex;
         }
@@ -93,7 +110,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       });
       return prevPlaylist;
     });
-  }, []);
+  }, [logPlay]);
 
   const updateMediaSession = useCallback((track: MusicTrack) => {
     if (!("mediaSession" in navigator)) return;
@@ -150,7 +167,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     audio.src = track.audioUrl;
     audio.play().catch(() => {});
     updateMediaSession(track);
-  }, [updateMediaSession]);
+    logPlay(track.id);
+  }, [updateMediaSession, logPlay]);
 
   const play = useCallback(() => {
     audioRef.current?.play().catch(() => {});
@@ -195,6 +213,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             audioRef.current.src = nextTrack.audioUrl;
             audioRef.current.play().catch(() => {});
             updateMediaSession(nextTrack);
+            logPlay(nextTrack.id);
           }
           return nextIndex;
         }
@@ -202,7 +221,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       });
       return prevPlaylist;
     });
-  }, [updateMediaSession]);
+  }, [updateMediaSession, logPlay]);
 
   const prev = useCallback(() => {
     setPlaylistState(prevPlaylist => {
@@ -215,6 +234,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             audioRef.current.src = prevTrack.audioUrl;
             audioRef.current.play().catch(() => {});
             updateMediaSession(prevTrack);
+            logPlay(prevTrack.id);
           }
           return prevIdx;
         }
@@ -222,7 +242,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       });
       return prevPlaylist;
     });
-  }, [updateMediaSession]);
+  }, [updateMediaSession, logPlay]);
 
   const setPlaylist = useCallback((tracks: MusicTrack[], startIndex = 0) => {
     setPlaylistState(tracks);

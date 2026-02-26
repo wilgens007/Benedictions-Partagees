@@ -1,14 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable, testimonies } from "@shared/schema";
+import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable, testimonies, genres, moods, songGenres, songMoods, songPlays } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay, postDailyToFacebook } from "./dailyContentGenerator";
 import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
 import { db } from "./db";
 import { supportConfig, dailyContent, pushSubscriptions } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, asc, ilike, or, sql, gte, count } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 import { optionalUser } from "./userAuth";
@@ -309,14 +309,111 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/genres", async (_req, res) => {
+    try {
+      const rows = await db.select().from(genres).orderBy(asc(genres.displayOrder), asc(genres.name));
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching genres:", error);
+      res.status(500).json({ error: "Failed to fetch genres" });
+    }
+  });
+
+  app.get("/api/moods", async (_req, res) => {
+    try {
+      const rows = await db.select().from(moods).orderBy(asc(moods.displayOrder), asc(moods.name));
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching moods:", error);
+      res.status(500).json({ error: "Failed to fetch moods" });
+    }
+  });
+
+  app.post("/api/songs/play", optionalUser, async (req: any, res) => {
+    try {
+      const { songId } = req.body;
+      if (!songId) return res.status(400).json({ error: "songId required" });
+
+      await db.update(songsTable).set({ playsCount: sql`${songsTable.playsCount} + 1` }).where(eq(songsTable.id, songId));
+      await db.insert(songPlays).values({ songId, userId: req.user?.id || null });
+
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error logging play:", error);
+      res.status(500).json({ error: "Failed to log play" });
+    }
+  });
+
   app.get("/api/music", optionalUser, async (req: any, res) => {
     try {
-      const inMemoryTracks = await storage.getMusicTracks();
       const user = req.user;
       const isPremium = user?.isPremium || false;
+      const genreSlug = (req.query.genre as string || "").trim();
+      const moodSlug = (req.query.mood as string || "").trim();
+      const q = (req.query.q as string || "").trim();
+      const sort = (req.query.sort as string || "new").trim();
+      const limit = Math.min(parseInt(req.query.limit as string || "50", 10), 100);
 
-      const dbSongs = await db.select().from(songsTable).orderBy(desc(songsTable.releaseDate));
-      const dbTracks = dbSongs.map((s) => ({
+      const hasFilters = genreSlug || moodSlug || q;
+
+      let dbSongs: any[];
+
+      if (genreSlug) {
+        const whereConditions = [eq(genres.slug, genreSlug)];
+        if (q) {
+          whereConditions.push(or(ilike(songsTable.title, `%${q}%`), ilike(songsTable.artist, `%${q}%`)) as any);
+        }
+        let query = db
+          .select({
+            id: songsTable.id, title: songsTable.title, artist: songsTable.artist,
+            coverUrl: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
+            isEarlyAccess: songsTable.isEarlyAccess, releaseDate: songsTable.releaseDate,
+            playsCount: songsTable.playsCount, createdAt: songsTable.createdAt,
+            isFeatured: songsTable.isFeatured, featuredRank: songsTable.featuredRank,
+          })
+          .from(songsTable)
+          .innerJoin(songGenres, eq(songGenres.songId, songsTable.id))
+          .innerJoin(genres, eq(genres.id, songGenres.genreId))
+          .where(and(...whereConditions));
+
+        if (sort === "popular") dbSongs = await query.orderBy(desc(songsTable.playsCount), desc(songsTable.releaseDate)).limit(limit);
+        else if (sort === "az") dbSongs = await query.orderBy(asc(songsTable.title)).limit(limit);
+        else dbSongs = await query.orderBy(desc(songsTable.releaseDate)).limit(limit);
+      } else if (moodSlug) {
+        const whereConditions = [eq(moods.slug, moodSlug)];
+        if (q) {
+          whereConditions.push(or(ilike(songsTable.title, `%${q}%`), ilike(songsTable.artist, `%${q}%`)) as any);
+        }
+        let query = db
+          .select({
+            id: songsTable.id, title: songsTable.title, artist: songsTable.artist,
+            coverUrl: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
+            isEarlyAccess: songsTable.isEarlyAccess, releaseDate: songsTable.releaseDate,
+            playsCount: songsTable.playsCount, createdAt: songsTable.createdAt,
+            isFeatured: songsTable.isFeatured, featuredRank: songsTable.featuredRank,
+          })
+          .from(songsTable)
+          .innerJoin(songMoods, eq(songMoods.songId, songsTable.id))
+          .innerJoin(moods, eq(moods.id, songMoods.moodId))
+          .where(and(...whereConditions));
+
+        if (sort === "popular") dbSongs = await query.orderBy(desc(songsTable.playsCount), desc(songsTable.releaseDate)).limit(limit);
+        else if (sort === "az") dbSongs = await query.orderBy(asc(songsTable.title)).limit(limit);
+        else dbSongs = await query.orderBy(desc(songsTable.releaseDate)).limit(limit);
+      } else {
+        const whereConditions: any[] = [];
+        if (q) {
+          whereConditions.push(or(ilike(songsTable.title, `%${q}%`), ilike(songsTable.artist, `%${q}%`)));
+        }
+        let query = db.select().from(songsTable);
+        if (whereConditions.length) query = query.where(and(...whereConditions)) as any;
+
+        if (sort === "popular") dbSongs = await query.orderBy(desc(songsTable.playsCount), desc(songsTable.releaseDate)).limit(limit);
+        else if (sort === "az") dbSongs = await query.orderBy(asc(songsTable.title)).limit(limit);
+        else dbSongs = await query.orderBy(desc(songsTable.releaseDate)).limit(limit);
+      }
+
+      const dbTracks = dbSongs.map((s: any) => ({
         id: s.id,
         title: s.title,
         artist: s.artist,
@@ -324,19 +421,17 @@ export async function registerRoutes(
         audioUrl: s.audioUrl,
         albumArt: s.coverUrl || "",
         isEarlyAccess: s.isEarlyAccess || false,
-        releaseDate: s.releaseDate ? s.releaseDate.toISOString() : s.createdAt ? s.createdAt.toISOString() : null,
+        releaseDate: s.releaseDate ? (s.releaseDate instanceof Date ? s.releaseDate.toISOString() : s.releaseDate) : s.createdAt ? (s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt) : null,
+        playsCount: s.playsCount || 0,
+        isFeatured: s.isFeatured || false,
       }));
 
-      const allTracks = [...dbTracks, ...inMemoryTracks];
+      const inMemoryTracks = await storage.getMusicTracks();
+      const allTracks = hasFilters ? dbTracks : [...dbTracks, ...inMemoryTracks];
 
       const filteredTracks = allTracks.map((track: any) => {
         if (track.isEarlyAccess && !isPremium) {
-          return {
-            ...track,
-            audioUrl: null,
-            locked: true,
-            lockReason: "early_access",
-          };
+          return { ...track, audioUrl: null, locked: true, lockReason: "early_access" };
         }
         return { ...track, locked: false };
       });
@@ -352,35 +447,87 @@ export async function registerRoutes(
     try {
       const user = req.user;
       const isPremium = user?.isPremium || false;
+      const listMode = req.query.list === "true";
 
-      const [latestSong] = await db.select().from(songsTable).orderBy(desc(songsTable.releaseDate)).limit(1);
+      const featuredSongs = await db.select().from(songsTable)
+        .where(eq(songsTable.isFeatured, true))
+        .orderBy(asc(songsTable.featuredRank), desc(songsTable.releaseDate))
+        .limit(12);
 
-      if (!latestSong) {
-        return res.json(null);
+      if (featuredSongs.length === 0) {
+        const [latestSong] = await db.select().from(songsTable).orderBy(desc(songsTable.releaseDate)).limit(1);
+        if (!latestSong) return res.json(listMode ? [] : null);
+        featuredSongs.push(latestSong);
       }
 
-      const track: any = {
-        id: latestSong.id,
-        title: latestSong.title,
-        artist: latestSong.artist,
-        duration: latestSong.duration || "",
-        audioUrl: latestSong.audioUrl,
-        albumArt: latestSong.coverUrl || "",
-        isEarlyAccess: latestSong.isEarlyAccess || false,
-        releaseDate: latestSong.releaseDate ? latestSong.releaseDate.toISOString() : latestSong.createdAt ? latestSong.createdAt.toISOString() : null,
-        locked: false,
+      const toTrack = (s: any) => {
+        const track: any = {
+          id: s.id, title: s.title, artist: s.artist,
+          duration: s.duration || "", audioUrl: s.audioUrl,
+          albumArt: s.coverUrl || "",
+          isEarlyAccess: s.isEarlyAccess || false,
+          releaseDate: s.releaseDate ? s.releaseDate.toISOString() : s.createdAt ? s.createdAt.toISOString() : null,
+          playsCount: s.playsCount || 0, isFeatured: true, locked: false,
+        };
+        if (track.isEarlyAccess && !isPremium) {
+          track.audioUrl = null; track.locked = true; track.lockReason = "early_access";
+        }
+        return track;
       };
 
-      if (track.isEarlyAccess && !isPremium) {
-        track.audioUrl = null;
-        track.locked = true;
-        track.lockReason = "early_access";
+      if (listMode) {
+        res.json(featuredSongs.map(toTrack));
+      } else {
+        res.json(toTrack(featuredSongs[0]));
       }
-
-      res.json(track);
     } catch (error) {
-      console.error("Error fetching featured song:", error);
-      res.status(500).json({ error: "Failed to fetch featured song" });
+      console.error("Error fetching featured songs:", error);
+      res.status(500).json({ error: "Failed to fetch featured songs" });
+    }
+  });
+
+  app.get("/api/music/trending", optionalUser, async (req: any, res) => {
+    try {
+      const user = req.user;
+      const isPremium = user?.isPremium || false;
+      const days = Math.min(parseInt(req.query.days as string || "7", 10), 30);
+      const limit = Math.min(parseInt(req.query.limit as string || "12", 10), 50);
+      const cutoff = new Date(Date.now() - days * 86400 * 1000);
+
+      const rows = await db
+        .select({
+          id: songsTable.id, title: songsTable.title, artist: songsTable.artist,
+          coverUrl: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
+          isEarlyAccess: songsTable.isEarlyAccess, releaseDate: songsTable.releaseDate,
+          playsCount: songsTable.playsCount, createdAt: songsTable.createdAt,
+          trendingPlays: count(songPlays.id),
+        })
+        .from(songPlays)
+        .innerJoin(songsTable, eq(songsTable.id, songPlays.songId))
+        .where(gte(songPlays.playedAt, cutoff))
+        .groupBy(songsTable.id, songsTable.title, songsTable.artist, songsTable.coverUrl, songsTable.audioUrl, songsTable.duration, songsTable.isEarlyAccess, songsTable.releaseDate, songsTable.playsCount, songsTable.createdAt)
+        .orderBy(desc(count(songPlays.id)))
+        .limit(limit);
+
+      const tracks = rows.map((s: any) => {
+        const track: any = {
+          id: s.id, title: s.title, artist: s.artist,
+          duration: s.duration || "", audioUrl: s.audioUrl,
+          albumArt: s.coverUrl || "",
+          isEarlyAccess: s.isEarlyAccess || false,
+          releaseDate: s.releaseDate ? s.releaseDate.toISOString() : s.createdAt ? s.createdAt.toISOString() : null,
+          playsCount: s.playsCount || 0, trendingPlays: Number(s.trendingPlays), locked: false,
+        };
+        if (track.isEarlyAccess && !isPremium) {
+          track.audioUrl = null; track.locked = true; track.lockReason = "early_access";
+        }
+        return track;
+      });
+
+      res.json(tracks);
+    } catch (error) {
+      console.error("Error fetching trending songs:", error);
+      res.status(500).json({ error: "Failed to fetch trending songs" });
     }
   });
 

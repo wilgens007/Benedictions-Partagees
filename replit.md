@@ -64,11 +64,20 @@ Preferred communication style: Simple, everyday language.
 - **Frontend**: Save button on daily verse, saved verses list on dashboard
 
 ### Early Access Music & Featured Song
-- **Song Fields**: `is_early_access` boolean, `release_date` timestamp on songs table
+- **Song Fields**: `is_early_access` boolean, `release_date` timestamp, `playsCount` integer, `isFeatured` boolean, `featuredRank` integer on songs table
 - **Gating**: `GET /api/music` uses `optionalUser` middleware — early access songs return `audioUrl: null, locked: true` for non-premium users
 - **Music Sources**: `/api/music` combines DB songs (admin-managed, ordered by release_date) with in-memory songs from `server/data/songs.ts`
-- **Featured Song**: `GET /api/music/featured` returns the latest DB song (by release_date desc) — displayed on Home page with early access badge, release date, and lock/play icons
-- **Admin Form**: `releaseDate` field added to admin song form — defaults to now if empty
+- **Featured Song**: `GET /api/music/featured` returns featured songs (isFeatured=true) — supports single (default) and list (?list=true) modes
+- **Admin Form**: `releaseDate`, genres, moods, and featured status fields in admin song form
+
+### Netflix-Style Music Browsing
+- **DB Tables**: `genres`, `moods`, `song_genres` (junction), `song_moods` (junction), `song_plays` (play events)
+- **Genres**: Kompa Gospel, Afrobeat Gospel, Worship/Adoration, Praise/Louange, Jazz Gospel, Acoustic, Live, Instrumental (seeded on startup)
+- **Moods**: Peace/Lapè, Joy/Lajwa, Prayer/Lapriyè, Breakthrough/Viktwa, Healing/Gerizon (seeded on startup)
+- **Endpoints**: `GET /api/genres`, `GET /api/moods`, `POST /api/songs/play` (logs play + increments playsCount), `GET /api/music/trending` (last 7 days)
+- **Music Filtering**: `GET /api/music` accepts `genre` (slug), `mood` (slug), `q` (search), `sort` (new/popular/az), `limit` query params
+- **Play Tracking**: AudioPlayerContext calls POST /api/songs/play on track start, debounced per track
+- **Music Page UI**: Horizontal scroll rows (Featured Today, New Releases, Trending, Most Played), genre/mood chip bars, search input, sort dropdown
 
 ### Key Design Patterns
 - **Shared Types**: TypeScript types and schemas in `shared/` directory are used by both client and server

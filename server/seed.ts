@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { albums, songs, testimonies, prayerRequests } from "@shared/schema";
+import { albums, songs, testimonies, prayerRequests, genres, moods } from "@shared/schema";
 import { sql } from "drizzle-orm";
 
 export async function seedAdminData() {
@@ -71,4 +71,33 @@ export async function seedAdminData() {
   ]);
 
   console.log("[SEED] Seed data inserted successfully");
+}
+
+export async function seedGenresAndMoods() {
+  const GENRES = [
+    { name: "Kompa Gospel", slug: "kompa-gospel", displayOrder: 1 },
+    { name: "Afrobeat Gospel", slug: "afrobeat-gospel", displayOrder: 2 },
+    { name: "Worship / Adoration", slug: "worship", displayOrder: 3 },
+    { name: "Praise / Louange", slug: "praise", displayOrder: 4 },
+    { name: "Jazz Gospel", slug: "jazz-gospel", displayOrder: 5 },
+    { name: "Acoustic", slug: "acoustic", displayOrder: 6 },
+    { name: "Live", slug: "live", displayOrder: 7 },
+    { name: "Instrumental", slug: "instrumental", displayOrder: 8 },
+  ];
+
+  const MOODS = [
+    { name: "Peace / Lapè", slug: "peace", displayOrder: 1 },
+    { name: "Joy / Lajwa", slug: "joy", displayOrder: 2 },
+    { name: "Prayer / Lapriyè", slug: "prayer", displayOrder: 3 },
+    { name: "Breakthrough / Viktwa", slug: "breakthrough", displayOrder: 4 },
+    { name: "Healing / Gerizon", slug: "healing", displayOrder: 5 },
+  ];
+
+  for (const g of GENRES) {
+    await db.insert(genres).values(g).onConflictDoNothing();
+  }
+  for (const m of MOODS) {
+    await db.insert(moods).values(m).onConflictDoNothing();
+  }
+  console.log("[SEED] Genres and moods seeded");
 }

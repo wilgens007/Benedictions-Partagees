@@ -196,8 +196,9 @@ async function runStartupGeneration() {
   }
 
   try {
-    const { seedAdminData } = await import("./seed");
+    const { seedAdminData, seedGenresAndMoods } = await import("./seed");
     await seedAdminData();
+    await seedGenresAndMoods();
   } catch (err: any) {
     log(`[STARTUP] Seed: ${err.message || err}`, "startup");
   }
