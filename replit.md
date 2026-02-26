@@ -17,6 +17,7 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS with CSS variables for theming (light/dark mode support)
 - **Component Library**: shadcn/ui components built on Radix UI primitives
 - **Form Handling**: React Hook Form with Zod validation
+- **Error Handling**: Global `ErrorBoundary` component wraps the entire app in `App.tsx`, catches React render errors and logs them to console. Also installs `window.onerror` and `window.onunhandledrejection` handlers for global frontend error logging.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js

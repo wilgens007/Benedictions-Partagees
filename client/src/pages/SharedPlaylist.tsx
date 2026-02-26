@@ -27,13 +27,13 @@ export default function SharedPlaylist() {
     retry: false,
   });
 
-  const { data: allTracks } = useQuery<MusicTrack[]>({
+  const { data: allTracks = [] } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music"],
     staleTime: 30 * 1000,
   });
 
-  const playlistTracks = playlist && allTracks
-    ? playlist.songIds
+  const playlistTracks = playlist
+    ? (playlist?.songIds ?? [])
         .map(sid => allTracks.find(t => t.id === sid))
         .filter((t): t is MusicTrack => t != null)
     : [];

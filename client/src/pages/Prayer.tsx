@@ -87,8 +87,8 @@ function PrayerCard({ request }: { request: PrayerWallRequest }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
 
-  const hasPrayed = request.userReactions.includes("PRAYED");
-  const hasAmen = request.userReactions.includes("AMEN");
+  const hasPrayed = request?.userReactions?.includes("PRAYED") ?? false;
+  const hasAmen = request?.userReactions?.includes("AMEN") ?? false;
 
   const { data: comments, refetch: refetchComments } = useQuery<PrayerWallComment[]>({
     queryKey: ["/api/prayer-wall/requests", request.id, "comments"],
@@ -279,7 +279,7 @@ export default function Prayer() {
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const { data: requests, isLoading } = useQuery<PrayerWallRequest[]>({
+  const { data: requests = [], isLoading } = useQuery<PrayerWallRequest[]>({
     queryKey: ["/api/prayer-wall/requests"],
   });
 
@@ -372,7 +372,7 @@ export default function Prayer() {
               </Card>
             ))}
           </div>
-        ) : requests && requests.length > 0 ? (
+        ) : requests.length > 0 ? (
           <div className="space-y-3">
             {requests.map((r) => (
               <PrayerCard key={r.id} request={r} />

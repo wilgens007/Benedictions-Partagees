@@ -83,7 +83,7 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: tracks } = useQuery<MusicTrack[]>({
+  const { data: tracks = [] } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music"],
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
@@ -95,26 +95,26 @@ export default function Home() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: prayerRequests } = useQuery<any[]>({
+  const { data: prayerRequests = [] } = useQuery<any[]>({
     queryKey: ["/api/prayer-requests"],
     staleTime: 60 * 1000,
   });
 
-  const { data: testimoniesData } = useQuery<Testimony[]>({
+  const { data: testimoniesData = [] } = useQuery<Testimony[]>({
     queryKey: ["/api/testimonies"],
     staleTime: 60 * 1000,
   });
 
-  const { data: videosData } = useQuery<Video[]>({
+  const { data: videosData = [] } = useQuery<Video[]>({
     queryKey: ["/api/videos"],
   });
 
-  const featuredTrack = featuredSong || tracks?.[0];
-  const nextTrack = tracks && tracks.length > 1 ? tracks[1] : null;
-  const displayTracks = tracks?.filter(tr => !tr.locked) || [];
-  const displayPrayers = prayerRequests?.slice(0, 3) || [];
-  const displayTestimonies = testimoniesData?.slice(0, 2) || [];
-  const displayVideos = videosData?.slice(0, 4) || [];
+  const featuredTrack = featuredSong || tracks[0] || null;
+  const nextTrack = tracks.length > 1 ? tracks[1] : null;
+  const displayTracks = tracks.filter(tr => !tr.locked);
+  const displayPrayers = Array.isArray(prayerRequests) ? prayerRequests.slice(0, 3) : [];
+  const displayTestimonies = testimoniesData.slice(0, 2);
+  const displayVideos = videosData.slice(0, 4);
 
   const carouselTracks = displayTracks.slice(0, 8);
 
@@ -700,8 +700,8 @@ export default function Home() {
             {displayPrayers.map((pr: any, i: number) => (
               <Card key={pr.id} className={`shadow-sm animate-fade-in-up animate-stagger-${Math.min(i + 1, 3)}`} data-testid={`card-prayer-${pr.id}`}>
                 <CardContent className="p-5">
-                  <p className="text-sm font-bold text-foreground mb-2">{pr.name}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-3">{pr.request || pr.message}</p>
+                  <p className="text-sm font-bold text-foreground mb-2">{pr?.name}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-3">{pr?.request || pr?.message}</p>
                 </CardContent>
               </Card>
             ))}

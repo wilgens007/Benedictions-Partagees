@@ -23,12 +23,12 @@ export default function Videos() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
-  const { data: videos, isLoading } = useQuery<Video[]>({
+  const { data: videos = [], isLoading } = useQuery<Video[]>({
     queryKey: ["/api/videos"],
   });
 
-  const filteredVideos = videos?.filter(
-    (video) => selectedCategory === "all" || video.category === selectedCategory
+  const filteredVideos = videos.filter(
+    (video) => selectedCategory === "all" || video?.category === selectedCategory
   );
 
   return (
@@ -73,7 +73,7 @@ export default function Videos() {
               </div>
             ))}
           </div>
-        ) : filteredVideos && filteredVideos.length > 0 ? (
+        ) : filteredVideos.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {filteredVideos.map((video) => (
               <Card 

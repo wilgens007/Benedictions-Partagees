@@ -137,12 +137,12 @@ export default function Music() {
   musicParams.set("limit", "50");
   const musicUrl = `/api/music?${musicParams.toString()}`;
 
-  const { data: genres } = useQuery<Genre[]>({
+  const { data: genres = [] } = useQuery<Genre[]>({
     queryKey: ["/api/genres"],
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: moodsData } = useQuery<Mood[]>({
+  const { data: moodsData = [] } = useQuery<Mood[]>({
     queryKey: ["/api/moods"],
     staleTime: 5 * 60 * 1000,
   });
@@ -153,13 +153,13 @@ export default function Music() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: featuredTracks } = useQuery<MusicTrack[]>({
+  const { data: featuredTracks = [] } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music/featured?list=true"],
     staleTime: 60 * 1000,
     enabled: !hasFilters,
   });
 
-  const { data: trendingTracks } = useQuery<MusicTrack[]>({
+  const { data: trendingTracks = [] } = useQuery<MusicTrack[]>({
     queryKey: ["/api/music/trending?days=7&limit=12"],
     staleTime: 60 * 1000,
     enabled: !hasFilters,
@@ -175,7 +175,7 @@ export default function Music() {
     return [...tracks].sort((a: any, b: any) => (b.playsCount || 0) - (a.playsCount || 0)).slice(0, 12);
   }, [tracks, hasFilters]);
 
-  const { data: userPlaylists, isLoading: playlistsLoading } = useQuery<PlaylistWithMeta[]>({
+  const { data: userPlaylists = [], isLoading: playlistsLoading } = useQuery<PlaylistWithMeta[]>({
     queryKey: ["/api/playlists"],
     enabled: isPremium,
   });
@@ -656,7 +656,7 @@ export default function Music() {
                 <Card key={i}><CardContent className="p-4"><Skeleton className="h-5 w-2/3 mb-2" /><Skeleton className="h-3 w-1/3" /></CardContent></Card>
               ))}
             </div>
-          ) : userPlaylists && userPlaylists.length > 0 ? (
+          ) : userPlaylists.length > 0 ? (
             <div className="space-y-3">
               {userPlaylists.map((pl) => (
                 <Card key={pl.id} className="hover-elevate cursor-pointer" data-testid={`playlist-card-${pl.id}`}>
@@ -738,7 +738,7 @@ export default function Music() {
       <Dialog open={showAddToPlaylist !== null} onOpenChange={(open) => { if (!open) setShowAddToPlaylist(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{t("addToPlaylist")}</DialogTitle></DialogHeader>
-          {userPlaylists && userPlaylists.length > 0 ? (
+          {userPlaylists.length > 0 ? (
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {userPlaylists.map((pl) => {
                 const alreadyAdded = showAddToPlaylist ? pl.songIds.includes(showAddToPlaylist) : false;

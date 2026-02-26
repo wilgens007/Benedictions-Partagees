@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/lib/ThemeContext";
 import { LanguageProvider } from "@/lib/LanguageContext";
 import { AudioPlayerProvider, useAudioPlayer } from "@/lib/AudioPlayerContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Header } from "@/components/Header";
 import { TopNav } from "@/components/TopNav";
 import { BottomNav } from "@/components/BottomNav";
@@ -92,20 +93,22 @@ function AppRouter() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <AudioPlayerProvider>
-              <TooltipProvider>
-                <AppRouter />
-                <Toaster />
-              </TooltipProvider>
-            </AudioPlayerProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <AudioPlayerProvider>
+                <TooltipProvider>
+                  <AppRouter />
+                  <Toaster />
+                </TooltipProvider>
+              </AudioPlayerProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
