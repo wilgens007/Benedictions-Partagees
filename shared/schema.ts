@@ -255,6 +255,19 @@ export type PlaylistSong = typeof playlistSongs.$inferSelect;
 export const insertPlaylistSongSchema = createInsertSchema(playlistSongs).omit({ id: true, addedAt: true });
 export type InsertPlaylistSong = z.infer<typeof insertPlaylistSongSchema>;
 
+export const announcements = pgTable("announcements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  type: varchar("type", { length: 20 }).notNull().default("update"),
+  url: text("url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Announcement = typeof announcements.$inferSelect;
+export const insertAnnouncementSchema = createInsertSchema(announcements).omit({ id: true, createdAt: true });
+export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
+
 export const adminSessions = pgTable("admin_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull(),

@@ -6,6 +6,7 @@ import AdminMusic from "./AdminMusic";
 import AdminTestimonies from "./AdminTestimonies";
 import AdminPrayers from "./AdminPrayers";
 import AdminUsers from "./AdminUsers";
+import AdminNotifications from "./AdminNotifications";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +15,7 @@ function getActiveKey(path: string): string {
   if (path.startsWith("/testimonies")) return "testimonies";
   if (path.startsWith("/prayers")) return "prayers";
   if (path.startsWith("/users")) return "users";
+  if (path.startsWith("/notifications")) return "notifications";
   return "overview";
 }
 
@@ -70,6 +72,7 @@ export default function AdminLayout() {
             <Route path="/testimonies" component={AdminTestimonies} />
             <Route path="/prayers" component={AdminPrayers} />
             <Route path="/users" component={AdminUsers} />
+            <Route path="/notifications" component={AdminNotifications} />
             <Route path="/" component={OverviewPage} />
           </Switch>
         </main>

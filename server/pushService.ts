@@ -112,3 +112,88 @@ export async function sendPushToAll(payload: {
   console.log(`[PUSH] Send results: sent=${sent}, failed=${failed}, cleaned=${cleaned}`);
   return { sent, failed, cleaned };
 }
+
+const notificationTemplates: Record<string, Record<string, { title: string; body: string; url: string }>> = {
+  new_song: {
+    en: { title: "New Music Available!", body: "A new song has been added. Listen now!", url: "/music" },
+    fr: { title: "Nouvelle musique disponible !", body: "Un nouveau cantique a été ajouté. Écoutez maintenant !", url: "/music" },
+    ht: { title: "Nouvo mizik disponib!", body: "Yon nouvo chan te ajoute. Koute kounye a!", url: "/music" },
+  },
+  update: {
+    en: { title: "New Update", body: "Check out what's new!", url: "/" },
+    fr: { title: "Nouvelle mise à jour", body: "Découvrez les nouveautés !", url: "/" },
+    ht: { title: "Nouvo mizajou", body: "Dekouvri sa ki nouvo!", url: "/" },
+  },
+  feature: {
+    en: { title: "New Feature", body: "A new feature is now available!", url: "/" },
+    fr: { title: "Nouvelle fonctionnalité", body: "Une nouvelle fonctionnalité est disponible !", url: "/" },
+    ht: { title: "Nouvo fonksyonalite", body: "Yon nouvo fonksyonalite disponib kounye a!", url: "/" },
+  },
+};
+
+export async function sendNotificationByType(
+  type: string,
+  payload?: { title?: string; body?: string; url?: string; songTitle?: string; artist?: string }
+): Promise<{ sent: number; failed: number; cleaned: number }> {
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    console.error("[PUSH] Cannot send: VAPID keys not configured");
+    return { sent: 0, failed: 0, cleaned: 0 };
+  }
+
+  const allSubs = await db.select().from(pushSubscriptions);
+  console.log(`[PUSH] Sending '${type}' notification to ${allSubs.length} subscribers`);
+
+  let sent = 0;
+  let failed = 0;
+  let cleaned = 0;
+
+  for (const sub of allSubs) {
+    const lang = sub.language || "en";
+    const template = notificationTemplates[type]?.[lang] || notificationTemplates[type]?.["en"] || notificationTemplates["update"]["en"];
+
+    let title = payload?.title || template.title;
+    let body = payload?.body || template.body;
+    const url = payload?.url || template.url;
+
+    if (type === "new_song" && payload?.songTitle) {
+      const songInfo = payload.artist ? `${payload.songTitle} - ${payload.artist}` : payload.songTitle;
+      const bodyTemplates: Record<string, string> = {
+        en: `"${songInfo}" is now available. Listen now!`,
+        fr: `"${songInfo}" est maintenant disponible. Écoutez maintenant !`,
+        ht: `"${songInfo}" disponib kounye a. Koute kounye a!`,
+      };
+      body = bodyTemplates[lang] || bodyTemplates["en"];
+    }
+
+    const notificationPayload = JSON.stringify({
+      title,
+      body,
+      url,
+      icon: "/icon-192.png",
+    });
+
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        notificationPayload
+      );
+      sent++;
+    } catch (err: any) {
+      const statusCode = err.statusCode;
+      if (statusCode === 404 || statusCode === 410) {
+        await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
+        cleaned++;
+        console.log(`[PUSH] Cleaned stale subscription (${statusCode}): ${sub.endpoint.substring(0, 60)}...`);
+      } else {
+        failed++;
+        console.error(`[PUSH] Failed to send to ${sub.endpoint.substring(0, 60)}...: ${err.message}`);
+      }
+    }
+  }
+
+  console.log(`[PUSH] '${type}' send results: sent=${sent}, failed=${failed}, cleaned=${cleaned}`);
+  return { sent, failed, cleaned };
+}

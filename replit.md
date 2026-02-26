@@ -96,10 +96,13 @@ Preferred communication style: Simple, everyday language.
 ### Push Notifications
 - **Service Worker**: `client/public/sw.js` — handles push events, shows notifications
 - **Client Library**: `client/src/lib/pushNotifications.ts` — subscribe/unsubscribe/check status helpers
-- **Server**: `server/pushService.ts` — sends push notifications via web-push library
+- **Server**: `server/pushService.ts` — `sendPushToAll()` for raw payloads, `sendNotificationByType()` for localized notifications by type (new_song, update, feature)
 - **DB Table**: `push_subscriptions` — stores push subscription endpoints with language preference
+- **Announcements Table**: `announcements` — stores notification history (title, body, type, url, createdAt)
 - **VAPID Keys**: `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` environment variables
-- **Auto-trigger**: Push notifications sent automatically after daily content generation
+- **Auto-triggers**: Push notifications sent automatically after daily content generation and when admin adds a new song
+- **Admin Notifications**: `/admin/notifications` page — compose and send custom push notifications, view sent history
+- **Localization Templates**: `sendNotificationByType` uses subscriber language preference for localized notification content (EN/FR/HT)
 
 ### Social Sharing
 - **Endpoint**: `GET /api/share/today?language=en` — returns WhatsApp/Facebook share URLs and caption

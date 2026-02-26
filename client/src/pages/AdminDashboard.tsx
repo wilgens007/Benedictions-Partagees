@@ -3,7 +3,7 @@ import { useLocation, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { adminApi, clearAdminToken, getAdminToken } from "@/lib/adminAuth";
-import { LayoutDashboard, Music, MessageSquareText, HandHeart, Users, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Music, MessageSquareText, HandHeart, Users, Bell, LogOut, Menu, X } from "lucide-react";
 
 interface AdminStats {
   songs: number;
@@ -22,6 +22,7 @@ function AdminSidebar({ active, onNav, mobile, open, onClose }: { active: string
     { key: "testimonies", label: "Testimonies", icon: MessageSquareText, path: "/testimonies" },
     { key: "prayers", label: "Prayer Requests", icon: HandHeart, path: "/prayers" },
     { key: "users", label: "Users", icon: Users, path: "/users" },
+    { key: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
   ];
 
   const sidebarContent = (

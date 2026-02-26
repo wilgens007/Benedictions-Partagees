@@ -5,10 +5,11 @@ import fs from "fs";
 import { db } from "./db";
 import {
   albums, songs, testimonies, prayerRequests, prayerComments, prayerReports, users, adminSessions,
-  genres, moods, songGenres, songMoods,
-  insertAlbumSchema, insertSongSchema, insertTestimonySchema,
+  genres, moods, songGenres, songMoods, announcements,
+  insertAlbumSchema, insertSongSchema, insertTestimonySchema, insertAnnouncementSchema,
   type Album, type Song, type Testimony, type DbPrayerRequest,
 } from "@shared/schema";
+import { sendPushToAll, sendNotificationByType } from "./pushService";
 import { eq, desc, ilike, sql, and, inArray } from "drizzle-orm";
 import { requireAdmin, isAdminEmail, createAdminSession, validateAdminToken } from "./adminAuth";
 
@@ -166,6 +167,12 @@ export function registerAdminRoutes(app: Express) {
     if (moodIds.length > 0) {
       await db.insert(songMoods).values(moodIds.map((mId) => ({ songId: row.id, moodId: mId })));
     }
+    sendNotificationByType("new_song", {
+      songTitle: row.title,
+      artist: row.artist,
+      url: "/music",
+    }).catch((err) => console.error("[PUSH] Auto-notify new song failed:", err));
+
     res.status(201).json({ ...row, genreIds, moodIds });
   });
 
@@ -372,6 +379,26 @@ export function registerAdminRoutes(app: Express) {
   app.delete("/api/admin/prayer-reports/:id", requireAdmin, async (req: Request, res: Response) => {
     await db.delete(prayerReports).where(eq(prayerReports.id, req.params.id));
     res.json({ success: true });
+  });
+
+  app.post("/api/admin/notifications/send", requireAdmin, async (req: Request, res: Response) => {
+    const parsed = insertAnnouncementSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+
+    const [announcement] = await db.insert(announcements).values(parsed.data).returning();
+
+    const result = await sendNotificationByType(announcement.type, {
+      title: announcement.title,
+      body: announcement.body,
+      url: announcement.url || "/",
+    });
+
+    res.json({ success: true, announcement, pushResult: result });
+  });
+
+  app.get("/api/admin/notifications", requireAdmin, async (_req: Request, res: Response) => {
+    const rows = await db.select().from(announcements).orderBy(desc(announcements.createdAt)).limit(50);
+    res.json(rows);
   });
 
   app.use("/uploads", (req, res, next) => {
