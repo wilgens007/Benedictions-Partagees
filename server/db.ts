@@ -4,6 +4,7 @@ import * as schema from "@shared/schema";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 3,
 });
 
 export const db = drizzle(pool, { schema });

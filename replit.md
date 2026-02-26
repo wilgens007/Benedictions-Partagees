@@ -27,7 +27,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Layer
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Schema Location**: `shared/schema.ts` contains database tables and Zod validation schemas
-- **DB Connection**: `server/db.ts` — Drizzle + pg pool using `DATABASE_URL`
+- **DB Connection**: `server/db.ts` — Drizzle + pg pool using `DATABASE_URL` (max 3 connections for memory efficiency)
 - **Daily Content Persistence**: `daily_content` table with composite unique index on `(day_key, language)` — stores daily verse, devotional, prayer, and encouragement per language per day
 - **In-Memory**: Prayer requests and user data still use in-memory storage in `server/storage.ts`
 
@@ -84,6 +84,13 @@ Preferred communication style: Simple, everyday language.
 - **Path Aliases**: `@/` for client source, `@shared/` for shared code, `@assets/` for attached assets
 - **Context Providers**: Theme, Language, and Auth contexts wrap the application for global state
 - **Internationalization**: Translation system with support for English, French, and Haitian Creole
+- **Code Splitting**: React.lazy() + Suspense for all pages except Home, reducing initial Vite transform load
+
+### Startup Performance Optimizations
+- **DB Pool**: pg pool limited to max 3 connections; Stripe sync pool limited to 1
+- **Deferred Stripe Init**: StripeSync (webhook + backfill) runs 15 seconds after startup to avoid memory spike with Vite
+- **Lazy StripeSync**: Webhook config and sync backfill deferred to first Stripe request via `ensureStripeSync()`
+- **No response body logging**: Middleware only logs method/path/status/duration (no JSON body capture) to prevent memory growth
 
 ### Push Notifications
 - **Service Worker**: `client/public/sw.js` — handles push events, shows notifications
@@ -128,7 +135,7 @@ Preferred communication style: Simple, everyday language.
 - **Devotion**: Daily devotional with scripture, reflection, prayer, push notification toggle, and social sharing (WhatsApp/Facebook)
 - **Prayer**: Prayer request submission form
 - **Support**: Donation page with configurable payment links and "coming soon" fallback
-- **Navigation**: 5-tab bottom nav (Home, Music, Devotion, Prayer, Support)
+- **Navigation**: 6-tab bottom nav (Home, Music, Videos, Devotion, Prayer, Support)
 
 ## External Dependencies
 

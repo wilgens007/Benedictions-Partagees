@@ -70,7 +70,7 @@ export async function getStripeSync() {
     stripeSync = new StripeSync({
       poolConfig: {
         connectionString: process.env.DATABASE_URL!,
-        max: 2,
+        max: 1,
       },
       stripeSecretKey: secretKey,
     });
