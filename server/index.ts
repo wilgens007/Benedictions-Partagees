@@ -24,22 +24,6 @@ process.on('unhandledRejection', (reason: any) => {
   if (reason?.stack) console.error(reason.stack);
 });
 
-const originalExit = process.exit.bind(process);
-(process as any).exit = (code?: number) => {
-  if (code !== 0) {
-    console.error(`[GUARD] process.exit(${code}) intercepted — keeping server alive`);
-    console.error(new Error().stack);
-    return undefined as never;
-  }
-  return originalExit(code);
-};
-
-for (const sig of ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGUSR1', 'SIGUSR2'] as const) {
-  process.on(sig, () => {
-    console.error(`[SIGNAL] Received ${sig} — ignoring to keep server alive`);
-  });
-}
-
 const app = express();
 const httpServer = createServer(app);
 
@@ -155,13 +139,21 @@ app.use((req, res, next) => {
     );
   };
 
+  let retryCount = 0;
+  const MAX_RETRIES = 5;
   httpServer.on('error', (e: any) => {
     if (e.code === 'EADDRINUSE') {
-      log(`Port ${port} is already in use, retrying in 1 second...`);
+      retryCount++;
+      if (retryCount > MAX_RETRIES) {
+        log(`Port ${port} still in use after ${MAX_RETRIES} retries — exiting so workflow can restart fresh`);
+        process.exit(1);
+        return;
+      }
+      log(`Port ${port} is already in use, retrying in 2 seconds... (attempt ${retryCount}/${MAX_RETRIES})`);
       setTimeout(() => {
         httpServer.close();
         startServer();
-      }, 1000);
+      }, 2000);
     } else {
       log(`Server error: ${e.message}`);
     }
