@@ -1,0 +1,451 @@
+A) DB upgrades (Drizzle / SQLite)
+1) Add featured fields to songs + add song_plays table
+
+Update src/db/schema.ts (add these):
+
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { songs } from "./schema"; // (if you split files, adjust import)
+
+// ADD to songs table:
+export const songs = sqliteTable("songs", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  albumId: text("album_id").references(() => albums.id),
+  audioUrl: text("audio_url").notNull(),
+  coverUrl: text("cover_url"),
+  language: text("language"),
+  durationSec: integer("duration_sec"),
+  playsCount: integer("plays_count").notNull().default(0),
+  createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
+
+  // NEW:
+  isFeatured: integer("is_featured", { mode: "boolean" }).notNull().default(false),
+  featuredRank: integer("featured_rank").notNull().default(999),
+});
+
+// NEW table: raw play events (for “Trending this week”)
+export const songPlays = sqliteTable("song_plays", {
+  id: text("id").primaryKey(),
+  songId: text("song_id").notNull().references(() => songs.id, { onDelete: "cascade" }),
+  userId: text("user_id"), // optional (if you have auth)
+  playedAt: integer("played_at").notNull().default(sql`(unixepoch())`),
+});
+
+B) API routes
+2) Track plays (increments playsCount + logs play event)
+
+Create: src/app/api/songs/play/route.ts
+
+import { NextResponse } from "next/server";
+import { db } from "@/db/client";
+import { songs, songPlays } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
+
+function uid() {
+  return crypto.randomUUID();
+}
+
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null);
+  const songId = body?.songId as string | undefined;
+  const userId = body?.userId as string | undefined; // optional
+
+  if (!songId) {
+    return NextResponse.json({ error: "songId required" }, { status: 400 });
+  }
+
+  // increment counter
+  await db
+    .update(songs)
+    .set({ playsCount: sql`${songs.playsCount} + 1` })
+    .where(eq(songs.id, songId));
+
+  // log event
+  await db.insert(songPlays).values({
+    id: uid(),
+    songId,
+    userId: userId || null,
+  });
+
+  return NextResponse.json({ ok: true });
+}
+3) Featured songs endpoint
+
+Create: src/app/api/songs/featured/route.ts
+
+import { NextResponse } from "next/server";
+import { db } from "@/db/client";
+import { songs } from "@/db/schema";
+import { and, asc, desc, eq } from "drizzle-orm";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "12", 10), 50);
+
+  const rows = await db
+    .select({
+      id: songs.id,
+      title: songs.title,
+      artist: songs.artist,
+      audioUrl: songs.audioUrl,
+      coverUrl: songs.coverUrl,
+      playsCount: songs.playsCount,
+      createdAt: songs.createdAt,
+      isFeatured: songs.isFeatured,
+      featuredRank: songs.featuredRank,
+    })
+    .from(songs)
+    .where(eq(songs.isFeatured, true))
+    .orderBy(asc(songs.featuredRank), desc(songs.createdAt))
+    .limit(limit);
+
+  return NextResponse.json(rows);
+}
+4) Trending this week endpoint
+
+Create: src/app/api/songs/trending/route.ts
+
+import { NextResponse } from "next/server";
+import { db } from "@/db/client";
+import { songs, songPlays } from "@/db/schema";
+import { eq, sql, desc } from "drizzle-orm";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const days = Math.min(parseInt(searchParams.get("days") || "7", 10), 30);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "12", 10), 50);
+
+  // unixepoch() - (days*86400)
+  const cutoff = sql`(unixepoch() - ${days * 86400})`;
+
+  const rows = await db
+    .select({
+      id: songs.id,
+      title: songs.title,
+      artist: songs.artist,
+      audioUrl: songs.audioUrl,
+      coverUrl: songs.coverUrl,
+      playsCount: songs.playsCount,
+      trendingPlays: sql<number>`count(${songPlays.id})`.as("trendingPlays"),
+    })
+    .from(songPlays)
+    .innerJoin(songs, eq(songs.id, songPlays.songId))
+    .where(sql`${songPlays.playedAt} >= ${cutoff}`)
+    .groupBy(songs.id)
+    .orderBy(desc(sql`trendingPlays`))
+    .limit(limit);
+
+  return NextResponse.json(rows);
+}
+5) Admin endpoint to set “featured”
+
+Create: src/app/api/admin/featured/route.ts
+
+import { NextResponse } from "next/server";
+import { db } from "@/db/client";
+import { songs } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+// Simple guard. Replace with your real admin auth.
+function requireAdmin(req: Request) {
+  const key = req.headers.get("x-admin-key");
+  return key && key === process.env.ADMIN_KEY;
+}
+
+export async function POST(req: Request) {
+  if (!requireAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => null);
+  const songId = body?.songId as string | undefined;
+  const isFeatured = !!body?.isFeatured;
+  const featuredRank = typeof body?.featuredRank === "number" ? body.featuredRank : 999;
+
+  if (!songId) return NextResponse.json({ error: "songId required" }, { status: 400 });
+
+  await db.update(songs).set({ isFeatured, featuredRank }).where(eq(songs.id, songId));
+  return NextResponse.json({ ok: true });
+}
+C) Real sticky audio player (bottom bar) + play tracking
+6) Create a small player store (client)
+
+Create: src/components/player/PlayerProvider.tsx
+
+"use client";
+
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+
+export type Song = {
+  id: string;
+  title: string;
+  artist: string;
+  audioUrl: string;
+  coverUrl?: string | null;
+};
+
+type PlayerCtx = {
+  current: Song | null;
+  queue: Song[];
+  isPlaying: boolean;
+  progress: number; // 0..1
+  playSong: (song: Song, queue?: Song[]) => void;
+  toggle: () => void;
+  next: () => void;
+  prev: () => void;
+  seek: (pct: number) => void;
+};
+
+const Ctx = createContext<PlayerCtx | null>(null);
+
+export function usePlayer() {
+  const v = useContext(Ctx);
+  if (!v) throw new Error("usePlayer must be used inside PlayerProvider");
+  return v;
+}
+
+export function PlayerProvider({ children }: { children: React.ReactNode }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [current, setCurrent] = useState<Song | null>(null);
+  const [queue, setQueue] = useState<Song[]>([]);
+  const [index, setIndex] = useState<number>(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Create audio element once
+  useEffect(() => {
+    audioRef.current = new Audio();
+    audioRef.current.preload = "metadata";
+
+    const a = audioRef.current;
+
+    const onTime = () => {
+      if (!a.duration) return setProgress(0);
+      setProgress(a.currentTime / a.duration);
+    };
+    const onEnded = () => next();
+
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("ended", onEnded);
+
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("ended", onEnded);
+      a.pause();
+      audioRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const logPlay = async (songId: string) => {
+    // Call your API to increment plays + log event
+    fetch("/api/songs/play", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ songId }),
+    }).catch(() => {});
+  };
+
+  const playSong = (song: Song, newQueue?: Song[]) => {
+    const q = newQueue?.length ? newQueue : queue.length ? queue : [song];
+    const idx = q.findIndex((s) => s.id === song.id);
+
+    setQueue(q);
+    setIndex(idx >= 0 ? idx : 0);
+    setCurrent(song);
+
+    const a = audioRef.current!;
+    a.src = song.audioUrl;
+    a.play()
+      .then(() => {
+        setIsPlaying(true);
+        logPlay(song.id);
+      })
+      .catch(() => setIsPlaying(false));
+  };
+
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a || !current) return;
+
+    if (a.paused) {
+      a.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    } else {
+      a.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const next = () => {
+    if (!queue.length) return;
+    const nextIndex = index + 1;
+    if (nextIndex >= queue.length) {
+      // stop at end
+      setIsPlaying(false);
+      return;
+    }
+    const s = queue[nextIndex];
+    setIndex(nextIndex);
+    setCurrent(s);
+
+    const a = audioRef.current!;
+    a.src = s.audioUrl;
+    a.play()
+      .then(() => {
+        setIsPlaying(true);
+        logPlay(s.id);
+      })
+      .catch(() => setIsPlaying(false));
+  };
+
+  const prev = () => {
+    if (!queue.length) return;
+    const prevIndex = Math.max(index - 1, 0);
+    const s = queue[prevIndex];
+    setIndex(prevIndex);
+    setCurrent(s);
+
+    const a = audioRef.current!;
+    a.src = s.audioUrl;
+    a.play()
+      .then(() => {
+        setIsPlaying(true);
+        logPlay(s.id);
+      })
+      .catch(() => setIsPlaying(false));
+  };
+
+  const seek = (pct: number) => {
+    const a = audioRef.current;
+    if (!a || !a.duration) return;
+    a.currentTime = Math.max(0, Math.min(1, pct)) * a.duration;
+  };
+
+  const value = useMemo<PlayerCtx>(
+    () => ({ current, queue, isPlaying, progress, playSong, toggle, next, prev, seek }),
+    [current, queue, isPlaying, progress]
+  );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+7) Sticky player UI bar
+
+Create: src/components/player/StickyPlayer.tsx
+
+"use client";
+
+import { usePlayer } from "./PlayerProvider";
+
+export function StickyPlayer() {
+  const { current, isPlaying, toggle, next, prev, progress, seek } = usePlayer();
+
+  if (!current) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 border-t bg-white">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+          {current.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={current.coverUrl} alt="" className="w-full h-full object-cover" />
+          ) : null}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold truncate">{current.title}</div>
+          <div className="text-xs text-gray-600 truncate">{current.artist}</div>
+
+          <input
+            type="range"
+            min={0}
+            max={1000}
+            value={Math.floor(progress * 1000)}
+            onChange={(e) => seek(Number(e.target.value) / 1000)}
+            className="w-full mt-2"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button className="border rounded-lg px-3 py-2 text-sm" onClick={prev}>Prev</button>
+          <button className="border rounded-lg px-3 py-2 text-sm" onClick={toggle}>
+            {isPlaying ? "Pause" : "Play"}
+          </button>
+          <button className="border rounded-lg px-3 py-2 text-sm" onClick={next}>Next</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+8) Wrap your app with PlayerProvider + render StickyPlayer
+
+In src/app/layout.tsx (client wrapper required). If your layout is server component, do this:
+
+Create src/app/providers.tsx:
+
+"use client";
+import { PlayerProvider } from "@/components/player/PlayerProvider";
+import { StickyPlayer } from "@/components/player/StickyPlayer";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <PlayerProvider>
+      {children}
+      <StickyPlayer />
+    </PlayerProvider>
+  );
+}
+
+Then in src/app/layout.tsx:
+
+import Providers from "./providers";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+D) Update your Music page to use the real player + add Featured + Trending rows
+9) Replace your onPlay with usePlayer().playSong
+
+In src/app/music/page.tsx, import and use:
+
+import { usePlayer } from "@/components/player/PlayerProvider";
+
+Then:
+
+const { playSong } = usePlayer();
+
+const onPlay = (song: Song) => {
+  // pass the current filtered list as queue so next/prev works
+  playSong(song, filtered);
+};
+10) Load Featured + Trending rows
+
+Add these states and fetch calls:
+
+const [featured, setFeatured] = useState<Song[]>([]);
+const [trending, setTrending] = useState<(Song & { trendingPlays?: number })[]>([]);
+
+useEffect(() => {
+  (async () => {
+    const [feat, trend] = await Promise.all([
+      fetchJSON<Song[]>("/api/songs/featured?limit=12"),
+      fetchJSON<any[]>("/api/songs/trending?days=7&limit=12"),
+    ]);
+    setFeatured(feat);
+    setTrending(trend);
+  })().catch(console.error);
+}, []);
+
+Then render rows near the top (when no filters):
+
+<Row title="Featured Today" songs={featured} onPlay={onPlay} />
+<Row title="Trending This Week" songs={trending as any} onPlay={onPlay} />
