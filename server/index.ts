@@ -90,7 +90,7 @@ app.use((req, res, next) => {
         const jsonStr = JSON.stringify(capturedJsonResponse);
         logLine += ` :: ${jsonStr.length > 200 ? jsonStr.slice(0, 200) + '...' : jsonStr}`;
       }
-
+      capturedJsonResponse = undefined;
       log(logLine);
     }
   });

@@ -334,8 +334,11 @@ export async function registerRoutes(
       const { songId } = req.body;
       if (!songId) return res.status(400).json({ error: "songId required" });
 
-      await db.update(songsTable).set({ playsCount: sql`${songsTable.playsCount} + 1` }).where(eq(songsTable.id, songId));
-      await db.insert(songPlays).values({ songId, userId: req.user?.id || null });
+      const isInMemorySong = /^\d+$/.test(songId);
+      if (!isInMemorySong) {
+        await db.update(songsTable).set({ playsCount: sql`${songsTable.playsCount} + 1` }).where(eq(songsTable.id, songId));
+        await db.insert(songPlays).values({ songId, userId: req.user?.id || null });
+      }
 
       res.json({ ok: true });
     } catch (error) {
