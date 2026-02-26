@@ -181,7 +181,7 @@ export default function SavedVerses() {
           </div>
         )}
 
-        {!isPremium && limit !== null && verses.length >= limit && (
+        {!isPremium && limit != null && verses.length >= limit && (
           <Card className="mt-4 shadow-md border-[#D4AF37]/20">
             <CardContent className="p-5 text-center">
               <Crown className="w-8 h-8 text-[#D4AF37] mx-auto mb-2" />
