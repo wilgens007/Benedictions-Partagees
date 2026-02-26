@@ -14,6 +14,32 @@ import prayerWallRoutes from "./prayerWallRoutes";
 import playlistRoutes from "./playlistRoutes";
 
 
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err.message);
+  console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  console.error('[FATAL] Unhandled rejection:', reason?.message || reason);
+  if (reason?.stack) console.error(reason.stack);
+});
+
+const originalExit = process.exit.bind(process);
+(process as any).exit = (code?: number) => {
+  if (code !== 0) {
+    console.error(`[GUARD] process.exit(${code}) intercepted — keeping server alive`);
+    console.error(new Error().stack);
+    return undefined as never;
+  }
+  return originalExit(code);
+};
+
+for (const sig of ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGUSR1', 'SIGUSR2'] as const) {
+  process.on(sig, () => {
+    console.error(`[SIGNAL] Received ${sig} — ignoring to keep server alive`);
+  });
+}
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -99,8 +125,11 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    log(`Error ${status}: ${message}`, "error");
+    if (err.stack) {
+      console.error(err.stack);
+    }
     res.status(status).json({ message });
-    throw err;
   });
 
   if (process.env.NODE_ENV === "production") {
