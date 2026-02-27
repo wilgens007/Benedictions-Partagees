@@ -64,6 +64,12 @@ Preferred communication style: Simple, everyday language.
 - **Endpoints**: `GET/POST/DELETE /api/verses/saved` — enforces 20-verse cap for free users (HTTP 403), unlimited for premium
 - **Frontend**: Save button on daily verse, saved verses list on dashboard
 
+### Media Storage
+- **DB Table**: `media` — stores uploaded files (cover images) as base64 in PostgreSQL for persistence across deployments
+- **Serve Endpoint**: `GET /api/media/:id` — serves stored media with correct Content-Type and 1-year cache headers
+- **Upload Flow**: Admin cover image uploads (`POST /api/admin/upload/cover`) use multer memoryStorage, convert to base64, insert into `media` table, return `/api/media/:id` URL
+- **Audio Uploads**: Audio files still use disk storage (`uploads/` directory) via `POST /api/admin/upload/audio` since they are typically referenced by external URLs (Suno AI CDN)
+
 ### Early Access Music & Featured Song
 - **Song Fields**: `is_early_access` boolean, `release_date` timestamp, `playsCount` integer, `isFeatured` boolean, `featuredRank` integer on songs table
 - **Gating**: `GET /api/music` uses `optionalUser` middleware — early access songs return `audioUrl: null, locked: true` for non-premium users

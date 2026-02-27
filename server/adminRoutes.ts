@@ -5,7 +5,7 @@ import fs from "fs";
 import { db } from "./db";
 import {
   albums, songs, testimonies, prayerRequests, prayerComments, prayerReports, users, adminSessions,
-  genres, moods, songGenres, songMoods, announcements,
+  genres, moods, songGenres, songMoods, announcements, media,
   insertAlbumSchema, insertSongSchema, insertTestimonySchema, insertAnnouncementSchema,
   type Album, type Song, type Testimony, type DbPrayerRequest,
 } from "@shared/schema";
@@ -15,6 +15,8 @@ import { requireAdmin, isAdminEmail, createAdminSession, validateAdminToken } fr
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const memStorage = multer.memoryStorage();
 
 async function resolveSunoAudioUrl(url: string): Promise<string> {
   if (!url) return url;
@@ -43,7 +45,7 @@ async function resolveSunoAudioUrl(url: string): Promise<string> {
   return url;
 }
 
-const storage = multer.diskStorage({
+const diskStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -52,7 +54,12 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage,
+  storage: memStorage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+const uploadDisk = multer({
+  storage: diskStorage,
   limits: { fileSize: 50 * 1024 * 1024 },
 });
 
@@ -95,13 +102,23 @@ export function registerAdminRoutes(app: Express) {
     res.json({ email: (req as any).adminEmail });
   });
 
-  app.post("/api/admin/upload/cover", requireAdmin, upload.single("file"), (req: Request, res: Response) => {
+  app.post("/api/admin/upload/cover", requireAdmin, upload.single("file"), async (req: Request, res: Response) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+    try {
+      const base64 = req.file.buffer.toString("base64");
+      const [row] = await db.insert(media).values({
+        filename: req.file.originalname,
+        mimeType: req.file.mimetype,
+        data: base64,
+      }).returning();
+      res.json({ url: `/api/media/${row.id}` });
+    } catch (err: any) {
+      console.error("[UPLOAD] Cover upload failed:", err.message);
+      res.status(500).json({ error: "Upload failed" });
+    }
   });
 
-  app.post("/api/admin/upload/audio", requireAdmin, upload.single("file"), (req: Request, res: Response) => {
+  app.post("/api/admin/upload/audio", requireAdmin, uploadDisk.single("file"), (req: Request, res: Response) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const url = `/uploads/${req.file.filename}`;
     res.json({ url });

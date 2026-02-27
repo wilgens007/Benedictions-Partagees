@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable, testimonies, genres, moods, songGenres, songMoods, songPlays } from "@shared/schema";
+import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema, songs as songsTable, testimonies, genres, moods, songGenres, songMoods, songPlays, media } from "@shared/schema";
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay, postDailyToFacebook } from "./dailyContentGenerator";
@@ -19,6 +19,25 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  app.get("/api/media/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [row] = await db.select().from(media).where(eq(media.id, id));
+      if (!row) return res.status(404).json({ error: "Media not found" });
+
+      const buffer = Buffer.from(row.data, "base64");
+      res.set({
+        "Content-Type": row.mimeType,
+        "Content-Length": buffer.length.toString(),
+        "Cache-Control": "public, max-age=31536000, immutable",
+      });
+      res.send(buffer);
+    } catch (error) {
+      console.error("Error serving media:", error);
+      res.status(500).json({ error: "Failed to serve media" });
+    }
+  });
+
   app.get("/api/daily-verse", async (req, res) => {
     try {
       const language = (req.query.language as Language) || "en";
