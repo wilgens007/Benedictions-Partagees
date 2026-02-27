@@ -1,0 +1,187 @@
+🔒 Privacy Policy
+
+Bénédictions Partagées
+Last Updated: [Insert Date]
+
+Bénédictions Partagées (“BP,” “we,” “our,” or “us”) respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect your data when you use our mobile application and services.
+
+1. Information We Collect
+A. Account Information
+
+When you create an account, we may collect:
+
+Full name
+
+Email address
+
+Profile information
+
+Login credentials (encrypted)
+
+B. Subscription & Payment Information
+
+If you subscribe to a premium plan:
+
+Payments are processed securely through Stripe.
+
+We do NOT store full credit card numbers.
+
+Stripe may collect billing details according to their own Privacy Policy.
+
+C. User-Generated Content
+
+When using the prayer and community features, we may collect:
+
+Prayer requests
+
+Comments
+
+Testimonies
+
+Reactions or engagement data
+
+This content may be visible to other users within the app.
+
+D. Technical & Usage Data
+
+We may automatically collect:
+
+Device type and operating system
+
+App usage data
+
+Log information
+
+Crash reports
+
+IP address (for security purposes)
+
+If using Firebase or Supabase, analytics and authentication data may be processed through those platforms.
+
+2. How We Use Your Information
+
+We use your information to:
+
+Create and manage your account
+
+Provide access to music, devotionals, and premium features
+
+Process subscriptions via Stripe
+
+Display prayer requests and comments
+
+Improve app performance and security
+
+Send service-related notifications
+
+We do NOT sell your personal data.
+
+3. Data Storage & Security
+
+Your data may be stored securely using:
+
+Firebase / Supabase infrastructure
+
+Secure cloud hosting providers
+
+Stripe secure payment systems
+
+We implement industry-standard security measures including encryption and secure authentication. However, no digital system is 100% secure.
+
+4. Data Sharing
+
+We do not sell or rent your personal information.
+
+We may share data only:
+
+With trusted service providers (Stripe, Firebase, Supabase)
+
+When legally required
+
+To protect the rights and safety of our users
+
+5. User-Generated Content Responsibility
+
+Content such as prayer requests and comments may be visible to others.
+Users are responsible for the information they choose to share.
+
+We reserve the right to remove content that:
+
+Is abusive or harmful
+
+Violates community standards
+
+Contains illegal or inappropriate material
+
+6. Data Retention
+
+We retain personal data:
+
+As long as your account remains active
+
+As required for legal or financial compliance
+
+You may request deletion of your account and data at any time.
+
+7. Your Rights
+
+You have the right to:
+
+Access your data
+
+Correct inaccurate information
+
+Request account deletion
+
+Withdraw consent (where applicable)
+
+To request data deletion, contact us at:
+
+📧 [Insert Official Email Here]
+
+We will respond within a reasonable timeframe.
+
+8. Children’s Privacy
+
+This app is not intended for children under 13 years of age.
+We do not knowingly collect personal data from children under 13.
+
+9. International Users
+
+If you access the app outside the United States, your information may be transferred and processed in the U.S. or other countries where our service providers operate.
+
+10. Changes to This Policy
+
+We may update this Privacy Policy periodically. Updates will be posted within the app and on our website.
+
+Continued use of the app after updates constitutes acceptance of the revised policy.
+
+🔐 Google Play Data Safety Alignment
+
+Based on your setup (login + Stripe + backend), you will declare:
+
+Collected:
+
+Name
+
+Email
+
+User-generated content
+
+App activity
+
+Device information
+
+Shared:
+
+With Stripe (payments)
+
+With Firebase/Supabase (hosting & authentication)
+
+Data is:
+
+Encrypted in transit
+
+Not sold
+
+Users can request deletion

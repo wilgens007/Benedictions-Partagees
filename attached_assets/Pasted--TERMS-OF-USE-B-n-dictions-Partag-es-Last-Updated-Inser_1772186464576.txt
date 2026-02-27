@@ -1,0 +1,200 @@
+📜 TERMS OF USE
+
+Bénédictions Partagées
+Last Updated: [Insert Date]
+
+Welcome to Bénédictions Partagées (“BP,” “we,” “our,” or “us”). By accessing or using our mobile application and services, you agree to these Terms of Use.
+
+If you do not agree, please do not use the app.
+
+1. Purpose of the App
+
+Bénédictions Partagées is a Christian digital platform offering:
+
+Gospel music streaming
+
+Daily devotionals
+
+Prayer request features
+
+Community engagement
+
+Optional Premium Subscription services
+
+The content is provided for spiritual, inspirational, and entertainment purposes only.
+
+2. User Accounts
+
+To access certain features, you may be required to create an account.
+
+You agree to:
+
+Provide accurate information
+
+Maintain the confidentiality of your login credentials
+
+Be responsible for activity under your account
+
+We reserve the right to suspend accounts that violate these Terms.
+
+You must be at least 13 years old to use this app.
+
+3. Premium Subscription (Stripe Billing)
+
+Bénédictions Partagées offers optional Premium Subscription plans.
+
+A. Billing
+
+Payments are processed securely through Stripe.
+
+By subscribing, you authorize recurring billing according to the selected plan (monthly or annual).
+
+Subscription fees are charged automatically at the start of each billing cycle.
+
+B. Auto-Renewal
+
+Unless canceled before the renewal date, your subscription will automatically renew.
+
+C. Cancellation
+
+You may cancel your subscription at any time through:
+
+Your account settings
+OR
+
+By contacting us at: [Insert Official Email]
+
+Cancellation will take effect at the end of the current billing period. No partial refunds will be issued unless required by law.
+
+D. Refund Policy
+
+All payments are non-refundable unless:
+
+Required by applicable law
+
+There was a billing error
+
+If you believe you were charged incorrectly, contact us within 7 days of the charge.
+
+4. User-Generated Content
+
+Users may post:
+
+Prayer requests
+
+Comments
+
+Testimonies
+
+By posting content, you grant Bénédictions Partagées a non-exclusive license to display that content within the app.
+
+You agree NOT to post:
+
+Abusive or hateful content
+
+False or misleading information
+
+Illegal material
+
+Spam or promotional content
+
+We reserve the right to remove content or suspend accounts that violate community standards.
+
+5. Intellectual Property
+
+All music, branding, logos, and app design elements are the property of Bénédictions Partagées or its licensed partners.
+
+You may not:
+
+Copy
+
+Redistribute
+
+Reproduce
+
+Sell
+
+Any content without written permission.
+
+6. Termination
+
+We may suspend or terminate access to the app if:
+
+You violate these Terms
+
+You misuse the platform
+
+You engage in harmful behavior
+
+Termination may result in loss of access to Premium features without refund.
+
+7. Limitation of Liability
+
+The app is provided “as is” without warranties of any kind.
+
+We are not responsible for:
+
+Service interruptions
+
+Technical issues
+
+User-posted content
+
+Indirect or incidental damages
+
+Use of the app is at your own risk.
+
+8. Privacy
+
+Your use of the app is also governed by our Privacy Policy. Please review it carefully.
+
+9. Changes to These Terms
+
+We may update these Terms periodically. Continued use of the app after changes are posted constitutes acceptance of the revised Terms.
+
+10. Contact Information
+
+For questions regarding these Terms, billing issues, or subscription concerns, contact:
+
+📧 [Insert Official Email]
+🌐 [Insert Website URL]
+
+🔥 IMPORTANT FOR GOOGLE PLAY APPROVAL
+
+Because you have Premium:
+
+You must:
+
+Clearly state auto-renewal
+
+Explain cancellation method
+
+Mention refund policy
+
+Avoid deceptive billing language
+
+Provide contact email
+
+This version satisfies Google’s subscription transparency requirements.
+
+Si ou vle, pwochen etap la mwen ka:
+
+Ajoute Free Trial clause si w gen trial
+
+Ajoute GDPR / CCPA compliance
+
+Fè yon vèsyon legal pi avanse pou investor-level
+
+Fòmate li an HTML pare pou mete sou sit la
+
+Fè vèsyon an Kreyòl tou
+
+Ban mwen:
+
+Eske gen free trial?
+
+Monthly price?
+
+Annual price?
+
+Email ofisyèl?
