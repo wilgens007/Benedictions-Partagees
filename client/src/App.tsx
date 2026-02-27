@@ -30,6 +30,9 @@ const SavedVerses = lazy(() => import("@/pages/SavedVerses"));
 const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
 const AdminLayout = lazy(() => import("@/pages/AdminLayout"));
 const SharedPlaylist = lazy(() => import("@/pages/SharedPlaylist"));
+const About = lazy(() => import("@/pages/About"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsOfUse = lazy(() => import("@/pages/TermsOfUse"));
 
 function LazyFallback() {
   return <div className="flex items-center justify-center py-20"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>;
@@ -52,6 +55,9 @@ function PublicRouter() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/saved-verses" component={SavedVerses} />
         <Route path="/playlist/:id" component={SharedPlaylist} />
+        <Route path="/about" component={About} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfUse} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

@@ -138,6 +138,12 @@ Preferred communication style: Simple, everyday language.
 - **MiniPlayer**: `client/src/components/MiniPlayer.tsx` — fixed mini-player above bottom nav with progress bar, track info, and controls
 - **Design**: Audio() created programmatically (not DOM element) to guarantee persistence independent of React rendering
 
+### Static/Legal Pages
+- **About** (`/about`): Mission, vision, core values, what's inside, digital ministry, join the movement
+- **Privacy Policy** (`/privacy`): 10-section privacy policy with Google Play Data Safety alignment
+- **Terms of Use** (`/terms`): 10-section terms covering subscriptions, content, IP, liability
+- **Footer Links**: About, Privacy Policy, and Terms of Use links in Home page footer
+
 ### Application Features
 - **Home**: Daily verse display with encouragement messages
 - **Music**: Full audio player with track listing, playback controls, volume — uses global AudioPlayerContext

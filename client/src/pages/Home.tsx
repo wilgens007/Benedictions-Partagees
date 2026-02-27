@@ -837,6 +837,19 @@ export default function Home() {
             <SiInstagram className="w-5 h-5" />
           </a>
         </div>
+        <div className="flex items-center justify-center gap-3 mb-2 flex-wrap">
+          <Link href="/about" className="text-xs text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-about">
+            About
+          </Link>
+          <span className="text-muted-foreground/40">|</span>
+          <Link href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-privacy">
+            Privacy Policy
+          </Link>
+          <span className="text-muted-foreground/40">|</span>
+          <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-terms">
+            Terms of Use
+          </Link>
+        </div>
         <p className="text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} {t("appName")}
         </p>
