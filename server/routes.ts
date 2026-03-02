@@ -90,6 +90,25 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/daily-content-reset", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const result = await db.delete(dailyContent);
+      const dayKey = getTodayKeyET();
+      const genResult = await generateDailyContent(dayKey);
+      res.json({ cleared: true, regenerated: genResult });
+    } catch (err: any) {
+      console.error("[ADMIN] daily-content-reset error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get("/api/admin/daily-content-debug", async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     const providedSecret = req.headers["x-cron-secret"] as string;
