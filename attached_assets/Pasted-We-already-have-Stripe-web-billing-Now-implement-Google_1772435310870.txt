@@ -1,0 +1,101 @@
+We already have Stripe web billing. Now implement Google Play Billing support for Android subscriptions, using the following tasks (T001–T006). IMPORTANT SECURITY FIX: Do NOT accept userId from the body for Google verify; always use req.user.id from requireUser middleware.
+
+T001: Update DB schema
+- In shared/schema.ts (Drizzle):
+  Add to users table:
+    premiumSource: text nullable ("google" | "stripe" | null)
+    premiumExpiresAt: timestamp nullable
+    googlePurchaseToken: text nullable
+- Keep existing fields (isPremium, premiumSince, stripeCustomerId, stripeSubscriptionId).
+- Update exported User type.
+- Run npm run db:push.
+
+T002: Add GET /api/me
+- In server/authRoutes.ts behind requireUser:
+  GET /api/me returns:
+    id, username, email, isPremium, premiumSource, premiumExpiresAt, premiumSince
+- Exclude sensitive fields (password hash, googlePurchaseToken, stripe IDs).
+- Add curl acceptance note.
+
+T003: Add POST /api/billing/google/verify
+- Create server/googleBillingRoutes.ts
+- Route: POST /api/billing/google/verify
+- Body: { productId, purchaseToken }  (NO userId)
+- Requires requireUser
+- Reads:
+  GOOGLE_SERVICE_ACCOUNT_KEY (JSON string or base64 JSON)
+  GOOGLE_PLAY_PACKAGE_NAME (e.g. com.benedictionspartagees.bp)
+- Uses Google Play Android Publisher API to verify subscription purchase token:
+  Prefer googleapis library:
+    import { google } from "googleapis";
+    const auth = new google.auth.GoogleAuth({
+      credentials: parsedServiceAccount,
+      scopes: ["https://www.googleapis.com/auth/androidpublisher"],
+    });
+    const androidpublisher = google.androidpublisher({ version: "v3", auth });
+    Call purchases.subscriptionsv2.get with packageName, token (and subscriptionId if needed by library version),
+    OR fallback to purchases.subscriptions.get (v3) depending on available endpoint.
+- Verify purchase is active (not canceled/expired):
+  Determine expiryTimeMillis / lineItems expiryTime etc.
+  If expiry is in the future -> active.
+- Update user (req.user.id):
+    isPremium=true
+    premiumSource="google"
+    premiumExpiresAt=expiry date
+    googlePurchaseToken=purchaseToken
+    premiumSince if empty set to now
+- Return { success: true, isPremium: true, premiumExpiresAt }.
+- Register this router in server/index.ts under /api/billing/google.
+
+Also return clean errors:
+- 401 if not logged in
+- 400 if missing fields
+- 403/422 if token invalid
+- 500 if API misconfigured
+
+T004: Update Stripe webhook handler
+- In server/webhookHandlers.ts:
+  When Stripe sets isPremium=true => set premiumSource="stripe"
+  On cancel => isPremium=false AND clear premiumSource + premiumExpiresAt + googlePurchaseToken? (google token should remain only if google source; implement logic)
+  Ensure syncUserPremiumStatus also sets/clears premiumSource + premiumExpiresAt appropriately.
+
+T005: Frontend platform detection + gating
+- Create client/src/lib/platform.ts:
+  export function isCapacitor(): boolean { return !!(window as any).Capacitor; }
+  export function isAndroid(): boolean { check Capacitor platform OR userAgent includes "Android"; }
+- Pricing page:
+  If Android/Capacitor => hide Stripe checkout button and show:
+    "Subscribe via Google Play inside the Android app."
+  Else show Stripe as before.
+- Dashboard:
+  Show premium status + source (stripe/google) + expiry.
+
+T006: Capacitor Android wrapper project + docs
+- Create android-wrapper/README.md with steps:
+  1) create Capacitor project (capacitor init)
+  2) set server.url to our hosted web app
+  3) install Android
+  4) add Google Play Billing Library dependency com.android.billingclient:billing
+  5) create a Capacitor native plugin in Kotlin (BillingPlugin) that:
+     - lists products/subscriptions
+     - starts purchase flow
+     - receives purchaseToken
+     - returns purchaseToken to web layer via Capacitor plugin call
+  6) in web app (when Capacitor), call BillingPlugin.purchase({ productId }) and then call POST /api/billing/google/verify with returned purchaseToken
+  7) Play Console: create app, create subscription product IDs, internal testing track, license testers
+  8) Service account setup: grant access in Play Console, enable Android Publisher API, store key in env var
+
+- Include key Kotlin files under android-wrapper/android/app/src/main/java/...:
+  BillingPlugin.kt (Capacitor Plugin)
+  billing helper
+  sample usage from JS (window.Capacitor.Plugins.BillingPlugin)
+
+Deliverables:
+- Working code for T001–T005 in repo
+- android-wrapper folder with clear README and code samples
+- A testing checklist:
+  - local web works with Stripe
+  - Android build shows Google Play subscribe message
+  - internal test purchase returns token
+  - backend verify marks premium
+  - /api/me returns premium data
