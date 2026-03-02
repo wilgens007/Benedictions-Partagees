@@ -55,12 +55,26 @@ export class WebhookHandlers {
 
     if (userRows.length > 0) {
       const user = userRows[0];
-      await db.update(users).set({
-        isPremium,
+      const updateData: any = {
         stripeSubscriptionId: isPremium ? subscriptionId : null,
         premiumSince: isPremium && !user.premiumSince ? new Date() : (isPremium ? user.premiumSince : null),
-      }).where(eq(users.id, user.id));
-      console.log(`[WEBHOOK] Updated user ${user.id} (${user.email}): isPremium=${isPremium}, subscriptionId=${isPremium ? subscriptionId : 'null'}`);
+      };
+
+      if (isPremium) {
+        if (user.premiumSource !== "google") {
+          updateData.isPremium = true;
+          updateData.premiumSource = "stripe";
+        }
+      } else {
+        if (user.premiumSource !== "google") {
+          updateData.isPremium = false;
+          updateData.premiumSource = null;
+          updateData.premiumExpiresAt = null;
+        }
+      }
+
+      await db.update(users).set(updateData).where(eq(users.id, user.id));
+      console.log(`[WEBHOOK] Updated user ${user.id} (${user.email}): isPremium=${updateData.isPremium ?? user.isPremium}, premiumSource=${updateData.premiumSource ?? user.premiumSource}`);
     } else {
       const customerResult = await db.execute(
         sql`SELECT metadata FROM stripe.customers WHERE id = ${customerId}`
@@ -71,11 +85,13 @@ export class WebhookHandlers {
       if (userId) {
         await db.update(users).set({
           isPremium,
+          premiumSource: isPremium ? "stripe" : null,
           stripeCustomerId: customerId,
           stripeSubscriptionId: isPremium ? subscriptionId : null,
           premiumSince: isPremium ? new Date() : null,
+          premiumExpiresAt: isPremium ? undefined : null,
         }).where(eq(users.id, userId));
-        console.log(`[WEBHOOK] Updated user ${userId} via metadata: isPremium=${isPremium}`);
+        console.log(`[WEBHOOK] Updated user ${userId} via metadata: isPremium=${isPremium}, premiumSource=${isPremium ? 'stripe' : 'null'}`);
       } else {
         console.log(`[WEBHOOK] No user found for customer ${customerId}`);
       }
@@ -93,12 +109,26 @@ export class WebhookHandlers {
     const sub = subResult.rows[0] as any;
     const isPremium = sub ? ACTIVE_STATUSES.includes(sub.status) : false;
 
-    await db.update(users).set({
-      isPremium,
+    const updateData: any = {
       stripeSubscriptionId: isPremium && sub ? sub.id : null,
       premiumSince: isPremium && !user.premiumSince ? new Date() : (isPremium ? user.premiumSince : null),
-    }).where(eq(users.id, userId));
+    };
 
-    return isPremium;
+    if (isPremium) {
+      if (user.premiumSource !== "google") {
+        updateData.isPremium = true;
+        updateData.premiumSource = "stripe";
+      }
+    } else {
+      if (user.premiumSource !== "google") {
+        updateData.isPremium = false;
+        updateData.premiumSource = null;
+        updateData.premiumExpiresAt = null;
+      }
+    }
+
+    await db.update(users).set(updateData).where(eq(users.id, userId));
+
+    return updateData.isPremium ?? user.isPremium ?? false;
   }
 }

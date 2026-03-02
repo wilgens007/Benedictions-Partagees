@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Crown, User, Mail, BookOpen, LogOut, Settings, Sparkles, ChevronRight } from "lucide-react";
+import { Crown, User, Mail, BookOpen, LogOut, Settings, Sparkles, ChevronRight, Smartphone } from "lucide-react";
+import { isAndroidApp } from "@/lib/platform";
 
 interface SavedVersesInfo {
   count: number;
@@ -118,31 +119,56 @@ export default function Dashboard() {
                     <Crown className="w-3 h-3 mr-1" />
                     {t("premiumActive") || "Premium Active"}
                   </Badge>
+                  {(user as any).premiumSource && (
+                    <Badge variant="outline" className="text-xs" data-testid="badge-premium-source">
+                      {(user as any).premiumSource === "google" ? (
+                        <><Smartphone className="w-3 h-3 mr-1" /> Google Play</>
+                      ) : (
+                        <>Stripe</>
+                      )}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-3 flex-wrap">
                   {user.premiumSince && (
                     <span className="text-xs text-muted-foreground" data-testid="text-premium-since">
                       Since {new Date(user.premiumSince).toLocaleDateString()}
                     </span>
                   )}
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleManageSubscription}
-                  disabled={isManaging}
-                  data-testid="button-manage-subscription"
-                >
-                  {isManaging ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Opening...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
-                      {t("manageSubscription") || "Manage Subscription"}
+                  {(user as any).premiumExpiresAt && (
+                    <span className="text-xs text-muted-foreground" data-testid="text-premium-expires">
+                      Expires {new Date((user as any).premiumExpiresAt).toLocaleDateString()}
                     </span>
                   )}
-                </Button>
+                </div>
+                {(user as any).premiumSource === "google" ? (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                    <Smartphone className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Manage your subscription in the Google Play Store app.
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleManageSubscription}
+                    disabled={isManaging}
+                    data-testid="button-manage-subscription"
+                  >
+                    {isManaging ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Opening...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Settings className="w-4 h-4" />
+                        {t("manageSubscription") || "Manage Subscription"}
+                      </span>
+                    )}
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">

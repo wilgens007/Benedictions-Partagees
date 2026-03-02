@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Crown, Check, BookOpen, Music, ListMusic, Heart, Sparkles } from "lucide-react";
+import { Crown, Check, BookOpen, Music, ListMusic, Heart, Sparkles, Smartphone } from "lucide-react";
+import { isAndroidApp } from "@/lib/platform";
 
 interface PriceItem {
   price_id: string;
@@ -210,31 +211,42 @@ export default function Pricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button
-                  className="w-full bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37]"
-                  onClick={handleSubscribe}
-                  disabled={isCheckingOut}
-                  data-testid="button-subscribe"
-                >
-                  {isCheckingOut ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Redirecting...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Crown className="w-4 h-4" />
-                      Subscribe Now
-                    </span>
-                  )}
-                </Button>
+                {isAndroidApp() ? (
+                  <div className="w-full space-y-3" data-testid="android-subscribe-notice">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                      <Smartphone className="w-5 h-5 text-[#D4AF37] flex-shrink-0" />
+                      <p className="text-sm text-foreground">
+                        Subscribe via Google Play inside the Android app to unlock Premium.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37]"
+                    onClick={handleSubscribe}
+                    disabled={isCheckingOut}
+                    data-testid="button-subscribe"
+                  >
+                    {isCheckingOut ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Redirecting...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Crown className="w-4 h-4" />
+                        Subscribe Now
+                      </span>
+                    )}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           </div>
         )}
 
         <p className="text-xs text-muted-foreground text-center px-4 leading-relaxed" data-testid="text-pricing-disclaimer">
-          Cancel anytime. Secure payment powered by Stripe.
+          Cancel anytime. {isAndroidApp() ? "Managed through Google Play." : "Secure payment powered by Stripe."}
         </p>
       </div>
     </div>

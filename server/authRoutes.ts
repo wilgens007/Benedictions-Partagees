@@ -93,7 +93,21 @@ router.get("/api/auth/me", requireUser, async (req: any, res) => {
     username: user.username,
     isPremium: user.isPremium,
     premiumSince: user.premiumSince,
-    stripeCustomerId: user.stripeCustomerId,
+    premiumSource: user.premiumSource,
+    premiumExpiresAt: user.premiumExpiresAt,
+  });
+});
+
+router.get("/api/me", requireUser, async (req: any, res) => {
+  const user = req.user;
+  res.json({
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    isPremium: user.isPremium,
+    premiumSource: user.premiumSource,
+    premiumExpiresAt: user.premiumExpiresAt,
+    premiumSince: user.premiumSince,
   });
 });
 

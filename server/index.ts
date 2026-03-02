@@ -12,6 +12,7 @@ import { sendPushToAll } from "./pushService";
 import { WebhookHandlers } from "./webhookHandlers";
 import prayerWallRoutes from "./prayerWallRoutes";
 import playlistRoutes from "./playlistRoutes";
+import googleBillingRoutes from "./googleBillingRoutes";
 
 
 process.on('uncaughtException', (err) => {
@@ -100,6 +101,7 @@ app.use((req, res, next) => {
 (async () => {
   app.use(authRoutes);
   app.use(billingRoutes);
+  app.use(googleBillingRoutes);
   app.use(prayerWallRoutes);
   app.use(playlistRoutes);
   registerAdminRoutes(app);

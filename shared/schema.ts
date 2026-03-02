@@ -10,8 +10,11 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   isPremium: boolean("is_premium").default(false),
   premiumSince: timestamp("premium_since"),
+  premiumSource: text("premium_source"),
+  premiumExpiresAt: timestamp("premium_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  googlePurchaseToken: text("google_purchase_token"),
 });
 
 export const userSessions = pgTable("user_sessions", {
