@@ -33,7 +33,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Daily Content Generation
 - Automated generation of daily content (verse, devotional, etc.) based on day-of-year.
-- **Scheduling**: GitHub Actions cron, node-cron, and server startup fallback ensure content availability.
+- **Scheduling**: GitHub Actions cron, node-cron (6 AM ET), and server startup fallback ensure content availability.
+- **Push Notification Dedup**: Uses a `_ps` sentinel row in `daily_content` table (keyed by day) to prevent duplicate push notifications across server restarts. Both the 6 AM cron and startup fallback check this marker before sending.
 - **Security**: `X-CRON-SECRET` for endpoint protection.
 
 ### Premium Subscriptions (Stripe & Google Play)

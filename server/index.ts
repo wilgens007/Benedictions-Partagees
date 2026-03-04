@@ -170,21 +170,27 @@ app.use((req, res, next) => {
     } catch (err: any) {
       log(`[CRON-6AM] ERROR generating content: ${err.message || err}`, "cron");
     }
-    try {
-      const pushResult = await sendPushToAll({
-        title: "BP \u2014 Devotion du jour",
-        body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
-        url: "/devotion",
-      });
-      log(`[CRON-6AM] Push notifications sent: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`, "cron");
-    } catch (pushErr: any) {
-      log(`[CRON-6AM] ERROR sending push notifications: ${pushErr.message || pushErr}`, "cron");
-    }
-    try {
-      const fbResult = await postDailyToFacebook();
-      log(`[CRON-6AM] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "cron");
-    } catch (fbErr: any) {
-      log(`[CRON-6AM] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "cron");
+    const alreadySent = await wasPushSentToday(dayKey);
+    if (!alreadySent) {
+      await markPushSent(dayKey);
+      try {
+        const pushResult = await sendPushToAll({
+          title: "BP \u2014 Devotion du jour",
+          body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
+          url: "/devotion",
+        });
+        log(`[CRON-6AM] Push notifications sent: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`, "cron");
+      } catch (pushErr: any) {
+        log(`[CRON-6AM] ERROR sending push notifications: ${pushErr.message || pushErr}`, "cron");
+      }
+      try {
+        const fbResult = await postDailyToFacebook();
+        log(`[CRON-6AM] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "cron");
+      } catch (fbErr: any) {
+        log(`[CRON-6AM] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "cron");
+      }
+    } else {
+      log(`[CRON-6AM] Push already sent today for ${dayKey}, skipping`, "cron");
     }
   }, {
     timezone: "America/New_York",
@@ -198,14 +204,82 @@ app.use((req, res, next) => {
   }
 })();
 
+async function wasPushSentToday(dayKey: string): Promise<boolean> {
+  try {
+    const { db: checkDb } = await import("./db");
+    const { dailyContent } = await import("@shared/schema");
+    const { and, eq } = await import("drizzle-orm");
+    const rows = await checkDb.select().from(dailyContent).where(
+      and(eq(dailyContent.dayKey, dayKey), eq(dailyContent.language, "_ps"))
+    );
+    return rows.length > 0;
+  } catch { return false; }
+}
+
+async function markPushSent(dayKey: string) {
+  try {
+    const { db: markDb } = await import("./db");
+    const { dailyContent } = await import("@shared/schema");
+    await markDb.insert(dailyContent).values({
+      id: `push-sent-${dayKey}`,
+      dayKey,
+      language: "_ps",
+      verse: "",
+      reference: "",
+      devotional: "",
+      prayer: "",
+      encouragementText: "",
+      encouragementAuthor: "",
+    }).onConflictDoNothing();
+  } catch (err: any) {
+    log(`[PUSH-MARKER] Error marking push sent: ${err.message || err}`, "startup");
+  }
+}
+
 async function runStartupGeneration() {
   const dayKey = getTodayKeyET();
   log(`[STARTUP] Checking if daily content exists for dayKey=${dayKey}`, "startup");
+  let contentReady = false;
   try {
     const result = await generateDailyContent(dayKey);
     log(`[STARTUP] Result: status=${result.status}, dayKey=${result.dayKey}, languages=${result.languages.join(",") || "all existed"}`, "startup");
+    contentReady = true;
   } catch (err: any) {
     log(`[STARTUP] ERROR generating daily content: ${err.message || err}`, "startup");
+  }
+
+  try {
+    const nowET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+    const hourET = nowET.getHours();
+    const alreadySent = await wasPushSentToday(dayKey);
+    if (hourET >= 6 && !alreadySent && contentReady) {
+      await markPushSent(dayKey);
+      log(`[STARTUP] It's past 6 AM ET (${hourET}:${nowET.getMinutes().toString().padStart(2, "0")}), sending startup push notifications`, "startup");
+      try {
+        const pushResult = await sendPushToAll({
+          title: "BP \u2014 Devotion du jour",
+          body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
+          url: "/devotion",
+        });
+        log(`[STARTUP] Push notifications sent: sent=${pushResult.sent}, failed=${pushResult.failed}, cleaned=${pushResult.cleaned}`, "startup");
+      } catch (pushErr: any) {
+        log(`[STARTUP] ERROR sending push notifications: ${pushErr.message || pushErr}`, "startup");
+      }
+      try {
+        const fbResult = await postDailyToFacebook();
+        log(`[STARTUP] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "startup");
+      } catch (fbErr: any) {
+        log(`[STARTUP] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "startup");
+      }
+    } else if (alreadySent) {
+      log(`[STARTUP] Push already sent today for ${dayKey}, skipping`, "startup");
+    } else if (hourET < 6) {
+      log(`[STARTUP] Before 6 AM ET (${hourET}:${nowET.getMinutes().toString().padStart(2, "0")}), skipping push notifications`, "startup");
+    } else if (!contentReady) {
+      log(`[STARTUP] Content generation failed, skipping push notifications`, "startup");
+    }
+  } catch (err: any) {
+    log(`[STARTUP] Push notification check error: ${err.message || err}`, "startup");
   }
 
   try {
