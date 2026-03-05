@@ -44,7 +44,9 @@ Preferred communication style: Simple, everyday language.
 - **User Interface**: Pricing page dynamically displays Stripe or Google Play options; Dashboard shows subscription status.
 
 ### User Authentication
-- **Methods**: Registration, login, logout, user profile.
+- **Methods**: Registration, login, logout, user profile, password reset.
+- **Password Reset**: `password_reset_tokens` table, `POST /api/auth/forgot-password` (sends email via Resend), `POST /api/auth/reset-password` (validates token, updates password). Tokens expire in 1 hour, single-use. Frontend pages: `/forgot-password`, `/reset-password?token=...`.
+- **Admin Password Reset**: `POST /api/admin/reset-user-password` (CRON_SECRET protected) for manual resets.
 - **Security**: bcrypt for password hashing, session tokens via `user_sessions` table, httpOnly cookie-based auth.
 - **Access Control**: `requireUser`, `optionalUser`, `requirePremium` middlewares.
 

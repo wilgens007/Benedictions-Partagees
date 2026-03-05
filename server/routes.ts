@@ -118,7 +118,7 @@ export async function registerRoutes(
     }
 
     try {
-      const { email } = req.body;
+      const { email, force } = req.body;
       if (!email) {
         return res.status(400).json({ error: "email is required" });
       }
@@ -130,7 +130,7 @@ export async function registerRoutes(
 
       const user = userRows[0];
 
-      if (user.stripeCustomerId) {
+      if (user.stripeCustomerId && !force) {
         const { WebhookHandlers } = await import("./webhookHandlers");
         const synced = await WebhookHandlers.syncUserPremiumStatus(user.id);
         return res.json({ synced: true, isPremium: synced, email: user.email, method: "stripe_sync" });
@@ -175,6 +175,37 @@ export async function registerRoutes(
       res.json({ webhooks: results, expectedHost });
     } catch (err: any) {
       console.error("[ADMIN] stripe-webhook-status error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/reset-user-password", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { email, newPassword } = req.body;
+      if (!email || !newPassword) {
+        return res.status(400).json({ error: "email and newPassword are required" });
+      }
+
+      const bcryptModule = await import("bcryptjs");
+      const bcryptLib = bcryptModule.default || bcryptModule;
+      const userRows = await db.select().from(users).where(eq(users.email, email.trim().toLowerCase()));
+      if (userRows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const passwordHash = await bcryptLib.hash(newPassword, 10);
+      await db.update(users).set({ password: passwordHash }).where(eq(users.id, userRows[0].id));
+
+      res.json({ success: true, email: userRows[0].email });
+    } catch (err: any) {
+      console.error("[ADMIN] reset-user-password error:", err);
       res.status(500).json({ error: err.message });
     }
   });

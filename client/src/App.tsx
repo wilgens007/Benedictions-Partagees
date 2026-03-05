@@ -33,6 +33,8 @@ const SharedPlaylist = lazy(() => import("@/pages/SharedPlaylist"));
 const About = lazy(() => import("@/pages/About"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsOfUse = lazy(() => import("@/pages/TermsOfUse"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 
 function LazyFallback() {
   return <div className="flex items-center justify-center py-20"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>;
@@ -51,6 +53,8 @@ function PublicRouter() {
         <Route path="/support/thank-you" component={ThankYou} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/saved-verses" component={SavedVerses} />

@@ -121,6 +121,11 @@ export default function Login() {
                     </FormItem>
                   )}
                 />
+                <div className="text-right">
+                  <Link href="/forgot-password" data-testid="link-forgot-password">
+                    <span className="text-sm text-[#D4AF37] font-medium cursor-pointer">Forgot password?</span>
+                  </Link>
+                </div>
                 <Button
                   type="submit"
                   className="w-full bg-[#0A1F44] dark:bg-[#D4AF37] dark:text-[#0A1F44] border-[#0A1F44] dark:border-[#D4AF37]"
