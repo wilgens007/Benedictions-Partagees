@@ -20,9 +20,11 @@ export class WebhookHandlers {
 
     try {
       const event = JSON.parse(payload.toString());
+      console.log(`[WEBHOOK] Received event: ${event.type} (id: ${event.id})`);
       await WebhookHandlers.handleSubscriptionEvent(event);
+      await WebhookHandlers.handleCheckoutCompleted(event);
     } catch (error: any) {
-      console.error('[WEBHOOK] Error handling subscription event:', error.message);
+      console.error('[WEBHOOK] Error handling event:', error.message);
     }
   }
 
@@ -95,6 +97,35 @@ export class WebhookHandlers {
       } else {
         console.log(`[WEBHOOK] No user found for customer ${customerId}`);
       }
+    }
+  }
+
+  static async handleCheckoutCompleted(event: any): Promise<void> {
+    if (event.type !== 'checkout.session.completed') return;
+
+    const session = event.data?.object;
+    if (!session?.customer || session.mode !== 'subscription') return;
+
+    const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id;
+    const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+
+    console.log(`[WEBHOOK] Checkout completed for customer ${customerId}, subscription ${subscriptionId}`);
+
+    const userRows = await db.select().from(users).where(eq(users.stripeCustomerId, customerId));
+
+    if (userRows.length > 0) {
+      const user = userRows[0];
+      if (!user.isPremium || user.premiumSource !== 'google') {
+        await db.update(users).set({
+          isPremium: true,
+          premiumSource: 'stripe',
+          stripeSubscriptionId: subscriptionId || null,
+          premiumSince: user.premiumSince || new Date(),
+        }).where(eq(users.id, user.id));
+        console.log(`[WEBHOOK] Checkout: granted premium to user ${user.id} (${user.email})`);
+      }
+    } else {
+      console.log(`[WEBHOOK] Checkout: no user found for customer ${customerId}, will be handled by subscription event`);
     }
   }
 

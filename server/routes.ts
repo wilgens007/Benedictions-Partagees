@@ -7,7 +7,7 @@ import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay, postDailyToFacebook } from "./dailyContentGenerator";
 import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
 import { db } from "./db";
-import { supportConfig, dailyContent, pushSubscriptions } from "@shared/schema";
+import { supportConfig, dailyContent, pushSubscriptions, users } from "@shared/schema";
 import { eq, and, desc, asc, ilike, or, sql, gte, count } from "drizzle-orm";
 import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
@@ -105,6 +105,76 @@ export async function registerRoutes(
       res.json({ cleared: true, regenerated: genResult });
     } catch (err: any) {
       console.error("[ADMIN] daily-content-reset error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/stripe-sync-user", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "email is required" });
+      }
+
+      const userRows = await db.select().from(users).where(eq(users.email, email));
+      if (userRows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const user = userRows[0];
+
+      if (user.stripeCustomerId) {
+        const { WebhookHandlers } = await import("./webhookHandlers");
+        const synced = await WebhookHandlers.syncUserPremiumStatus(user.id);
+        return res.json({ synced: true, isPremium: synced, email: user.email, method: "stripe_sync" });
+      }
+
+      await db.update(users).set({
+        isPremium: true,
+        premiumSource: "stripe",
+        premiumSince: user.premiumSince || new Date(),
+      }).where(eq(users.id, user.id));
+
+      return res.json({ synced: true, isPremium: true, email: user.email, method: "manual_grant" });
+    } catch (err: any) {
+      console.error("[ADMIN] stripe-sync-user error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/admin/stripe-webhook-status", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+      const webhooks = await stripe.webhookEndpoints.list({ limit: 10 });
+      const domains = process.env.REPLIT_DOMAINS || "";
+      const expectedHost = domains.split(",")[0];
+
+      const results = webhooks.data.map((wh: any) => ({
+        id: wh.id,
+        url: wh.url,
+        status: wh.status,
+        matchesApp: wh.url?.includes(expectedHost),
+        enabledEvents: wh.enabled_events?.length,
+      }));
+
+      res.json({ webhooks: results, expectedHost });
+    } catch (err: any) {
+      console.error("[ADMIN] stripe-webhook-status error:", err);
       res.status(500).json({ error: err.message });
     }
   });

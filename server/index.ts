@@ -41,6 +41,7 @@ app.post(
     const signature = req.headers['stripe-signature'];
 
     if (!signature) {
+      log('[STRIPE-WEBHOOK] Missing stripe-signature header', 'stripe');
       return res.status(400).json({ error: 'Missing stripe-signature' });
     }
 
@@ -48,15 +49,17 @@ app.post(
       const sig = Array.isArray(signature) ? signature[0] : signature;
 
       if (!Buffer.isBuffer(req.body)) {
-        console.error('STRIPE WEBHOOK ERROR: req.body is not a Buffer');
+        log('STRIPE WEBHOOK ERROR: req.body is not a Buffer, type=' + typeof req.body, 'stripe');
         return res.status(500).json({ error: 'Webhook processing error' });
       }
 
+      log(`[STRIPE-WEBHOOK] Received webhook call (${req.body.length} bytes)`, 'stripe');
       await ensureStripeSync();
       await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+      log('[STRIPE-WEBHOOK] Processed successfully', 'stripe');
       res.status(200).json({ received: true });
     } catch (error: any) {
-      console.error('Webhook error:', error.message);
+      log(`[STRIPE-WEBHOOK] Error: ${error.message}`, 'stripe');
       res.status(400).json({ error: 'Webhook processing error' });
     }
   }
@@ -320,7 +323,8 @@ async function initStripe() {
     const { seedStripeProducts } = await import('./seedProducts');
     await seedStripeProducts();
 
-    log('[STRIPE] Deferring webhook + sync to first request', 'stripe');
+    log('[STRIPE] Initializing webhook + sync...', 'stripe');
+    await ensureStripeSync();
   } catch (err: any) {
     log(`[STRIPE] Init error: ${err.message || err}`, 'stripe');
   }
@@ -333,10 +337,11 @@ export async function ensureStripeSync() {
     const { getStripeSync } = await import('./stripeClient');
     const stripeSync = await getStripeSync();
 
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
-    await stripeSync.findOrCreateManagedWebhook(
-      `${webhookBaseUrl}/api/stripe/webhook`
-    );
+    const domains = process.env.REPLIT_DOMAINS || process.env.REPL_SLUG + '.replit.app';
+    const webhookBaseUrl = `https://${domains.split(',')[0]}`;
+    const webhookUrl = `${webhookBaseUrl}/api/stripe/webhook`;
+    log(`[STRIPE] Registering webhook at: ${webhookUrl}`, 'stripe');
+    await stripeSync.findOrCreateManagedWebhook(webhookUrl);
     log(`[STRIPE] Webhook configured: OK`, 'stripe');
 
     stripeSync.syncBackfill()
