@@ -771,23 +771,43 @@ export default function Home() {
 
               <div className="max-w-sm mx-auto">
                 {premiumTab === "free" ? (
-                  <ul className="space-y-3 mb-6">
-                    {[t("listenAnytime"), t("dailyVerses")].map((feature) => (
-                      <li key={feature} className="flex items-center gap-3 text-white/80 text-sm">
-                        <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mb-6">
+                    <p className="text-white/50 text-xs text-center mb-3">Enjoy uplifting content anytime, anywhere.</p>
+                    <ul className="space-y-3">
+                      {[
+                        t("listenAnytime") || "Listen anytime",
+                        t("dailyVerses") || "Daily Bible verse",
+                        "Submit prayer requests",
+                        "Access to all sermons",
+                        "Testimonies",
+                        "Worship music",
+                        "Teachings",
+                      ].map((feature) => (
+                        <li key={feature} className="flex items-center gap-3 text-white/80 text-sm">
+                          <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ) : (
-                  <ul className="space-y-3 mb-6">
-                    {[t("saveFavorites"), t("createPlaylists"), t("noAdsOffline")].map((feature) => (
-                      <li key={feature} className="flex items-center gap-3 text-white/80 text-sm">
-                        <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mb-6">
+                    <p className="text-white/50 text-xs text-center mb-3">Unlock the full experience.</p>
+                    <ul className="space-y-3">
+                      {[
+                        t("saveFavorites") || "Everything in Free",
+                        "Early access to new releases",
+                        t("createPlaylists") || "Create and save your own playlists",
+                        "Exclusive premium content",
+                        "Priority access to special teachings",
+                      ].map((feature) => (
+                        <li key={feature} className="flex items-center gap-3 text-white/80 text-sm">
+                          <Check className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 <div className="text-center">
