@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Shield, Lock, Database, Share2, FileText, Clock, UserCheck, Baby, Globe, RefreshCw, CheckCircle, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -264,21 +265,22 @@ export default function PrivacyPolicy() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Once your data is deleted, this action cannot be undone. Your premium subscription (if any) will also be cancelled.
             </p>
-            <a
-              href={`mailto:${dataRemovalEmail}?subject=${dataRemovalSubject}&body=${dataRemovalBody}`}
-              data-testid="link-data-removal"
-            >
+            <Link href="/delete-account" data-testid="link-data-removal">
               <Button
                 variant="outline"
                 className="w-full border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
                 data-testid="button-request-data-removal"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Request Data Removal
+                Delete My Account
               </Button>
-            </a>
+            </Link>
             <p className="text-xs text-muted-foreground/70 italic">
-              We will process your request within 30 days and confirm deletion via email.
+              You can also contact us at{" "}
+              <a href={`mailto:${dataRemovalEmail}?subject=${dataRemovalSubject}&body=${dataRemovalBody}`} className="text-[#D4AF37]">
+                {dataRemovalEmail}
+              </a>{" "}
+              if you need assistance.
             </p>
           </CardContent>
         </Card>

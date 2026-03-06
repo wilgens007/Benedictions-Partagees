@@ -3,13 +3,25 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/LanguageContext";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Crown, User, Mail, BookOpen, LogOut, Settings, Sparkles, ChevronRight, Smartphone } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Crown, User, Mail, BookOpen, LogOut, Settings, Sparkles, ChevronRight, Smartphone, Trash2 } from "lucide-react";
 import { isAndroidApp } from "@/lib/platform";
 
 interface SavedVersesInfo {
@@ -25,6 +37,9 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isManaging, setIsManaging] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: versesInfo, isLoading: versesLoading } = useQuery<SavedVersesInfo>({
     queryKey: ["/api/verses/saved"],
@@ -53,6 +68,28 @@ export default function Dashboard() {
       setLocation("/");
     } catch {
       toast({ title: "Error logging out", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return;
+    setIsDeleting(true);
+    try {
+      await apiRequest("DELETE", "/api/auth/account");
+      queryClient.clear();
+      setDeleteDialogOpen(false);
+      setLocation("/");
+      toast({
+        title: t("accountDeleted") || "Account Deleted",
+        description: t("accountDeletedDesc") || "Your account and all associated data have been permanently deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete account",
+        variant: "destructive",
+      });
+      setIsDeleting(false);
     }
   };
 
@@ -260,6 +297,72 @@ export default function Dashboard() {
           <LogOut className="w-4 h-4 mr-2" />
           {t("signOut") || "Sign Out"}
         </Button>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setDeleteConfirmText("");
+        }}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+              data-testid="button-delete-account"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {t("deleteAccount") || "Delete Account"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-red-500" data-testid="text-delete-dialog-title">
+                {t("deleteAccountTitle") || "Delete Your Account?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  <p>{t("deleteAccountWarning") || "This action is permanent and cannot be undone. The following data will be permanently deleted:"}</p>
+                  <ul className="text-sm space-y-1 ml-4 list-disc">
+                    <li>{t("deleteItemProfile") || "Your profile and login credentials"}</li>
+                    <li>{t("deleteItemVerses") || "All saved verses"}</li>
+                    <li>{t("deleteItemPlaylists") || "Your playlists"}</li>
+                    <li>{t("deleteItemPrayer") || "Prayer reactions and comments"}</li>
+                    <li>{t("deleteItemSubscription") || "Premium subscription (will be cancelled)"}</li>
+                  </ul>
+                  <p className="font-medium">{t("deleteConfirmPrompt") || 'Type "DELETE" to confirm:'}</p>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                    className="font-mono"
+                    data-testid="input-delete-confirm"
+                  />
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-delete-cancel">
+                {t("cancel") || "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                className="bg-red-500 hover:bg-red-600 text-white"
+                data-testid="button-delete-confirm"
+              >
+                {isDeleting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    {t("deleting") || "Deleting..."}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Trash2 className="w-4 h-4" />
+                    {t("deleteAccountConfirm") || "Delete Account"}
+                  </span>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

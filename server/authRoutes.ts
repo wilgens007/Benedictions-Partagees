@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { registerUserSchema, loginUserSchema, users, passwordResetTokens } from "@shared/schema";
+import {
+  registerUserSchema, loginUserSchema, users, passwordResetTokens,
+  userSessions, savedVerses, prayerReactions, prayerComments,
+  prayerReports, prayerRequests, playlists, playlistSongs, songPlays,
+} from "@shared/schema";
 import {
   registerUser,
   loginUser,
@@ -189,6 +193,52 @@ router.post("/api/auth/reset-password", async (req, res) => {
   } catch (error: any) {
     console.error("Reset password error:", error.message);
     res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
+router.delete("/api/auth/account", requireUser, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    console.log(`[AUTH] Account deletion requested for user ${userId} (${userEmail})`);
+
+    if (req.user.stripeSubscriptionId) {
+      try {
+        const { getUncachableStripeClient } = await import("./stripeClient");
+        const stripe = getUncachableStripeClient();
+        await stripe.subscriptions.cancel(req.user.stripeSubscriptionId);
+        console.log(`[AUTH] Stripe subscription ${req.user.stripeSubscriptionId} cancelled for user ${userId}`);
+      } catch (stripeErr: any) {
+        console.error(`[AUTH] Failed to cancel Stripe subscription:`, stripeErr.message);
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      const userPlaylists = await tx.select({ id: playlists.id }).from(playlists).where(eq(playlists.userId, userId));
+      for (const pl of userPlaylists) {
+        await tx.delete(playlistSongs).where(eq(playlistSongs.playlistId, pl.id));
+      }
+
+      await tx.delete(prayerReactions).where(eq(prayerReactions.userId, userId));
+      await tx.delete(prayerComments).where(eq(prayerComments.userId, userId));
+      await tx.delete(prayerReports).where(eq(prayerReports.reporterUserId, userId));
+      await tx.update(prayerRequests).set({ userId: null }).where(eq(prayerRequests.userId, userId));
+      await tx.delete(savedVerses).where(eq(savedVerses.userId, userId));
+      await tx.delete(playlists).where(eq(playlists.userId, userId));
+      await tx.update(songPlays).set({ userId: null }).where(eq(songPlays.userId, userId));
+      await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await tx.delete(userSessions).where(eq(userSessions.userId, userId));
+      await tx.delete(users).where(eq(users.id, userId));
+    });
+
+    res.clearCookie("user_token");
+
+    console.log(`[AUTH] Account deleted successfully for user ${userId} (${userEmail})`);
+    res.json({ success: true, message: "Account and all associated data have been deleted." });
+  } catch (error: any) {
+    console.error("Account deletion error:", error.message);
+    res.status(500).json({ error: "Failed to delete account" });
   }
 });
 

@@ -44,8 +44,9 @@ Preferred communication style: Simple, everyday language.
 - **User Interface**: Pricing page dynamically displays Stripe or Google Play options; Dashboard shows subscription status.
 
 ### User Authentication
-- **Methods**: Registration, login, logout, user profile, password reset.
+- **Methods**: Registration, login, logout, user profile, password reset, account deletion.
 - **Password Reset**: `password_reset_tokens` table, `POST /api/auth/forgot-password` (sends email via Resend), `POST /api/auth/reset-password` (validates token, updates password). Tokens expire in 1 hour, single-use. Frontend pages: `/forgot-password`, `/reset-password?token=...`.
+- **Account Deletion**: `DELETE /api/auth/account` (requires auth) — deletes all user data across all tables (sessions, saved verses, playlists, playlist songs, prayer reactions/comments/reports, song plays, password reset tokens), cancels Stripe subscription if active, clears auth cookie. Frontend: "Delete Account" button on Dashboard page + standalone `/delete-account` page (for Google Play Console compliance). Requires typing "DELETE" to confirm.
 - **Admin Password Reset**: `POST /api/admin/reset-user-password` (CRON_SECRET protected) for manual resets.
 - **Security**: bcrypt for password hashing, session tokens via `user_sessions` table, httpOnly cookie-based auth.
 - **Access Control**: `requireUser`, `optionalUser`, `requirePremium` middlewares.

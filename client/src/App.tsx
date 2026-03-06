@@ -35,6 +35,7 @@ const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsOfUse = lazy(() => import("@/pages/TermsOfUse"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const DeleteAccount = lazy(() => import("@/pages/DeleteAccount"));
 
 function LazyFallback() {
   return <div className="flex items-center justify-center py-20"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>;
@@ -62,6 +63,7 @@ function PublicRouter() {
         <Route path="/about" component={About} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfUse} />
+        <Route path="/delete-account" component={DeleteAccount} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
