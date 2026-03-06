@@ -210,6 +210,29 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/email-test", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers["x-cron-secret"] as string;
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { to } = req.body;
+      if (!to) {
+        return res.status(400).json({ error: "to (email address) is required" });
+      }
+
+      const { sendTestEmail } = await import("./resend");
+      const response = await sendTestEmail(to);
+      res.json(response);
+    } catch (err: any) {
+      console.error("[ADMIN] email-test error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get("/api/admin/daily-content-debug", async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     const providedSecret = req.headers["x-cron-secret"] as string;
