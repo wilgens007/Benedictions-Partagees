@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Crown, Check, BookOpen, Music, ListMusic, Heart, Sparkles, Smartphone } from "lucide-react";
+import { Crown, Check, BookOpen, Music, ListMusic, Heart, Sparkles, Smartphone, Mic, MessageCircle, Star, GraduationCap } from "lucide-react";
 import { isAndroidApp } from "@/lib/platform";
 
 interface PriceItem {
@@ -25,16 +25,21 @@ interface PriceItem {
 }
 
 const freeFeatures = [
-  { icon: BookOpen, label: "Daily devotionals" },
-  { icon: Heart, label: "20 saved verses" },
-  { icon: Sparkles, label: "Community prayers" },
+  { icon: Music, label: "Listen anytime" },
+  { icon: BookOpen, label: "Daily Bible verse" },
+  { icon: Heart, label: "Submit prayer requests" },
+  { icon: Mic, label: "Access to all sermons" },
+  { icon: MessageCircle, label: "Testimonies" },
+  { icon: Sparkles, label: "Worship music" },
+  { icon: GraduationCap, label: "Teachings" },
 ];
 
 const premiumFeatures = [
-  { icon: Check, label: "All free features" },
-  { icon: Heart, label: "Unlimited saved verses" },
-  { icon: Music, label: "Early access music" },
-  { icon: ListMusic, label: "Custom playlists" },
+  { icon: Check, label: "Everything in Free" },
+  { icon: Star, label: "Early access to new releases" },
+  { icon: ListMusic, label: "Create and save your own playlists" },
+  { icon: Crown, label: "Exclusive premium content" },
+  { icon: GraduationCap, label: "Priority access to special teachings and messages" },
 ];
 
 export default function Pricing() {
@@ -97,7 +102,7 @@ export default function Pricing() {
           <h1 className="font-serif text-2xl font-bold text-white mb-2" data-testid="text-pricing-title">
             Choose Your Plan
           </h1>
-          <p className="text-white/60 text-sm">Unlock the full spiritual experience</p>
+          <p className="text-white/60 text-sm">Perfect for anyone who wants to grow spiritually and stay connected to God's Word</p>
         </div>
       </div>
 
@@ -132,10 +137,11 @@ export default function Pricing() {
               <CardHeader className="pb-3">
                 <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
                   <BookOpen className="w-5 h-5 text-muted-foreground" />
-                  Free
+                  Free Plan
                 </CardTitle>
               </CardHeader>
               <CardContent className="pb-3">
+                <p className="text-sm text-muted-foreground mb-3" data-testid="text-free-description">Enjoy uplifting content anytime, anywhere.</p>
                 <div className="mb-4">
                   <span className="text-3xl font-bold text-foreground">$0</span>
                   <span className="text-muted-foreground text-sm ml-1">/forever</span>
@@ -174,7 +180,7 @@ export default function Pricing() {
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <CardTitle className="font-serif text-lg flex items-center gap-2 flex-wrap">
                     <Crown className="w-5 h-5 text-[#D4AF37]" />
-                    Premium
+                    Premium Plan
                   </CardTitle>
                   <Badge className="bg-[#D4AF37] text-[#0A1F44] border-[#D4AF37]" data-testid="badge-premium">
                     Most Popular
@@ -182,6 +188,7 @@ export default function Pricing() {
                 </div>
               </CardHeader>
               <CardContent className="pb-3">
+                <p className="text-sm text-muted-foreground mb-3" data-testid="text-premium-description">Unlock the full experience. Everything in the Free Plan, plus:</p>
                 <div className="mb-4">
                   {isYearly ? (
                     <>
@@ -245,6 +252,9 @@ export default function Pricing() {
           </div>
         )}
 
+        <p className="text-xs text-muted-foreground text-center px-4 leading-relaxed" data-testid="text-pricing-mission">
+          Premium helps support the mission of B&eacute;n&eacute;dictions Partag&eacute;es to spread the Gospel and share encouragement around the world.
+        </p>
         <p className="text-xs text-muted-foreground text-center px-4 leading-relaxed" data-testid="text-pricing-disclaimer">
           Cancel anytime. {isAndroidApp() ? "Managed through Google Play." : "Secure payment powered by Stripe."}
         </p>
