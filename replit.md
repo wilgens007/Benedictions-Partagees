@@ -121,6 +121,14 @@ Preferred communication style: Simple, everyday language.
 - **Core Tabs**: Home (daily verse), Music (audio player), Videos, Devotion (daily content, sharing), Prayer (request form), Support (donations).
 - **Navigation**: 6-tab bottom navigation for primary features.
 
+### Capacitor (Android App)
+- **Framework**: Capacitor for packaging the web app as a native Android app
+- **Package Name**: `org.benedictionspartagees.app`
+- **Config**: `capacitor.config.ts` — appId, appName, webDir (`dist/public`)
+- **Android Project**: `android/` directory with scaffolded native project
+- **Build Flow**: `npm run build` → `npx cap sync` to update Android assets
+- **Web Assets Location**: `android/app/src/main/assets/public/`
+
 ## External Dependencies
 
 ### Database
