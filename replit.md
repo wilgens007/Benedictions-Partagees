@@ -124,8 +124,10 @@ Preferred communication style: Simple, everyday language.
 ### Capacitor (Android App)
 - **Framework**: Capacitor for packaging the web app as a native Android app
 - **Package Name**: `org.benedictionspartagees.app`
-- **Config**: `capacitor.config.ts` — appId, appName, webDir (`dist/public`)
+- **Config**: `capacitor.config.ts` — appId, appName, webDir (`dist/public`), server.url points to production `https://benedictionspartagees.org`
 - **Android Project**: `android/` directory with scaffolded native project
+- **WebView Configuration** (`MainActivity.java`): JavaScript enabled, DOM storage, cookies (persisted on pause via `CookieManager.flush()`), HTTPS enforced (`MIXED_CONTENT_NEVER_ALLOW` + `usesCleartextTraffic=false`), custom user agent appends `BPAndroidApp` for detection, back button navigates WebView history, internal URLs stay in-app, external URLs open system browser
+- **Platform Detection** (`client/src/lib/platform.ts`): `isAndroidApp()` checks for Capacitor bridge OR `BPAndroidApp` user agent marker (needed since remote URL mode doesn't inject Capacitor JS bridge)
 - **Build Flow**: `npm run build` → `npx cap sync` to update Android assets
 - **Web Assets Location**: `android/app/src/main/assets/public/`
 

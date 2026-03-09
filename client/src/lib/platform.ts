@@ -11,5 +11,6 @@ export function isAndroid(): boolean {
 }
 
 export function isAndroidApp(): boolean {
-  return isCapacitor() && isAndroid();
+  if (isCapacitor() && isAndroid()) return true;
+  return /BPAndroidApp/i.test(navigator.userAgent);
 }
