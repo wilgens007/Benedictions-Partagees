@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /saved-verses
+Disallow: /admin
+
+Sitemap: https://benedictionspartagees.org/sitemap.xml

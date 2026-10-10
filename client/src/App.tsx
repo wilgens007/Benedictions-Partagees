@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -41,9 +41,36 @@ function LazyFallback() {
   return <div className="flex items-center justify-center py-20"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>;
 }
 
+const pageTitles: Record<string, string> = {
+  "/": "Bénédictions Partagées — Gospel Worship, Daily Devotion & Prayer",
+  "/music": "Gospel Music Library — Bénédictions Partagées",
+  "/videos": "Video Teachings — Bénédictions Partagées",
+  "/devotion": "Today's Devotion — Bénédictions Partagées",
+  "/prayer": "Prayer Wall — Bénédictions Partagées",
+  "/support": "Support Our Ministry — Bénédictions Partagées",
+  "/about": "About Us — Bénédictions Partagées",
+  "/privacy": "Privacy Policy — Bénédictions Partagées",
+  "/terms": "Terms of Use — Bénédictions Partagées",
+  "/login": "Sign In — Bénédictions Partagées",
+  "/register": "Create Account — Bénédictions Partagées",
+  "/pricing": "Pricing — Bénédictions Partagées",
+  "/dashboard": "Dashboard — Bénédictions Partagées",
+  "/saved-verses": "Saved Verses — Bénédictions Partagées",
+};
+
+function PageTitle() {
+  const [location] = useLocation();
+  useEffect(() => {
+    const base = location.split("?")[0].replace(/\/$/, "") || "/";
+    document.title = pageTitles[base] || pageTitles["/"];
+  }, [location]);
+  return null;
+}
+
 function PublicRouter() {
   return (
     <Suspense fallback={<LazyFallback />}>
+      <PageTitle />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/music" component={Music} />
