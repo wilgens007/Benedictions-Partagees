@@ -1,0 +1,1 @@
+- [Git authentication](git-authentication.md) — Git pane authorization and agent-shell Git credentials can behave differently; a shell failure does not prove the UI reconnect failed.
