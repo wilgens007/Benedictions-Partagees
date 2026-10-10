@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "server/tests/**/*.ts",
+    "server/devotionGenerationRoute.ts",
+    "server/dailyContentGenerator.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "incremental": false
+  }
+}
