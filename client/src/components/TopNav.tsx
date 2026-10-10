@@ -24,6 +24,7 @@ const navLinks = [
   { path: "/videos", labelKey: "videos" },
   { path: "/devotion", labelKey: "devotion" },
   { path: "/prayer", labelKey: "prayer" },
+  { path: "/support", labelKey: "support" },
 ];
 
 export function TopNav() {

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -47,6 +47,9 @@ function PublicRouter() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/music" component={Music} />
+        <Route path="/listen">
+          <Redirect to="/music" />
+        </Route>
         <Route path="/videos" component={Videos} />
         <Route path="/devotion" component={Devotion} />
         <Route path="/prayer" component={Prayer} />

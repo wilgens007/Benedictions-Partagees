@@ -289,8 +289,8 @@ export default function TermsOfUse() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-muted-foreground" />
-                  <a href="https://benedictionspartagees.replit.app" target="_blank" rel="noopener noreferrer" className="text-[#D4AF37] font-medium underline" data-testid="link-terms-website">
-                    https://benedictionspartagees.replit.app
+                  <a href="https://benedictionspartagees.org" target="_blank" rel="noopener noreferrer" className="text-[#D4AF37] font-medium underline" data-testid="link-terms-website">
+                    https://benedictionspartagees.org
                   </a>
                 </div>
               </CardContent>

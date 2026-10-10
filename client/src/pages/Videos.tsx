@@ -120,15 +120,6 @@ export default function Videos() {
           </VisuallyHidden>
           {selectedVideo && (
             <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 z-10 bg-black/50 text-white no-default-hover-elevate no-default-active-elevate"
-                onClick={() => setSelectedVideo(null)}
-                data-testid="button-close-video"
-              >
-                <X className="w-4 h-4" />
-              </Button>
               <div className="aspect-video">
                 <iframe
                   src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
