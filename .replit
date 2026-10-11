@@ -68,7 +68,6 @@ integrations = ["resend:1.0.0", "stripe:2.0.0"]
 
 [userenv.shared]
 VAPID_PUBLIC_KEY = "BHPA09VN1LAzbDLi-3firKGmkHY7z6P-PVuZiqUAoxfxxjV9CkFEaZdUmpyWiH9sMeqO7H6i4ZvFAFYjJ0mjiu8"
-VAPID_PRIVATE_KEY = "vgBsgW73pP04IopJIPS28u-72kYslKPCbF2wOpwgBuI"
 VAPID_SUBJECT = "mailto:contact@benedictionspartagees.org"
 ADMIN_EMAILS = "admin@benedictionspartagees.org"
 SAVED_VERSES_MODE = "free_limited"
