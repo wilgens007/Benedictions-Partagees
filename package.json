@@ -14,9 +14,9 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@capacitor/android": "^8.2.0",
-    "@capacitor/cli": "^7.6.0",
-    "@capacitor/core": "^8.2.0",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^7.6.9",
+    "@capacitor/core": "^8.5.3",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@radix-ui/react-accordion": "^1.2.4",
@@ -63,7 +63,7 @@
     "drizzle-zod": "^0.7.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "express-session": "^1.18.1",
     "framer-motion": "^11.13.1",
     "input-otp": "^1.4.2",
@@ -122,6 +122,8 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
+    "tar": "^7.5.22",
+    "proxy-addr": "^2.0.8",
     "drizzle-kit": {
       "@esbuild-kit/esm-loader": "npm:tsx@^4.20.4"
     }

@@ -73,3 +73,7 @@ VAPID_SUBJECT = "mailto:contact@benedictionspartagees.org"
 ADMIN_EMAILS = "admin@benedictionspartagees.org"
 SAVED_VERSES_MODE = "free_limited"
 FREE_SAVED_VERSES_LIMIT = "20"
+
+[postMerge]
+path = "script/post-merge.sh"
+timeoutMs = 180000
