@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { isModuleLoadError, recoverModuleLoad } from "@/lib/moduleRecovery";
 
 interface Props {
   children: ReactNode;
@@ -25,19 +26,28 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[ErrorBoundary] Uncaught error:", error);
     console.error("[ErrorBoundary] Component stack:", errorInfo.componentStack);
+    recoverModuleLoad(error);
   }
 
   componentDidMount() {
     window.onerror = (message, source, lineno, colno, error) => {
       console.error("[Global Error]", { message, source, lineno, colno, error });
+      recoverModuleLoad(error ?? message);
     };
 
     window.onunhandledrejection = (event: PromiseRejectionEvent) => {
       console.error("[Unhandled Promise Rejection]", event.reason);
+      recoverModuleLoad(event.reason);
     };
   }
 
   handleReset = () => {
+    // React.lazy caches a rejected import; resetting boundary state alone
+    // would immediately throw the same error again.
+    if (isModuleLoadError(this.state.error)) {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: null });
   };
 
