@@ -114,6 +114,11 @@ export async function sendPushToAll(payload: {
 }
 
 const notificationTemplates: Record<string, Record<string, { title: string; body: string; url: string }>> = {
+  daily_devotion: {
+    en: { title: "BP — Today's Devotion", body: "Today's verse and meditation are ready. Tap to read.", url: "/devotion" },
+    fr: { title: "BP — Devotion du jour", body: "Le verset et la méditation d'aujourd'hui sont prêts. Touchez pour lire.", url: "/devotion" },
+    ht: { title: "BP — Devo Jodi a", body: "Vèsè ak meditasyon jodi a pare. Peze pou li.", url: "/devotion" },
+  },
   new_song: {
     en: { title: "New Music Available!", body: "A new song has been added. Listen now!", url: "/music" },
     fr: { title: "Nouvelle musique disponible !", body: "Un nouveau cantique a été ajouté. Écoutez maintenant !", url: "/music" },

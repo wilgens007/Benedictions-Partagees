@@ -5,7 +5,7 @@ import { insertPrayerRequestSchema, prayerRequests, insertDbPrayerRequestSchema,
 import type { Language } from "@shared/schema";
 import { sendPrayerRequestEmail } from "./resend";
 import { generateDailyContent, getTodayKeyET, getDailyContentForDay, postDailyToFacebook } from "./dailyContentGenerator";
-import { saveSubscription, removeSubscription, sendPushToAll } from "./pushService";
+import { saveSubscription, removeSubscription, sendPushToAll, sendNotificationByType } from "./pushService";
 import { db } from "./db";
 import { supportConfig, dailyContent, pushSubscriptions, users } from "@shared/schema";
 import { eq, and, desc, asc, ilike, or, sql, gte, count } from "drizzle-orm";
@@ -337,11 +337,7 @@ export async function registerRoutes(
     }
 
     try {
-      const result = await sendPushToAll({
-        title: "BP \u2014 Devotion du jour",
-        body: "Le verset et la m\u00e9ditation d'aujourd'hui sont pr\u00eats. Touchez pour lire.",
-        url: "/devotion",
-      });
+      const result = await sendNotificationByType("daily_devotion");
       res.json(result);
     } catch (error: any) {
       console.error("[PUSH] Error sending notifications:", error.message || error);
