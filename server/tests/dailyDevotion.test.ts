@@ -9,6 +9,11 @@ import { memory } from "./isolation";
 import { generateDailyContent, getTodayKeyET } from "../dailyContentGenerator";
 import { registerDevotionGenerationRoute } from "../devotionGenerationRoute";
 import { registerDevotionRepairRoute, repairDailyContentForDay } from "../devotionRepairRoute";
+import { assertAlignedVerseCorpus, canonicalPassageRotation, dailyVerses, getVerseForDayIndex } from "../data/dailyVerses";
+import { getPassageId } from "../data/passageIdentity";
+import { versesEN } from "../data/verses-en";
+import { versesFR } from "../data/verses-fr";
+import { versesHT } from "../data/verses-ht";
 
 const TEST_SECRET = "isolated-test-only-not-a-real-credential";
 const FIXED_DAY = "2026-10-10";
@@ -109,6 +114,134 @@ describe("Eastern calendar day", () => {
   });
 });
 
+describe("shared Bible passage corpus", () => {
+  it("keeps all 365 rotation slots aligned by book, chapter, verse and range", () => {
+    expect(canonicalPassageRotation).toHaveLength(365);
+    expect(dailyVerses).toEqual({ en: versesEN, fr: versesFR, ht: versesHT });
+    for (const language of ["en", "fr", "ht"] as const) {
+      const verses = dailyVerses[language];
+      expect(verses).toHaveLength(365);
+      expect(new Set(verses.map(verse => verse.id)).size).toBe(365);
+      for (const [index, verse] of verses.entries()) {
+        expect(verse.id).toBe(String(index + 1));
+        expect(verse.passageId).toBe(canonicalPassageRotation[index]);
+        expect(getPassageId(verse.reference, language)).toBe(verse.passageId);
+        for (const field of ["verse", "reference", "devotional", "prayer"] as const) {
+          expect(verse[field].trim().length).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  it.each([
+    [55, "Psalm 3:3", "Psaume 3:3", "Sòm 3:3"],
+    [70, "Psalm 29:11", "Psaume 29:11", "Sòm 29:11"],
+    [97, "Zechariah 4:6", "Zacharie 4:6", "Zakari 4:6"],
+    [108, "Hebrews 12:2", "Hébreux 12:2", "Ebre 12:2"],
+    [215, "2 Corinthians 3:18", "2 Corinthiens 3:18", "2 Korentyen 3:18"],
+    [257, "Romans 1:16", "Romains 1:16", "Women 1:16"],
+    [276, "Ruth 1:16", "Ruth 1:16", "Rit 1:16"],
+    [283, "Psalm 1:1", "Psaume 1:1", "Sòm 1:1"],
+    [332, "Revelation 1:8", "Apocalypse 1:8", "Revelasyon 1:8"],
+    [336, "Daniel 3:17", "Daniel 3:17", "Danyèl 3:17"],
+    [358, "Song of Solomon 4:7", "Cantique des cantiques 4:7", "Kantik Salomon 4:7"],
+    [363, "Philippians 4:23", "Philippiens 4:23", "Filipyen 4:23"],
+  ])("retains the English passage and supplies localized references at index %i", (index, en, fr, ht) => {
+    expect(["en", "fr", "ht"].map(lang => getVerseForDayIndex(Number(index), lang as "en" | "fr" | "ht").reference))
+      .toEqual([en, fr, ht]);
+  });
+
+  it("supplies real replacement text, rather than relabeling unrelated verses", () => {
+    expect(versesFR[55].verse).toContain("tu es mon bouclier");
+    expect(versesFR[215].verse).toContain("transformés en la même image");
+    expect(versesFR[257].verse).toContain("point honte de l'Évangile");
+    expect(versesHT[72].verse).toContain("Nou se travay Bondye");
+    expect(versesHT[169].verse).toContain("limyè nou klere");
+    expect(versesHT[217].verse).toContain("bon gadò");
+    expect(versesHT[218].verse).toContain("San lafwa");
+    expect(versesHT[220].verse).toContain("lavi an abondans");
+    expect(versesHT[258].verse).toContain("siye tout dlo");
+    expect(versesHT[300].verse).toContain("vin pi piti");
+    expect(versesHT[332].verse).toContain("Alfa ak Omega");
+    expect(versesHT[363].verse).toBe("Se pou gras Senyè Jezi Kris la avèk lespri nou.");
+    expect(versesHT[364].verse).toBe("Se pou gras Senyè Jezi Kris la avèk nou tout. Amèn.");
+    // Genesis remains Genesis in its own slot, with its own original text.
+    expect(versesFR[17]).toMatchObject({
+      reference: "Genèse 1:1", verse: "Au commencement, Dieu créa les cieux et la terre.",
+    });
+    expect(versesHT[17]).toMatchObject({
+      reference: "Jenèz 1:1", verse: "Nan konmansman, Bondye kreye syèl la ak tè a.",
+    });
+  });
+
+  it.each(["Genèse 1:1", "Psaume 1:2", "Psaume 1:1-2"])(
+    "rejects mismatched book/verse/range instead of silently relabeling %s", reference => {
+      const fr = [...versesFR];
+      fr[283] = { ...fr[283], reference, passageId: getPassageId(reference, "fr") };
+      expect(() => assertAlignedVerseCorpus({ ...dailyVerses, fr })).toThrow("Bible passage mismatch");
+    },
+  );
+
+  it("rejects a missing translation, unknown reference, or forged passage identity", () => {
+    expect(() => assertAlignedVerseCorpus({ ...dailyVerses, ht: versesHT.slice(1) }))
+      .toThrow("length mismatch");
+    expect(() => assertAlignedVerseCorpus({ en: [], fr: [], ht: [] })).toThrow("must not be empty");
+    expect(() => getPassageId("Unknown 1:1", "en")).toThrow("Unknown Bible passage");
+    const fr = [...versesFR];
+    fr[283] = { ...fr[283], reference: "Genèse 1:1" };
+    expect(() => assertAlignedVerseCorpus({ ...dailyVerses, fr })).toThrow("Bible passage mismatch");
+  });
+
+  it("uses the same rotation for every day index, including leap-day and wraparound indices", () => {
+    for (let dayIndex = 0; dayIndex <= 732; dayIndex++) {
+      const expected = canonicalPassageRotation[dayIndex % 365];
+      for (const language of ["en", "fr", "ht"] as const) {
+        expect(getVerseForDayIndex(dayIndex, language).passageId).toBe(expected);
+      }
+    }
+    for (const dayIndex of [-1, 0.5, NaN, Infinity]) {
+      expect(() => getVerseForDayIndex(dayIndex, "en")).toThrow("Invalid Bible passage day index");
+    }
+  });
+});
+
+describe("daily passage selection", () => {
+  it.each([2026, 2028])("generates matching translated passages throughout calendar year %i", async year => {
+    for (let day = 1; day <= (year === 2028 ? 366 : 365); day++) {
+      const date = new Date(year, 0, day);
+      const key = `${year}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      await generateDailyContent(key);
+      const selected: string[] = [];
+      for (const language of ["en", "fr", "ht"] as const) {
+        const row = memory.rows.get(`${key}|${language}`)!;
+        const identity = getPassageId(String(row.reference), language);
+        selected.push(identity);
+        const source = dailyVerses[language].find(verse =>
+          verse.passageId === identity && verse.verse === row.verse);
+        expect(source).toBeDefined();
+        expect(row.devotional).toBe(source!.devotional);
+        expect(row.prayer).toBe(source!.prayer);
+        expect(row.shareCaption).toContain(row.reference);
+      }
+      expect(new Set(selected).size).toBe(1);
+    }
+    expect(memory.rows.size).toBe((year === 2028 ? 366 : 365) * 3);
+  });
+
+  it("never rewrites existing cached languages, historical days or notification markers", async () => {
+    const rows = [
+      { dayKey: "2026-10-09", language: "en", verse: "historical content", reference: "old reference" },
+      { dayKey: FIXED_DAY, language: "fr", verse: "approved cached content", reference: "Genèse 1:1" },
+      { dayKey: FIXED_DAY, language: "_ps", verse: "push bookkeeping" },
+      { dayKey: FIXED_DAY, language: "_fb", verse: "Facebook bookkeeping" },
+    ];
+    for (const row of rows) memory.rows.set(`${row.dayKey}|${row.language}`, row);
+    expect((await generateDailyContent(FIXED_DAY)).languages).toEqual(["en", "ht"]);
+    for (const row of rows) expect(memory.rows.get(`${row.dayKey}|${row.language}`)).toEqual(row);
+    expect(memory.deletes).toBe(0);
+  });
+});
+
 describe("today-only content repair", () => {
   const path = "/api/admin/daily-content-repair-today";
 
@@ -164,10 +297,12 @@ describe("today-only content repair", () => {
       verse: "Blessed is the man that walketh not in the counsel of the ungodly, nor standeth in the way of sinners, nor sitteth in the seat of the scornful.",
     });
     expect(memory.rows.get(`${FIXED_DAY}|fr`)).toMatchObject({
-      reference: "Genèse 1:1", verse: "Au commencement, Dieu créa les cieux et la terre.",
+      reference: "Psaume 1:1",
+      verse: "Heureux l'homme qui ne marche pas selon le conseil des méchants, qui ne s'arrête pas sur la voie des pécheurs, et qui ne s'assied pas en compagnie des moqueurs.",
     });
     expect(memory.rows.get(`${FIXED_DAY}|ht`)).toMatchObject({
-      reference: "Jenèz 1:1", verse: "Nan konmansman, Bondye kreye syèl la ak tè a.",
+      reference: "Sòm 1:1",
+      verse: "Ala bon sa bon pou moun ki pa mache dapre konsèy mechan yo, ki pa kanpe sou chemen pechè yo, ki pa chita ansanm ak moun k ap pase lòt moun nan betiz.",
     });
     const repaired = new Map(memory.rows);
     expect((await postGeneration(TEST_SECRET, path)).status).toBe(200);

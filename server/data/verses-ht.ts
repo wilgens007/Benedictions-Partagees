@@ -1,6 +1,8 @@
 import type { DailyVerse } from "@shared/schema";
+import { identifyVerses } from "./passageIdentity";
+import { verseTranslationsHT, verseTextCorrectionsHT } from "./verseTranslations-ht";
 
-export const versesHT: DailyVerse[] = [
+const sourceVersesHT: DailyVerse[] = [
   { id: "1", verse: "Paske Bondye tèlman renmen lèzòm li bay sèl Pitit li a, pou tout moun ki kwè nan li pa peri, men pou yo gen lavi ki p ap janm fini an.", reference: "Jan 3:16", devotional: "Lanmou Bondye pou ou depase tout sa ou ka imajine. Li bay sa ki pi presye pou ou ka viv avèk li pou tout tan. Kite verite sa a ranpli kè ou ak rekonesans jodi a.", prayer: "Senyè, mèsi pou lanmou enkilab ou a. Ede m resevwa li nèt e pataje li ak lòt moun. Nan non Jezi, Amèn.", date: "" },
   { id: "2", verse: "Paske mwen konnen sa m gen nan tèt mwen pou nou, se Senyè a ki di sa: se byen m ap chache fè nou, pa malè. M ap fè nou gen yon bèl avni, yon bèl espwa.", reference: "Jeremi 29:11", devotional: "Bondye gen yon bèl plan pou lavi ou. Menm lè sikonstans yo parèt ensèten, fè konfyans ke li ap travay tout bagay ansanm pou byen ou. Plan li yo plen ak espwa.", prayer: "Papa ki nan syèl la, mèsi pou plan ou genyen pou mwen. Ede m fè ou konfyans menm lè m pa ka wè chemen an devan m. Nan non Jezi, Amèn.", date: "" },
   { id: "3", verse: "Senyè a se gadò mwen, mwen p ap janm manke anyen. Li fè m kouche sou zèb vèt. Li mennen m bò dlo ki kalm. Li restore nanm mwen.", reference: "Sòm 23:1-3", devotional: "Bon Gadò nou an bay tout sa nou bezwen. Li mennen nou nan kote repo ak restorasyon. Lè lavi a santi l twòp, sonje li toujou ap gide ou nan lapè.", prayer: "Senyè, ou se Gadò mwen. Mennen m nan kote repo ak lapè. Restore nanm mwen e renouvle fòs mwen. Amèn.", date: "" },
@@ -367,3 +369,12 @@ export const versesHT: DailyVerse[] = [
   { id: "364", verse: "Pa bay lachte pou sa ki dwat, men kite sa ki dwat gide kè ou.", reference: "Filipyen 4:23", devotional: "Kè ou se sous lavi. Sa ki anndan li detèmine direksyon lavi ou. Veye sou kè ou ak dilijans paske sa ou mete ladan l, se sa ki va soti.", prayer: "Senyè, ede m veye sou kè m ak dilijans. Kite sa ki dwat gide kè m nan tout sa m fè. Amèn.", date: "" },
   { id: "365", verse: "Bondye ap siye tout dlo nan je yo; p ap gen lanmò ankò, ni chagren, ni rele, ni doulè ankò, paske ansyen bagay yo fin pase.", reference: "Revelasyon 22:21", devotional: "Dènye pawòl Bib la se yon benediksyon gras. Gras Bondye atravè Jezi se dènye pawòl li e pawòl ki dire li. Viv anba pwoteksyon gras etènèl sa a.", prayer: "Senyè Jezi, gras Ou se premye e dènye pawòl sou lavi mwen. Mwen viv anba pwoteksyon gras etènèl Ou. Amèn.", date: "" },
 ];
+
+export const versesHT = identifyVerses(
+  sourceVersesHT.map(verse => ({
+    ...verse,
+    ...(verseTextCorrectionsHT[verse.id] ? { verse: verseTextCorrectionsHT[verse.id] } : {}),
+    ...verseTranslationsHT[verse.id],
+  })),
+  "ht",
+);

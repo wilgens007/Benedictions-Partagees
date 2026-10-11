@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { dailyContent } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
-import { dailyVerses } from "./data/dailyVerses";
+import { getVerseForDayIndex } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 import type { Language, DailyContent } from "@shared/schema";
 
@@ -64,9 +64,8 @@ export async function generateDailyContent(dayKey: string, database: ContentData
       continue;
     }
 
-    const verses = dailyVerses[lang] || dailyVerses.en;
     const msgs = encouragements[lang] || encouragements.en;
-    const verse = verses[dayIndex % verses.length];
+    const verse = getVerseForDayIndex(dayIndex, lang);
     const encouragement = msgs[dayIndex % msgs.length];
     const shareCaption = generateShareCaption(verse, dayKey);
 

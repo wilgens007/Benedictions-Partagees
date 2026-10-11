@@ -1,6 +1,8 @@
 import type { DailyVerse } from "@shared/schema";
+import { identifyVerses } from "./passageIdentity";
+import { verseTranslationsFR } from "./verseTranslations-fr";
 
-export const versesFR: DailyVerse[] = [
+const sourceVersesFR: DailyVerse[] = [
   { id: "1", verse: "Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle.", reference: "Jean 3:16", devotional: "L'amour de Dieu pour vous dépasse toute mesure. Il a donné son bien le plus précieux pour que vous puissiez vivre éternellement avec Lui. Que cette vérité remplisse votre cœur de gratitude et d'espérance aujourd'hui.", prayer: "Seigneur, merci pour Ton amour incroyable. Aide-moi à le recevoir pleinement et à le partager avec les autres. Au nom de Jésus, Amen.", date: "" },
   { id: "2", verse: "Car je connais les projets que j'ai formés sur vous, dit l'Éternel, projets de paix et non de malheur, afin de vous donner un avenir et de l'espérance.", reference: "Jérémie 29:11", devotional: "Dieu a un plan magnifique pour votre vie. Même lorsque les circonstances semblent incertaines, ayez confiance qu'Il fait concourir toutes choses pour votre bien. Ses plans sont remplis d'espérance.", prayer: "Père céleste, merci pour les projets que Tu as pour moi. Aide-moi à Te faire confiance même quand je ne vois pas le chemin devant moi. Au nom de Jésus, Amen.", date: "" },
   { id: "3", verse: "L'Éternel est mon berger : je ne manquerai de rien. Il me fait reposer dans de verts pâturages, il me dirige près des eaux paisibles. Il restaure mon âme.", reference: "Psaume 23:1-3", devotional: "Notre bon Berger pourvoit à tout ce dont nous avons besoin. Il nous conduit vers des lieux de repos et de restauration. Quand la vie vous submerge, rappelez-vous qu'Il vous guide toujours vers la paix.", prayer: "Seigneur, Tu es mon Berger. Conduis-moi vers des lieux de repos et de paix. Restaure mon âme et renouvelle ma force. Amen.", date: "" },
@@ -367,3 +369,8 @@ export const versesFR: DailyVerse[] = [
   { id: "364", verse: "Mais l''heure vient, et elle est déjà venue, où les vrais adorateurs adoreront le Père en esprit et en vérité; car ce sont là les adorateurs que le Père demande.", reference: "Jean 4:23", devotional: "L'adoration véritable transcende les lieux et les formes. Elle est une question d'esprit et de vérité. Dieu cherche des adorateurs qui L'adorent avec authenticité et sincérité de cœur.", prayer: "Père, je désire T'adorer en esprit et en vérité. Fais de moi un vrai adorateur selon Ton cœur. Amen.", date: "" },
   { id: "365", verse: "Que la grâce du Seigneur Jésus soit avec tous !", reference: "Apocalypse 22:21", devotional: "La dernière parole de la Bible est une bénédiction de grâce. La grâce de Jésus-Christ vous accompagne dans chaque moment de votre vie. Recevez cette grâce et partagez-la avec tous.", prayer: "Seigneur Jésus, que Ta grâce soit avec moi et avec tous ceux qui T'aiment. Ta grâce nous suffit. Amen.", date: "" }
 ];
+
+export const versesFR = identifyVerses(
+  sourceVersesFR.map(verse => ({ ...verse, ...verseTranslationsFR[verse.id] })),
+  "fr",
+);

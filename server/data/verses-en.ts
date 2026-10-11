@@ -1,6 +1,7 @@
 import type { DailyVerse } from "@shared/schema";
+import { identifyVerses } from "./passageIdentity";
 
-export const versesEN: DailyVerse[] = [
+const sourceVersesEN: DailyVerse[] = [
   { id: "1", verse: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.", reference: "John 3:16", devotional: "God's love for you is beyond measure. He gave His most precious gift so that you could live forever with Him. Let this truth fill your heart with gratitude and hope today.", prayer: "Lord, thank You for Your incredible love. Help me to receive it fully and share it with others. In Jesus' name, Amen.", date: "" },
   { id: "2", verse: "For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil, to give you an expected end.", reference: "Jeremiah 29:11", devotional: "God has a beautiful plan for your life. Even when circumstances seem uncertain, trust that He is working all things together for your good. His plans are filled with hope.", prayer: "Heavenly Father, thank You for the plans You have for me. Help me to trust You even when I cannot see the path ahead. In Jesus' name, Amen.", date: "" },
   { id: "3", verse: "The Lord is my shepherd; I shall not want. He maketh me to lie down in green pastures: he leadeth me beside the still waters. He restoreth my soul.", reference: "Psalm 23:1-3", devotional: "Our Good Shepherd provides everything we need. He leads us to places of rest and restoration. When life feels overwhelming, remember that He is always guiding you toward peace.", prayer: "Lord, You are my Shepherd. Lead me to places of rest and peace. Restore my soul and renew my strength. Amen.", date: "" },
@@ -367,3 +368,5 @@ export const versesEN: DailyVerse[] = [
   { id: "364", verse: "The grace of our Lord Jesus Christ be with you all. Amen.", reference: "Philippians 4:23", devotional: "Grace is God's final word over your life. The grace of Jesus Christ accompanies your spirit in every moment. Let His grace be the atmosphere in which you live and breathe.", prayer: "Lord Jesus, let Your grace be with my spirit. May I live and breathe in the atmosphere of Your grace. Amen.", date: "" },
   { id: "365", verse: "The grace of our Lord Jesus Christ be with you all. Amen.", reference: "Revelation 22:21", devotional: "The Bible's final words are a benediction of grace. God's grace through Jesus is His last word and His lasting word. Live under the canopy of this eternal grace.", prayer: "Lord Jesus, Your grace is the first and final word over my life. I live under the canopy of Your eternal grace. Amen.", date: "" },
 ];
+
+export const versesEN = identifyVerses(sourceVersesEN, "en");
