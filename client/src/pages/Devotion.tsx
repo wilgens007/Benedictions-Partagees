@@ -44,8 +44,9 @@ export default function Devotion() {
       if (!res.ok) throw new Error("Failed to fetch daily verse");
       return res.json();
     },
-    staleTime: 1000 * 60 * 60,
-    refetchOnWindowFocus: false,
+    // Re-check saved content when revisiting a language after a source repair.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: shareData } = useQuery<{
@@ -62,8 +63,8 @@ export default function Devotion() {
       if (!res.ok) throw new Error("Failed to fetch share data");
       return res.json();
     },
-    staleTime: 1000 * 60 * 60,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const handleTogglePush = async () => {

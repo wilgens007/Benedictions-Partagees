@@ -68,8 +68,8 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch daily verse");
       return res.json();
     },
-    staleTime: 1000 * 60 * 60,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: encouragement } = useQuery<Encouragement>({
