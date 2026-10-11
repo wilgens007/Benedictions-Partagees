@@ -26,7 +26,7 @@ async function resolveSunoAudioUrl(url: string): Promise<string> {
   const sunoSongMatch = url.match(/suno\.com\/song\/([0-9a-f-]{36})/);
 
   if (sunoSongMatch) {
-    return `https://cdn1.suno.ai/${sunoSongMatch[1]}.mp3`;
+    return `https://suno.com/song/${sunoSongMatch[1]}`;
   }
 
   if (sunoShareMatch) {
@@ -35,7 +35,7 @@ async function resolveSunoAudioUrl(url: string): Promise<string> {
       const finalUrl = resp.url;
       const uuidMatch = finalUrl.match(/song\/([0-9a-f-]{36})/);
       if (uuidMatch) {
-        return `https://cdn1.suno.ai/${uuidMatch[1]}.mp3`;
+        return `https://suno.com/song/${uuidMatch[1]}`;
       }
     } catch (err) {
       console.log(`[SUNO] Failed to resolve share URL: ${url}`, err);

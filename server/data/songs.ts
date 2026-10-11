@@ -6,13 +6,12 @@
  * - title: The name of the song
  * - artist: The artist or "Bénédictions Partagées"
  * - duration: How long the song is (e.g., "4:32")
- * - audioUrl: Your Suno audio URL (get this from Suno's share button)
+ * - audioUrl: A public Suno song/share URL (the app uses Suno's official embed player)
  * - albumArt: (optional) A cover image URL, or leave the default
  * 
- * HOW TO GET YOUR SUNO AUDIO URL:
+ * HOW TO GET YOUR SUNO SONG URL:
  * 1. Go to your song on suno.com
- * 2. Click the share/download button
- * 3. Copy the audio URL (it looks like: https://cdn1.suno.ai/...)
+ * 2. Copy its public song or share link
  */
 
 import type { MusicTrack } from "@shared/schema";

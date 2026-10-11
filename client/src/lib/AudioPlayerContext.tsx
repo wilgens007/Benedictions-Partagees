@@ -1,6 +1,7 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect } from "react";
 import type { MusicTrack } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { getSunoEmbedUrl } from "@/lib/sunoEmbed";
 
 interface AudioPlayerState {
   currentTrack: MusicTrack | null;
@@ -27,6 +28,18 @@ interface AudioPlayerActions {
 type AudioPlayerContextType = AudioPlayerState & AudioPlayerActions;
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null);
+
+function setNativeAudioSource(audio: HTMLAudioElement, track: MusicTrack): boolean {
+  audio.pause();
+  if (getSunoEmbedUrl(track.audioUrl)) {
+    audio.removeAttribute("src");
+    audio.load();
+    return false;
+  }
+
+  audio.src = track.audioUrl ?? "";
+  return true;
+}
 
 export function useAudioPlayer() {
   const ctx = useContext(AudioPlayerContext);
@@ -99,10 +112,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           const nextTrack = prevPlaylist[nextIndex];
           if (nextTrack && audioRef.current) {
             setCurrentTrack(nextTrack);
-            audioRef.current.src = nextTrack.audioUrl;
-            audioRef.current.play().catch(() => {});
-            updateMediaSession(nextTrack);
-            logPlay(nextTrack.id);
+            setCurrentTime(0);
+            setDuration(0);
+            if (setNativeAudioSource(audioRef.current, nextTrack)) {
+              audioRef.current.play().catch(() => {});
+              updateMediaSession(nextTrack);
+              logPlay(nextTrack.id);
+            } else {
+              setIsPlaying(false);
+              if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+            }
           }
           return nextIndex;
         }
@@ -167,21 +186,30 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
 
     setCurrentTrack(track);
-    audio.src = track?.audioUrl ?? "";
-    audio.play().catch(() => {});
-    updateMediaSession(track);
-    logPlay(track?.id);
+    setCurrentTime(0);
+    setDuration(0);
+    if (setNativeAudioSource(audio, track)) {
+      audio.play().catch(() => {});
+      updateMediaSession(track);
+      logPlay(track.id);
+    } else {
+      setIsPlaying(false);
+      if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+    }
   }, [updateMediaSession, logPlay]);
 
   const play = useCallback(() => {
+    if (currentTrack && getSunoEmbedUrl(currentTrack.audioUrl)) return;
     audioRef.current?.play().catch(() => {});
-  }, []);
+  }, [currentTrack]);
 
   const pause = useCallback(() => {
+    if (currentTrack && getSunoEmbedUrl(currentTrack.audioUrl)) return;
     audioRef.current?.pause();
-  }, []);
+  }, [currentTrack]);
 
   const toggle = useCallback(() => {
+    if (currentTrack && getSunoEmbedUrl(currentTrack.audioUrl)) return;
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
@@ -189,14 +217,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     } else {
       audio.pause();
     }
-  }, []);
+  }, [currentTrack]);
 
   const seek = useCallback((time: number) => {
+    if (currentTrack && getSunoEmbedUrl(currentTrack.audioUrl)) return;
     if (audioRef.current) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
     }
-  }, []);
+  }, [currentTrack]);
 
   const setVolume = useCallback((vol: number) => {
     setVolumeState(vol);
@@ -213,10 +242,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           const nextTrack = prevPlaylist[nextIndex];
           if (nextTrack && audioRef.current) {
             setCurrentTrack(nextTrack);
-            audioRef.current.src = nextTrack.audioUrl;
-            audioRef.current.play().catch(() => {});
-            updateMediaSession(nextTrack);
-            logPlay(nextTrack.id);
+            setCurrentTime(0);
+            setDuration(0);
+            if (setNativeAudioSource(audioRef.current, nextTrack)) {
+              audioRef.current.play().catch(() => {});
+              updateMediaSession(nextTrack);
+              logPlay(nextTrack.id);
+            } else {
+              setIsPlaying(false);
+              if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+            }
           }
           return nextIndex;
         }
@@ -234,10 +269,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           const prevTrack = prevPlaylist[prevIdx];
           if (prevTrack && audioRef.current) {
             setCurrentTrack(prevTrack);
-            audioRef.current.src = prevTrack.audioUrl;
-            audioRef.current.play().catch(() => {});
-            updateMediaSession(prevTrack);
-            logPlay(prevTrack.id);
+            setCurrentTime(0);
+            setDuration(0);
+            if (setNativeAudioSource(audioRef.current, prevTrack)) {
+              audioRef.current.play().catch(() => {});
+              updateMediaSession(prevTrack);
+              logPlay(prevTrack.id);
+            } else {
+              setIsPlaying(false);
+              if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+            }
           }
           return prevIdx;
         }
@@ -251,7 +292,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     setPlaylistState(tracks);
     setCurrentTrackIndex(startIndex);
     if (tracks[startIndex]) {
-      setCurrentTrack(tracks[startIndex]);
+      const track = tracks[startIndex];
+      setCurrentTrack(track);
+      if (getSunoEmbedUrl(track.audioUrl) && audioRef.current) {
+        setNativeAudioSource(audioRef.current, track);
+        setCurrentTime(0);
+        setDuration(0);
+        setIsPlaying(false);
+        if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+      }
     }
   }, []);
 

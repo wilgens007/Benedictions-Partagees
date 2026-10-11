@@ -191,11 +191,16 @@ export default function Music() {
 
   useEffect(() => {
     if (tracks && tracks.length > 0 && !hasFilters) {
-      const trackIds = tracks.map(t => t.id).join(",");
+      const playableTracks = tracks.filter(t => !t.locked && Boolean(t.audioUrl?.trim()));
+      if (playableTracks.length === 0) return;
+
+      const trackIds = playableTracks.map(t => t.id).join(",");
       const playlistIds = playlist.map(t => t.id).join(",");
       if (trackIds !== playlistIds) {
-        const currentIndex = currentTrack ? tracks.findIndex(t => t.id === currentTrack.id) : 0;
-        setPlaylist(tracks, Math.max(currentIndex, 0));
+        const currentIndex = currentTrack
+          ? playableTracks.findIndex(t => t.id === currentTrack.id)
+          : 0;
+        setPlaylist(playableTracks, currentIndex >= 0 ? currentIndex : 0);
       }
     }
   }, [tracks, playlist, currentTrack, setPlaylist, hasFilters]);

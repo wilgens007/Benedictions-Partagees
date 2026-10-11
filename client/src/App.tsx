@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { LanguageProvider } from "@/lib/LanguageContext";
 import { AudioPlayerProvider, useAudioPlayer } from "@/lib/AudioPlayerContext";
+import { getSunoEmbedUrl } from "@/lib/sunoEmbed";
 import { AuthProvider } from "@/lib/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Header } from "@/components/Header";
@@ -104,13 +105,14 @@ function PublicRouter() {
 function AppLayout() {
   const { currentTrack } = useAudioPlayer();
   const hasPlayer = !!currentTrack;
+  const hasSunoPlayer = !!getSunoEmbedUrl(currentTrack?.audioUrl);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <TopNav />
       <Header />
       <InstallAppBanner />
-      <main className={`flex-1 w-full ${hasPlayer ? "pb-36 md:pb-20" : "pb-20 md:pb-0"} md:max-w-none max-w-lg mx-auto`}>
+      <main className={`flex-1 w-full ${hasSunoPlayer ? "pb-44 sm:pb-52" : hasPlayer ? "pb-36 md:pb-20" : "pb-20 md:pb-0"} md:max-w-none max-w-lg mx-auto`}>
         <PublicRouter />
       </main>
       <MiniPlayer />

@@ -1,8 +1,10 @@
-import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useAudioPlayer } from "@/lib/AudioPlayerContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { getSunoEmbedUrl } from "@/lib/sunoEmbed";
 
 function formatTime(seconds: number) {
   if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
@@ -12,6 +14,7 @@ function formatTime(seconds: number) {
 }
 
 export function MiniPlayer() {
+  const { t } = useLanguage();
   const {
     currentTrack,
     playlist,
@@ -26,6 +29,41 @@ export function MiniPlayer() {
   } = useAudioPlayer();
 
   if (!currentTrack) return null;
+
+  const sunoEmbedUrl = getSunoEmbedUrl(currentTrack.audioUrl);
+  if (sunoEmbedUrl) {
+    return (
+      <div
+        className="fixed left-0 right-0 z-40 bg-[#0A1F44] dark:bg-[#060E22] shadow-lg px-2 py-1"
+        style={{ bottom: "64px" }}
+        data-testid="mini-player"
+      >
+        <div className="mx-auto w-full max-w-[600px]">
+          <a
+            href={sunoEmbedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-[#0A1F44] sm:hidden"
+            data-testid="suno-player-open-link"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t("openOnSuno")}
+          </a>
+          <iframe
+            src={sunoEmbedUrl}
+            title={`Suno player: ${currentTrack.title}`}
+            width="600"
+            height="140"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className="hidden h-[140px] w-full rounded-md border-0 sm:block"
+            data-testid="suno-embedded-player"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
