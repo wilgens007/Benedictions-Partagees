@@ -27,6 +27,12 @@ export default function Videos() {
     queryKey: ["/api/videos"],
   });
 
+  // Only show filter chips for categories that actually have videos;
+  // categories are added back automatically as videos are published.
+  const availableCategories = categories.filter(
+    (cat) => cat.key === "all" || videos.some((video) => video?.category === cat.key)
+  );
+
   const filteredVideos = videos.filter(
     (video) => selectedCategory === "all" || video?.category === selectedCategory
   );
@@ -45,7 +51,7 @@ export default function Videos() {
       <div className="px-5 mb-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-2 pb-2">
-            {categories.map((cat) => (
+            {availableCategories.map((cat) => (
               <Button
                 key={cat.key}
                 variant={selectedCategory === cat.key ? "default" : "secondary"}
