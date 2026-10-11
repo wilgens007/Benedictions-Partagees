@@ -33,15 +33,21 @@ function generateShareCaption(verse: { verse: string; reference: string }, dayKe
   return `BP — Devotion du jour (${dayKey})\n${verse.reference} — "${excerpt}"\n\n${baseUrl}/devotion`;
 }
 
-export async function getDailyContentForDay(dayKey: string, language: Language): Promise<DailyContent | null> {
-  const rows = await db
+type ContentDatabase = Pick<typeof db, "select" | "insert">;
+
+export async function getDailyContentForDay(
+  dayKey: string,
+  language: Language,
+  database: Pick<typeof db, "select"> = db,
+): Promise<DailyContent | null> {
+  const rows = await database
     .select()
     .from(dailyContent)
     .where(and(eq(dailyContent.dayKey, dayKey), eq(dailyContent.language, language)));
   return rows[0] || null;
 }
 
-export async function generateDailyContent(dayKey: string): Promise<{
+export async function generateDailyContent(dayKey: string, database: ContentDatabase = db): Promise<{
   status: "created" | "already_exists";
   languages: string[];
   dayKey: string;
@@ -52,7 +58,7 @@ export async function generateDailyContent(dayKey: string): Promise<{
   console.log(`[CRON] generateDailyContent called for dayKey=${dayKey}, dayIndex=${dayIndex}`);
 
   for (const lang of LANGUAGES) {
-    const existing = await getDailyContentForDay(dayKey, lang);
+    const existing = await getDailyContentForDay(dayKey, lang, database);
     if (existing) {
       console.log(`[CRON] Content already exists for dayKey=${dayKey}, lang=${lang} — skipping`);
       continue;
@@ -65,7 +71,7 @@ export async function generateDailyContent(dayKey: string): Promise<{
     const shareCaption = generateShareCaption(verse, dayKey);
 
     try {
-      await db.insert(dailyContent).values({
+      await database.insert(dailyContent).values({
         dayKey,
         language: lang,
         verse: verse.verse,
@@ -79,7 +85,9 @@ export async function generateDailyContent(dayKey: string): Promise<{
       console.log(`[CRON] Created daily content for dayKey=${dayKey}, lang=${lang}`);
       generated.push(lang);
     } catch (err: any) {
-      if (err.code === "23505") {
+      // A PostgreSQL statement error aborts its transaction. Only standalone
+      // generation can safely treat a unique conflict as an idempotent skip.
+      if (err.code === "23505" && database === db) {
         console.log(`[CRON] Duplicate key conflict for dayKey=${dayKey}, lang=${lang} — already exists (race condition safe)`);
       } else {
         console.error(`[CRON] ERROR inserting daily content for dayKey=${dayKey}, lang=${lang}:`, err);

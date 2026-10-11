@@ -8,12 +8,14 @@ import { dailyContent } from "../../shared/schema";
 import { memory } from "./isolation";
 import { generateDailyContent, getTodayKeyET } from "../dailyContentGenerator";
 import { registerDevotionGenerationRoute } from "../devotionGenerationRoute";
+import { registerDevotionRepairRoute, repairDailyContentForDay } from "../devotionRepairRoute";
 
 const TEST_SECRET = "isolated-test-only-not-a-real-credential";
 const FIXED_DAY = "2026-10-10";
 let cronSecret: string | undefined;
 let server: Server;
 const generate = vi.fn(generateDailyContent);
+const repair = vi.fn(repairDailyContentForDay);
 
 beforeAll(async () => {
   const app = express();
@@ -21,6 +23,11 @@ beforeAll(async () => {
     getCronSecret: () => cronSecret,
     getTodayKeyET,
     generateDailyContent: generate,
+  });
+  registerDevotionRepairRoute(app, {
+    getCronSecret: () => cronSecret,
+    getTodayKeyET,
+    repairDailyContentForDay: repair,
   });
   await new Promise<void>((resolve, reject) => {
     server = app.listen(0, "127.0.0.1", resolve);
@@ -31,6 +38,7 @@ beforeAll(async () => {
 beforeEach(() => {
   cronSecret = TEST_SECRET;
   generate.mockClear();
+  repair.mockClear();
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -49,13 +57,13 @@ afterAll(async () => {
 });
 
 // Only the ephemeral loopback test server is contacted, never the published app.
-async function postGeneration(secret?: string) {
+async function postGeneration(secret?: string, path = "/api/devotion/generate") {
   const port = (server.address() as AddressInfo).port;
   return new Promise<{ status: number; body: any }>((resolve, reject) => {
     const req = request({
       hostname: "127.0.0.1",
       port,
-      path: "/api/devotion/generate",
+      path,
       method: "POST",
       headers: secret === undefined ? {} : { "X-CRON-SECRET": secret },
     }, res => {
@@ -98,6 +106,94 @@ describe("Eastern calendar day", () => {
   ])("%s", (_label, instant, dayKey) => {
     freezeDate(instant);
     expect(getTodayKeyET()).toBe(dayKey);
+  });
+});
+
+describe("today-only content repair", () => {
+  const path = "/api/admin/daily-content-repair-today";
+
+  function seedContent() {
+    for (const dayKey of ["2026-10-09", FIXED_DAY, "2026-10-11"]) {
+      for (const language of ["en", "fr", "ht", "_ps", "_fb"]) {
+        memory.rows.set(`${dayKey}|${language}`, {
+          dayKey, language, verse: "old cached text", reference: "old cached reference",
+        });
+      }
+    }
+    return new Map(memory.rows);
+  }
+
+  it.each([undefined, "", "incorrect-test-secret"])("rejects unauthorized repair (%s) without deleting data", async secret => {
+    const before = seedContent();
+    const response = await postGeneration(secret, path);
+    expect(response.status).toBe(401);
+    expect(repair).not.toHaveBeenCalled();
+    expect(memory.deletes).toBe(0);
+    expect(memory.rows).toEqual(before);
+  });
+
+  it("rejects repair when the server secret is not configured", async () => {
+    cronSecret = undefined;
+    const before = seedContent();
+    expect((await postGeneration(TEST_SECRET, path)).status).toBe(401);
+    expect(memory.rows).toEqual(before);
+    expect(memory.deletes).toBe(0);
+  });
+
+  it("repairs only today's content languages, preserving history, future rows, and markers", async () => {
+    freezeDate("2026-10-11T03:59:59.999Z");
+    const before = seedContent();
+    // A caller-supplied date must not broaden the deletion scope.
+    const response = await postGeneration(TEST_SECRET, `${path}?dayKey=2026-10-09`);
+    expect(response).toEqual({
+      status: 200,
+      body: {
+        repairedDay: FIXED_DAY,
+        regenerated: { status: "created", dayKey: FIXED_DAY, languages: ["en", "fr", "ht"] },
+      },
+    });
+    expect(repair).toHaveBeenCalledWith(FIXED_DAY);
+    expect(memory.rows.size).toBe(before.size);
+    for (const [key, row] of before) {
+      if (row.dayKey !== FIXED_DAY || row.language.startsWith("_")) {
+        expect(memory.rows.get(key)).toEqual(row);
+      }
+    }
+    expect(memory.rows.get(`${FIXED_DAY}|en`)).toMatchObject({
+      reference: "Psalm 1:1",
+      verse: "Blessed is the man that walketh not in the counsel of the ungodly, nor standeth in the way of sinners, nor sitteth in the seat of the scornful.",
+    });
+    expect(memory.rows.get(`${FIXED_DAY}|fr`)).toMatchObject({
+      reference: "Genèse 1:1", verse: "Au commencement, Dieu créa les cieux et la terre.",
+    });
+    expect(memory.rows.get(`${FIXED_DAY}|ht`)).toMatchObject({
+      reference: "Jenèz 1:1", verse: "Nan konmansman, Bondye kreye syèl la ak tè a.",
+    });
+    const repaired = new Map(memory.rows);
+    expect((await postGeneration(TEST_SECRET, path)).status).toBe(200);
+    expect(memory.rows).toEqual(repaired);
+  });
+
+  it("rolls back the deletion and partial regeneration if storage fails", async () => {
+    freezeDate("2026-10-10T10:00:00.000Z");
+    const before = seedContent();
+    memory.failLanguage = "fr";
+    const response = await postGeneration(TEST_SECRET, path);
+    expect(response.status).toBe(500);
+    expect(response.body.error).toBe("Today's content repair failed");
+    expect(memory.rows).toEqual(before);
+    memory.failLanguage = null;
+    expect((await postGeneration(TEST_SECRET, path)).status).toBe(200);
+    expect(memory.rows.size).toBe(before.size);
+  });
+
+  it("does not claim repair succeeded after a transaction-aborting unique conflict", async () => {
+    freezeDate("2026-10-10T10:00:00.000Z");
+    const before = seedContent();
+    memory.failLanguage = "fr";
+    memory.failCode = "23505";
+    expect((await postGeneration(TEST_SECRET, path)).status).toBe(500);
+    expect(memory.rows).toEqual(before);
   });
 });
 

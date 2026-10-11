@@ -13,6 +13,8 @@ import { dailyVerses } from "./data/dailyVerses";
 import { encouragements } from "./data/encouragements";
 import { optionalUser } from "./userAuth";
 import { getUncachableStripeClient } from "./stripeClient";
+import { registerDevotionGenerationRoute } from "./devotionGenerationRoute";
+import { registerDevotionRepairRoute, repairDailyContentForDay } from "./devotionRepairRoute";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -60,34 +62,10 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/devotion/generate", async (req, res) => {
-    const cronSecret = process.env.CRON_SECRET;
-    const providedSecret = req.headers["x-cron-secret"] as string;
-
-    console.log(`[CRON-ENDPOINT] POST /api/devotion/generate called at ${new Date().toISOString()}`);
-
-    if (!cronSecret) {
-      console.error("[CRON-ENDPOINT] ERROR: CRON_SECRET env var is not set on the server");
-      return res.status(500).json({ error: "Server misconfiguration: CRON_SECRET not set" });
-    }
-
-    if (!providedSecret || providedSecret !== cronSecret) {
-      console.warn("[CRON-ENDPOINT] UNAUTHORIZED: Invalid or missing X-CRON-SECRET header");
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    try {
-      const dayKey = getTodayKeyET();
-      console.log(`[CRON-ENDPOINT] Computed dayKey=${dayKey} (America/New_York)`);
-
-      const result = await generateDailyContent(dayKey);
-
-      console.log(`[CRON-ENDPOINT] Result: status=${result.status}, dayKey=${result.dayKey}, languages=${result.languages.join(",") || "none"}`);
-      res.json(result);
-    } catch (error: any) {
-      console.error("[CRON-ENDPOINT] ERROR during generation:", error.message || error);
-      res.status(500).json({ error: "Generation failed", details: error.message });
-    }
+  registerDevotionGenerationRoute(app, {
+    getCronSecret: () => process.env.CRON_SECRET,
+    getTodayKeyET,
+    generateDailyContent,
   });
 
   app.post("/api/admin/daily-content-reset", async (req, res) => {
@@ -109,23 +87,10 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/daily-content-repair-today", async (req, res) => {
-    const cronSecret = process.env.CRON_SECRET;
-    const providedSecret = req.headers["x-cron-secret"] as string;
-
-    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    try {
-      const dayKey = getTodayKeyET();
-      const deleted = await db.delete(dailyContent).where(eq(dailyContent.dayKey, dayKey));
-      const genResult = await generateDailyContent(dayKey);
-      res.json({ repairedDay: dayKey, regenerated: genResult });
-    } catch (err: any) {
-      console.error("[ADMIN] daily-content-repair-today error:", err);
-      res.status(500).json({ error: err.message });
-    }
+  registerDevotionRepairRoute(app, {
+    getCronSecret: () => process.env.CRON_SECRET,
+    getTodayKeyET,
+    repairDailyContentForDay,
   });
 
   app.post("/api/admin/stripe-sync-user", async (req, res) => {

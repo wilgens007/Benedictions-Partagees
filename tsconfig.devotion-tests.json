@@ -3,6 +3,7 @@
   "include": [
     "server/tests/**/*.ts",
     "server/devotionGenerationRoute.ts",
+    "server/devotionRepairRoute.ts",
     "server/dailyContentGenerator.ts",
     "vitest.config.ts"
   ],

@@ -10,7 +10,9 @@ const memory = vi.hoisted(() => ({
   reads: 0,
   insertAttempts: 0,
   duplicates: 0,
+  deletes: 0,
   failLanguage: null as string | null,
+  failCode: "08006",
 }));
 
 export { memory };
@@ -26,8 +28,7 @@ vi.mock("../db", async () => {
       throw new Error("Test storage only supports daily_content");
     }
   };
-  return {
-    db: {
+  const database = {
       select: () => ({
         from: (table: Parameters<typeof getTableName>[0]) => {
           assertTable(table);
@@ -49,7 +50,7 @@ vi.mock("../db", async () => {
           values: async (row: StoredContent) => {
             memory.insertAttempts++;
             if (row.language === memory.failLanguage) {
-              throw Object.assign(new Error("Isolated storage unavailable"), { code: "08006" });
+              throw Object.assign(new Error("Isolated storage unavailable"), { code: memory.failCode });
             }
             const key = `${row.dayKey}|${row.language}`;
             if (memory.rows.has(key)) {
@@ -60,6 +61,40 @@ vi.mock("../db", async () => {
           },
         };
       },
+      delete: (table: Parameters<typeof getTableName>[0]) => {
+        assertTable(table);
+        return {
+          where: async (predicate: Parameters<typeof dialect.sqlToQuery>[0]) => {
+            const query = dialect.sqlToQuery(predicate);
+            if (!query.sql.includes('"day_key" = $1 and ')
+              || !query.sql.includes('"language" in ($2, $3, $4)')
+              || query.params.length !== 4) {
+              throw new Error("Repair deletion must filter by day AND content languages");
+            }
+            memory.deletes++;
+            const [dayKey, ...languages] = query.params;
+            for (const [key, row] of memory.rows) {
+              if (row.dayKey === dayKey && languages.includes(row.language)) {
+                memory.rows.delete(key);
+              }
+            }
+          },
+        };
+      },
+  };
+  return {
+    db: {
+      ...database,
+      transaction: async (callback: (transaction: typeof database) => Promise<unknown>) => {
+        const snapshot = new Map(memory.rows);
+        try {
+          return await callback(database);
+        } catch (error) {
+          memory.rows.clear();
+          for (const [key, row] of snapshot) memory.rows.set(key, row);
+          throw error;
+        }
+      },
     },
   };
 });
@@ -69,7 +104,9 @@ beforeEach(() => {
   memory.reads = 0;
   memory.insertAttempts = 0;
   memory.duplicates = 0;
+  memory.deletes = 0;
   memory.failLanguage = null;
+  memory.failCode = "08006";
   // Content comes from local fixtures in this app. Any accidental external
   // generation or Facebook API call fails instead of reaching the network.
   vi.stubGlobal("fetch", vi.fn(async () => {

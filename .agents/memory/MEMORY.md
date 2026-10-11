@@ -1,3 +1,4 @@
 - [Git authentication](git-authentication.md) — Git pane authorization and agent-shell Git credentials can behave differently; a shell failure does not prove the UI reconnect failed.
 - [Cron authorization verification](cron-authorization-verification.md) — secret existence and a healthy deployment do not prove matching live credentials; require an authorized run.
 - [Clean-install security checks](clean-install-security.md) — working installed packages do not prove a locked reinstall passes the package firewall; validate the actual merge hook.
+- [Daily content repair scope](daily-content-repair-scope.md) — preserve historical content and notification bookkeeping when correcting cached devotions.
