@@ -13,6 +13,7 @@ import { Header } from "@/components/Header";
 import { TopNav } from "@/components/TopNav";
 import { BottomNav } from "@/components/BottomNav";
 import { MiniPlayer } from "@/components/MiniPlayer";
+import { InstallAppBanner } from "@/components/InstallAppBanner";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/not-found";
 
@@ -108,6 +109,7 @@ function AppLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       <TopNav />
       <Header />
+      <InstallAppBanner />
       <main className={`flex-1 w-full ${hasPlayer ? "pb-36 md:pb-20" : "pb-20 md:pb-0"} md:max-w-none max-w-lg mx-auto`}>
         <PublicRouter />
       </main>
