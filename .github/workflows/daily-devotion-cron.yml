@@ -33,44 +33,9 @@ jobs:
           else
             echo "Failed with status $HTTP_CODE"
             exit 1
-          fi      
-name: Daily Devotion Generator
-
-on:
-  schedule:
-    # 11:00 UTC = 6:00 AM EST (Nov-Mar)
-    # 10:00 UTC = 6:00 AM EDT (Mar-Nov)
-    # Both run daily; the endpoint is idempotent so the second call is a no-op.
-    - cron: "0 10 * * *"
-    - cron: "0 11 * * *"
-  workflow_dispatch: {}
-
-jobs:
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger daily content generation
-        run: |
-          echo "Triggering daily devotion generation at $(date -u)"
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            -H "X-CRON-SECRET: ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json" \
-            https://benedictionspartagees.org/api/devotion/generate)
-
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -n -1)
-
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $BODY"
-
-          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "Success!"
-          else
-            echo "Failed with status $HTTP_CODE"
-            exit 1
           fi
-        name: Send daily push notifications
+
+      - name: Send daily push notifications
         run: |
           echo "Sending daily push notifications at $(date -u)"
           RESPONSE=$(curl -s -w "\n%{http_code}" \
@@ -82,12 +47,11 @@ jobs:
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -n -1)
 
-    echo "HTTP Status: $HTTP_CODE"
-    echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
 
-     if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-      echo "Push notifications sent!"
-     else
-      echo "Push failed with status $HTTP_CODE (non-fatal)"
-     fi
-
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Push notifications sent!"
+          else
+            echo "Push failed with status $HTTP_CODE (non-fatal)"
+          fi
