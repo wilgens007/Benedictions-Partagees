@@ -1,10 +1,9 @@
-import { Play, Pause, SkipBack, SkipForward, ExternalLink } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Loader2, X } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useAudioPlayer } from "@/lib/AudioPlayerContext";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getSunoEmbedUrl } from "@/lib/sunoEmbed";
 
 function formatTime(seconds: number) {
   if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
@@ -20,6 +19,9 @@ export function MiniPlayer() {
     playlist,
     currentTrackIndex,
     isPlaying,
+    isLoading,
+    playbackError,
+    clearPlaybackError,
     currentTime,
     duration,
     toggle,
@@ -30,47 +32,20 @@ export function MiniPlayer() {
 
   if (!currentTrack) return null;
 
-  const sunoEmbedUrl = getSunoEmbedUrl(currentTrack.audioUrl);
-  if (sunoEmbedUrl) {
-    return (
-      <div
-        className="fixed left-0 right-0 z-40 bg-[#0A1F44] dark:bg-[#060E22] shadow-lg px-2 py-1"
-        style={{ bottom: "64px" }}
-        data-testid="mini-player"
-      >
-        <div className="mx-auto w-full max-w-[600px]">
-          <a
-            href={sunoEmbedUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            referrerPolicy="no-referrer"
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-[#0A1F44] sm:hidden"
-            data-testid="suno-player-open-link"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {t("openOnSuno")}
-          </a>
-          <iframe
-            src={sunoEmbedUrl}
-            title={`Suno player: ${currentTrack.title}`}
-            width="600"
-            height="140"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            referrerPolicy="strict-origin-when-cross-origin"
-            className="hidden h-[140px] w-full rounded-md border-0 sm:block"
-            data-testid="suno-embedded-player"
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       className="fixed left-0 right-0 z-40 bg-[#0A1F44] dark:bg-[#060E22] shadow-lg"
       style={{ bottom: "64px" }}
       data-testid="mini-player"
     >
+      {playbackError && (
+        <div className="flex items-center justify-between gap-2 bg-red-900/90 px-3 py-1.5 text-xs text-white" data-testid="mini-player-error">
+          <span className="truncate">{playbackError}</span>
+          <button onClick={clearPlaybackError} aria-label="Dismiss error" className="flex-shrink-0 text-white/70 hover:text-white">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
       <div className="relative max-w-lg mx-auto">
         <Slider
           value={[currentTime]}
@@ -124,10 +99,13 @@ export function MiniPlayer() {
               variant="ghost"
               size="icon"
               onClick={toggle}
-              className="text-white no-default-hover-elevate no-default-active-elevate"
+              disabled={isLoading}
+              className="text-white no-default-hover-elevate no-default-active-elevate disabled:opacity-70"
               data-testid="mini-player-toggle"
             >
-              {isPlaying ? (
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : isPlaying ? (
                 <Pause className="w-5 h-5" />
               ) : (
                 <Play className="w-5 h-5 ml-0.5" />

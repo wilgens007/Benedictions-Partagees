@@ -28,40 +28,10 @@ export async function registerRoutes(
       if (!row) return res.status(404).json({ error: "Media not found" });
 
       const buffer = Buffer.from(row.data, "base64");
-      const headers = {
-        "Content-Type": row.mimeType,
-        "Accept-Ranges": "bytes",
-        "Cache-Control": "public, max-age=31536000, immutable",
-      };
-      const range = req.headers.range;
-      if (range) {
-        const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
-        if (!match || (!match[1] && !match[2])) {
-          res.set({ "Content-Range": `bytes */${buffer.length}` });
-          return res.status(416).end();
-        }
-
-        let start = match[1] ? Number(match[1]) : Math.max(0, buffer.length - Number(match[2]));
-        let end = match[2] && match[1] ? Number(match[2]) : buffer.length - 1;
-        if (!match[1]) end = buffer.length - 1;
-        if (start >= buffer.length || end < start) {
-          res.set({ "Content-Range": `bytes */${buffer.length}` });
-          return res.status(416).end();
-        }
-
-        end = Math.min(end, buffer.length - 1);
-        const partial = buffer.subarray(start, end + 1);
-        res.status(206).set({
-          ...headers,
-          "Content-Length": partial.length.toString(),
-          "Content-Range": `bytes ${start}-${end}/${buffer.length}`,
-        });
-        return res.send(partial);
-      }
-
       res.set({
-        ...headers,
+        "Content-Type": row.mimeType,
         "Content-Length": buffer.length.toString(),
+        "Cache-Control": "public, max-age=31536000, immutable",
       });
       res.send(buffer);
     } catch (error) {
@@ -541,7 +511,7 @@ export async function registerRoutes(
         let query = db
           .select({
             id: songsTable.id, title: songsTable.title, artist: songsTable.artist,
-            coverUrl: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
+            coverUrl: songsTable.coverUrl, albumArt: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
             isEarlyAccess: songsTable.isEarlyAccess, releaseDate: songsTable.releaseDate,
             playsCount: songsTable.playsCount, createdAt: songsTable.createdAt,
             isFeatured: songsTable.isFeatured, featuredRank: songsTable.featuredRank,
@@ -562,7 +532,7 @@ export async function registerRoutes(
         let query = db
           .select({
             id: songsTable.id, title: songsTable.title, artist: songsTable.artist,
-            coverUrl: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
+            coverUrl: songsTable.coverUrl, albumArt: songsTable.coverUrl, audioUrl: songsTable.audioUrl, duration: songsTable.duration,
             isEarlyAccess: songsTable.isEarlyAccess, releaseDate: songsTable.releaseDate,
             playsCount: songsTable.playsCount, createdAt: songsTable.createdAt,
             isFeatured: songsTable.isFeatured, featuredRank: songsTable.featuredRank,
