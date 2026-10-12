@@ -3,3 +3,4 @@
 - [Clean-install security checks](clean-install-security.md) — working installed packages do not prove a locked reinstall passes the package firewall; validate the actual merge hook.
 - [Daily content repair scope](daily-content-repair-scope.md) — preserve historical content and notification bookkeeping when correcting cached devotions.
 - [Suno playback sources](suno-playback.md) — Use Suno’s official player; direct CDN MP3 URLs can return 403 MissingKey.
+- [Persistent media storage](persistent-media-storage.md) — App Storage needs a provisioned bucket; until then use the persistent database media store, not local uploads.

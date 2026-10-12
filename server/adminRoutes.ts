@@ -45,21 +45,8 @@ async function resolveSunoAudioUrl(url: string): Promise<string> {
   return url;
 }
 
-const diskStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-  },
-});
-
 const upload = multer({
   storage: memStorage,
-  limits: { fileSize: 50 * 1024 * 1024 },
-});
-
-const uploadDisk = multer({
-  storage: diskStorage,
   limits: { fileSize: 50 * 1024 * 1024 },
 });
 
@@ -118,10 +105,19 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/upload/audio", requireAdmin, uploadDisk.single("file"), (req: Request, res: Response) => {
+  app.post("/api/admin/upload/audio", requireAdmin, upload.single("file"), async (req: Request, res: Response) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+    try {
+      const [row] = await db.insert(media).values({
+        filename: req.file.originalname,
+        mimeType: req.file.mimetype,
+        data: req.file.buffer.toString("base64"),
+      }).returning({ id: media.id });
+      res.json({ url: `/api/media/${row.id}` });
+    } catch (err: any) {
+      console.error("[UPLOAD] Audio upload failed:", err.message);
+      res.status(500).json({ error: "Upload failed" });
+    }
   });
 
   app.get("/api/admin/albums", requireAdmin, async (_req: Request, res: Response) => {
