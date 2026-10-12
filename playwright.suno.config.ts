@@ -13,6 +13,15 @@ const nixChromium = process.env.REPLIT_DEV_DOMAIN
   ? spawnSync("which", ["chromium"], { encoding: "utf8" }).stdout?.trim()
   : undefined;
 const executablePath = process.env.SUNO_TEST_BROWSER_PATH || nixChromium || undefined;
+const chromiumLaunchOptions = executablePath
+  ? { launchOptions: { executablePath } }
+  : {};
+const webkitProject = {
+  // Playwright's Linux WebKit with iPhone-sized/touch emulation is useful
+  // coverage, but it is not MobileSafari running on iOS.
+  name: "iphone-webkit-emulation",
+  use: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } },
+};
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -27,17 +36,25 @@ export default defineConfig({
     baseURL,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
-    launchOptions: { executablePath },
     // Keep the normal user-gesture autoplay policy: no force-play browser flags.
   },
   projects: [
     {
       name: "desktop-chromium",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1280, height: 800 },
+        ...chromiumLaunchOptions,
+      },
     },
     {
       name: "phone-chromium",
-      use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } },
+      use: {
+        ...devices["Pixel 7"],
+        viewport: { width: 390, height: 844 },
+        ...chromiumLaunchOptions,
+      },
     },
+    ...(process.env.SUNO_TEST_WEBKIT === "1" ? [webkitProject] : []),
   ],
 });
