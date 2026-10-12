@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { albums, songs, testimonies, prayerRequests, genres, moods } from "@shared/schema";
+import { albums, testimonies, prayerRequests, genres, moods } from "@shared/schema";
 import { sql } from "drizzle-orm";
 
 export async function seedAdminData() {
@@ -11,33 +11,8 @@ export async function seedAdminData() {
 
   console.log("[SEED] Seeding sample admin data...");
 
-  const [album] = await db.insert(albums).values({
-    title: "RNB Creole Psalm",
-    artist: "Bénédictions Partagées Music",
-    coverUrl: "https://cdn2.suno.ai/image_c4b82a31-e59b-4bfd-9445-4fa64a5b2b5b.jpeg",
-  }).returning();
-
-  await db.insert(songs).values([
-    {
-      albumId: album.id,
-      title: "Fondasyon Benediksyon",
-      artist: "Bénédictions Partagées Music",
-      coverUrl: "https://cdn2.suno.ai/image_c4b82a31-e59b-4bfd-9445-4fa64a5b2b5b.jpeg",
-      audioUrl: "https://cdn1.suno.ai/c4b82a31-e59b-4bfd-9445-4fa64a5b2b5b.mp3",
-      duration: "2:54",
-      isEarlyAccess: false,
-    },
-    {
-      albumId: album.id,
-      title: "Chemen Lavi (Psalm 1)",
-      artist: "Bénédictions Partagées Music",
-      coverUrl: "https://cdn2.suno.ai/image_754977c5-e4a5-4064-a140-1da89146af3d.jpeg",
-      audioUrl: "https://cdn1.suno.ai/754977c5-e4a5-4064-a140-1da89146af3d.mp3",
-      duration: "2:39",
-      isEarlyAccess: true,
-      publicReleaseAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    },
-  ]);
+  // Note: songs and albums are managed exclusively via the Admin panel.
+  // No sample songs are seeded; the music library starts empty.
 
   await db.insert(testimonies).values([
     {

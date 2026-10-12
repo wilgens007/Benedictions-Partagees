@@ -196,7 +196,7 @@ function SongForm({ song, albumsList, genresList, moodsList, onSave, onCancel }:
           <Button type="button" variant={audioMode === "upload" ? "default" : "outline"} size="sm" onClick={() => setAudioMode("upload")}><Upload className="w-3 h-3 mr-1" /> Upload</Button>
         </div>
         {audioMode === "url" ? (
-          <Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://cdn1.suno.ai/... or any URL" required data-testid="input-song-audio-url" />
+          <Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="Upload audio below or paste MP3 URL" required data-testid="input-song-audio-url" />
         ) : (
           <Input type="file" accept="audio/*" disabled={uploadingAudio} onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "audio"); }} data-testid="input-song-audio-upload" />
         )}
