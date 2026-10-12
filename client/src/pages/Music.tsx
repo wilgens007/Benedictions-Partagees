@@ -190,18 +190,21 @@ export default function Music() {
   }, [userPlaylists, showPlaylistDetail]);
 
   useEffect(() => {
-    if (tracks && tracks.length > 0 && !hasFilters) {
-      const playableTracks = tracks.filter(t => !t.locked && Boolean(t.audioUrl?.trim()));
-      if (playableTracks.length === 0) return;
+    if (!tracks || hasFilters) return;
 
-      const trackIds = playableTracks.map(t => t.id).join(",");
-      const playlistIds = playlist.map(t => t.id).join(",");
-      if (trackIds !== playlistIds) {
-        const currentIndex = currentTrack
-          ? playableTracks.findIndex(t => t.id === currentTrack.id)
-          : 0;
-        setPlaylist(playableTracks, currentIndex >= 0 ? currentIndex : 0);
-      }
+    const playableTracks = tracks.filter(t => !t.locked && Boolean(t.audioUrl?.trim()));
+    if (playableTracks.length === 0) {
+      if (currentTrack || playlist.length > 0) setPlaylist([]);
+      return;
+    }
+
+    const trackIds = playableTracks.map(t => t.id).join(",");
+    const playlistIds = playlist.map(t => t.id).join(",");
+    if (trackIds !== playlistIds) {
+      const currentIndex = currentTrack
+        ? playableTracks.findIndex(t => t.id === currentTrack.id)
+        : 0;
+      setPlaylist(playableTracks, currentIndex >= 0 ? currentIndex : 0);
     }
   }, [tracks, playlist, currentTrack, setPlaylist, hasFilters]);
 
@@ -464,6 +467,7 @@ export default function Music() {
         </>
       )}
 
+      {displayTrack ? (
       <div className="px-5 mb-4">
         <Card className="shadow-md overflow-visible">
           <CardContent className="p-0">
@@ -546,7 +550,13 @@ export default function Music() {
           </CardContent>
         </Card>
       </div>
+      ) : !isLoading && !hasFilters ? (
+        <div className="mx-5 mb-6 rounded-lg border border-border px-4 py-6 text-center text-sm text-muted-foreground" data-testid="music-empty-state">
+          {t("noResults")}
+        </div>
+      ) : null}
 
+      {(isLoading || hasFilters || (tracks?.length ?? 0) > 0) && (
       <div className="px-5 mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-serif font-semibold text-xl text-foreground">
@@ -631,6 +641,7 @@ export default function Music() {
           )}
         </ScrollArea>
       </div>
+      )}
 
       {user && (
         <div className="px-5">

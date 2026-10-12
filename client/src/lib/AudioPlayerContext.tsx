@@ -290,6 +290,21 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   const setPlaylist = useCallback((tracks: MusicTrack[], startIndex = 0) => {
     setPlaylistState(tracks);
+    if (tracks.length === 0) {
+      setCurrentTrackIndex(0);
+      setCurrentTrack(null);
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute("src");
+        audioRef.current.load();
+      }
+      if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+      return;
+    }
+
     setCurrentTrackIndex(startIndex);
     if (tracks[startIndex]) {
       const track = tracks[startIndex];
