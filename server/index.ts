@@ -8,6 +8,8 @@ import authRoutes from "./authRoutes";
 import billingRoutes from "./billingRoutes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import path from "path";
+import fs from "fs";
 import cron from "node-cron";
 import { generateDailyContent, getTodayKeyET, postDailyToFacebook } from "./dailyContentGenerator";
 import { sendPushToAll } from "./pushService";
@@ -140,6 +142,11 @@ app.use((req, res, next) => {
   app.use(playlistRoutes);
   registerAdminRoutes(app);
   await registerRoutes(httpServer, app);
+
+  // Serve uploaded audio and cover files
+  const uploadsDir = path.join(process.cwd(), "uploads");
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  app.use("/uploads", express.static(uploadsDir));
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
