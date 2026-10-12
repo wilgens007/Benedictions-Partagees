@@ -224,14 +224,23 @@ app.use((req, res, next) => {
       } catch (pushErr: any) {
         log(`[CRON-6AM] ERROR sending push notifications: ${pushErr.message || pushErr}`, "cron");
       }
+    } else {
+      log(`[CRON-6AM] Push already sent today for ${dayKey}, skipping`, "cron");
+    }
+    // Facebook posts independently of push notification state
+    const fbAlreadyPosted = await wasFacebookPostedToday(dayKey);
+    if (!fbAlreadyPosted) {
       try {
         const fbResult = await postDailyToFacebook();
         log(`[CRON-6AM] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "cron");
+        if (fbResult.status === "posted") {
+          await markFacebookPosted(dayKey);
+        }
       } catch (fbErr: any) {
         log(`[CRON-6AM] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "cron");
       }
     } else {
-      log(`[CRON-6AM] Push already sent today for ${dayKey}, skipping`, "cron");
+      log(`[CRON-6AM] Facebook already posted today for ${dayKey}, skipping`, "cron");
     }
   }, {
     timezone: "America/New_York",
@@ -277,6 +286,35 @@ async function markPushSent(dayKey: string) {
   }
 }
 
+async function wasFacebookPostedToday(dayKey: string): Promise<boolean> {
+  try {
+    const { db: checkDb } = await import("./db");
+    const { dailyContent } = await import("@shared/schema");
+    const { and, eq } = await import("drizzle-orm");
+    const rows = await checkDb.select().from(dailyContent).where(
+      and(eq(dailyContent.dayKey, dayKey), eq(dailyContent.language, "_fb"))
+    );
+    return rows.length > 0;
+  } catch { return false; }
+}
+
+async function markFacebookPosted(dayKey: string) {
+  try {
+    const { db: markDb } = await import("./db");
+    const { dailyContent } = await import("@shared/schema");
+    await markDb.insert(dailyContent).values({
+      id: `fb-posted-${dayKey}`,
+      dayKey,
+      language: "_fb",
+      verse: "",
+      reference: "",
+      devotional: "",
+      prayer: "",
+      createdAt: new Date(),
+    });
+  } catch { /* ignore */ }
+}
+
 async function runStartupGeneration() {
   const dayKey = getTodayKeyET();
   log(`[STARTUP] Checking if daily content exists for dayKey=${dayKey}`, "startup");
@@ -306,14 +344,25 @@ async function runStartupGeneration() {
       } catch (pushErr: any) {
         log(`[STARTUP] ERROR sending push notifications: ${pushErr.message || pushErr}`, "startup");
       }
-      try {
-        const fbResult = await postDailyToFacebook();
-        log(`[STARTUP] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "startup");
-      } catch (fbErr: any) {
-        log(`[STARTUP] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "startup");
-      }
     } else if (alreadySent) {
       log(`[STARTUP] Push already sent today for ${dayKey}, skipping`, "startup");
+    }
+    // Facebook posts independently of push notification state
+    if (hourET >= 6 && contentReady) {
+      const fbAlreadyPosted = await wasFacebookPostedToday(dayKey);
+      if (!fbAlreadyPosted) {
+        try {
+          const fbResult = await postDailyToFacebook();
+          log(`[STARTUP] Facebook auto-post: status=${fbResult.status}${fbResult.postId ? `, postId=${fbResult.postId}` : ""}${fbResult.error ? `, error=${fbResult.error}` : ""}`, "startup");
+          if (fbResult.status === "posted") {
+            await markFacebookPosted(dayKey);
+          }
+        } catch (fbErr: any) {
+          log(`[STARTUP] ERROR posting to Facebook: ${fbErr.message || fbErr}`, "startup");
+        }
+      } else {
+        log(`[STARTUP] Facebook already posted today for ${dayKey}, skipping`, "startup");
+      }
     } else if (hourET < 6) {
       log(`[STARTUP] Before 6 AM ET (${hourET}:${nowET.getMinutes().toString().padStart(2, "0")}), skipping push notifications`, "startup");
     } else if (!contentReady) {
