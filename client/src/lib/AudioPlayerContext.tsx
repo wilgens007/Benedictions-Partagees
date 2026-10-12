@@ -80,6 +80,27 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }, 1000);
   }, []);
 
+  const updateMediaSession = useCallback((track: MusicTrack) => {
+    if (!("mediaSession" in navigator)) return;
+
+    const artwork = track?.albumArt
+      ? [
+          { src: track.albumArt, sizes: "96x96", type: "image/jpeg" },
+          { src: track.albumArt, sizes: "128x128", type: "image/jpeg" },
+          { src: track.albumArt, sizes: "192x192", type: "image/jpeg" },
+          { src: track.albumArt, sizes: "256x256", type: "image/jpeg" },
+          { src: track.albumArt, sizes: "384x384", type: "image/jpeg" },
+          { src: track.albumArt, sizes: "512x512", type: "image/jpeg" },
+        ]
+      : [];
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track?.title ?? "",
+      artist: track?.artist ?? "",
+      album: "Bénédictions Partagées",
+      artwork,
+    });
+  }, []);
+
   useEffect(() => {
     const audio = new Audio();
     audio.preload = "metadata";
@@ -168,27 +189,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsLoading(false);
     }
   }, [playTrackAtIndex]);
-
-  const updateMediaSession = useCallback((track: MusicTrack) => {
-    if (!("mediaSession" in navigator)) return;
-
-    const artwork = track?.albumArt
-      ? [
-          { src: track.albumArt, sizes: "96x96", type: "image/jpeg" },
-          { src: track.albumArt, sizes: "128x128", type: "image/jpeg" },
-          { src: track.albumArt, sizes: "192x192", type: "image/jpeg" },
-          { src: track.albumArt, sizes: "256x256", type: "image/jpeg" },
-          { src: track.albumArt, sizes: "384x384", type: "image/jpeg" },
-          { src: track.albumArt, sizes: "512x512", type: "image/jpeg" },
-        ]
-      : [];
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: track?.title ?? "",
-      artist: track?.artist ?? "",
-      album: "Bénédictions Partagées",
-      artwork,
-    });
-  }, []);
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
