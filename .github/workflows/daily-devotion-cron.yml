@@ -4,7 +4,8 @@ on:
   schedule:
     # 11:00 UTC = 6:00 AM EST (Nov-Mar)
     # 10:00 UTC = 6:00 AM EDT (Mar-Nov)
-    # Both run daily; the endpoint is idempotent so the second call is a no-op.
+    # Both run daily; generation is idempotent per ET day (second call returns
+    # already_exists), and the push step only fires when fresh content was created.
     - cron: "0 10 * * *"
     - cron: "0 11 * * *"
   workflow_dispatch: {}
@@ -14,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger daily content generation
+        id: generate
         run: |
           echo "Triggering daily devotion generation at $(date -u)"
           RESPONSE=$(curl -s -w "\n%{http_code}" \
@@ -30,12 +32,15 @@ jobs:
 
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
             echo "Success!"
+            GEN_STATUS=$(echo "$BODY" | jq -r '.status // empty')
+            echo "gen_status=$GEN_STATUS" >> "$GITHUB_OUTPUT"
           else
             echo "Failed with status $HTTP_CODE"
             exit 1
           fi
 
       - name: Send daily push notifications
+        if: steps.generate.outputs.gen_status == 'created'
         run: |
           echo "Sending daily push notifications at $(date -u)"
           RESPONSE=$(curl -s -w "\n%{http_code}" \
